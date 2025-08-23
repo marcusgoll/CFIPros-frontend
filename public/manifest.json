@@ -1,0 +1,44 @@
+{
+  "name": "CFIPros - CFI Training Platform",
+  "short_name": "CFIPros",
+  "description": "Comprehensive pilot training platform with ACS code references and premium lessons",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-512.png", 
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png", 
+      "sizes": "180x180"
+    }
+  ],
+  "categories": ["education", "business", "productivity"],
+  "screenshots": [
+    {
+      "src": "/screenshot-wide.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-mobile.png", 
+      "type": "image/png",
+      "sizes": "375x812",
+      "form_factor": "narrow"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+# Spec Summary (Lite)
+
+Implement bulk file upload capability to process up to 30 FAA test reports simultaneously with a hybrid processing approach (PDFs sequentially, images in parallel), generating individual reports for each file plus a comprehensive summary analysis. This enables flight schools to analyze entire class results at once while supporting partial success handling to ensure failed files don't block the entire batch.
