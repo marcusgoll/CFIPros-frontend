@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import type { ProblemDetails, BackendErrorResponse } from '@/lib/types';
 
 export class APIError extends Error {
   public readonly code: string;
@@ -28,8 +29,8 @@ export class APIError extends Error {
   /**
    * Convert APIError to Problem Details format
    */
-  toProblemDetails() {
-    const result: any = {
+  toProblemDetails(): ProblemDetails {
+    const result: ProblemDetails = {
       type: `about:blank#${this.code}`,
       title: this.code,
       status: this.status,
@@ -46,7 +47,7 @@ export class APIError extends Error {
   /**
    * Create APIError from backend response
    */
-  static fromBackendError(backendError: any, fallbackStatus = 500): APIError {
+  static fromBackendError(backendError: BackendErrorResponse, fallbackStatus = 500): APIError {
     if (backendError?.type && backendError?.title && backendError?.detail) {
       // Backend already returned Problem Details format
       const code = backendError.title;

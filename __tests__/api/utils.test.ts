@@ -22,7 +22,7 @@ jest.mock('redis', () => ({
   })),
 }), { virtual: true });
 
-describe.skip('API Utilities', () => {
+describe('API Utilities', () => {
   describe('Rate Limiter', () => {
     beforeEach(() => {
       jest.clearAllMocks();

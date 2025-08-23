@@ -3,6 +3,8 @@
  * Uses in-memory cache for development and Redis for production
  */
 
+import type { RedisClient } from '@/lib/types';
+
 export interface RateLimiterResult {
   success: boolean;
   limit: number;
@@ -39,7 +41,7 @@ const RATE_LIMIT_CONFIGS: Record<string, RateLimitConfig> = {
 const memoryCache = new Map<string, { count: number; reset: number }>();
 
 class RateLimiter {
-  private redisClient: any = null;
+  private redisClient: RedisClient | null = null;
 
   constructor() {
     this.initializeRedis();

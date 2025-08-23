@@ -8,6 +8,7 @@ import { GET as profileGET, PUT as profilePUT } from '@/app/api/auth/profile/rou
 import { POST as loginPOST } from '@/app/api/auth/login/route';
 import { POST as registerPOST } from '@/app/api/auth/register/route';
 import { APIError } from '@/lib/api/errors';
+import type { MockAPIClient } from '@/lib/types';
 
 // Mock the API client
 jest.mock('@/lib/api/client', () => ({
@@ -30,9 +31,9 @@ jest.mock('@/lib/api/rateLimiter', () => ({
   },
 }));
 
-describe.skip('/api/auth', () => {
-  let mockApiClient: any;
-  let mockGetServerSession: any;
+describe('/api/auth', () => {
+  let mockApiClient: MockAPIClient;
+  let mockGetServerSession: jest.Mock;
 
   beforeEach(() => {
     const { APIClient } = require('@/lib/api/client');

@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { config } from '@/lib/config';
+import { FileUploadSecurity } from '@/lib/security/fileUpload';
 
 // Validation schemas
 const AuthLoginSchema = z.object({
@@ -45,7 +46,7 @@ export interface ValidationResult<T = any> {
 
 export class RequestValidator {
   /**
-   * Validate file upload request
+   * Validate file upload request with comprehensive security checks
    */
   static async fileUpload(request: NextRequest): Promise<ValidationResult<FormData>> {
     try {
@@ -59,7 +60,7 @@ export class RequestValidator {
         };
       }
 
-      // Check file size
+      // Basic checks first (size, type, extension)
       if (file.size > config.fileUpload.maxSize) {
         return {
           isValid: false,
@@ -67,7 +68,6 @@ export class RequestValidator {
         };
       }
 
-      // Check file type
       if (!config.fileUpload.allowedTypes.includes(file.type as any)) {
         return {
           isValid: false,
@@ -75,7 +75,6 @@ export class RequestValidator {
         };
       }
 
-      // Check file extension  
       const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
       if (!config.fileUpload.allowedExtensions.includes(extension as any)) {
         return {
@@ -84,12 +83,24 @@ export class RequestValidator {
         };
       }
 
-      // Check filename for security
-      if (this.hasUnsafeFileName(file.name)) {
+      // Perform comprehensive security validation
+      const securityCheck = await FileUploadSecurity.validateFile(file);
+      if (!securityCheck.isSecure) {
         return {
           isValid: false,
-          error: 'Filename contains unsafe characters',
+          error: securityCheck.error || 'File failed security validation',
         };
+      }
+
+      // Generate secure metadata
+      const metadata = await FileUploadSecurity.generateFileMetadata(file);
+      
+      // Add metadata to form data for backend processing
+      formData.set('fileMetadata', JSON.stringify(metadata));
+
+      // Log security warnings if any (in development)
+      if (securityCheck.warnings && config.isDevelopment) {
+        console.warn('File upload security warnings:', securityCheck.warnings);
       }
 
       return {
@@ -98,6 +109,7 @@ export class RequestValidator {
         file,
       };
     } catch (error) {
+      console.error('File upload validation error:', error);
       return {
         isValid: false,
         error: 'Invalid file upload request',

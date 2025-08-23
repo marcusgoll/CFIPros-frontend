@@ -154,3 +154,81 @@ export interface SortConfig {
 export interface FilterConfig {
   [key: string]: string | string[] | number | boolean;
 }
+
+// API specific types
+export interface APIResponse<T = unknown> {
+  data: T;
+  success: boolean;
+  message?: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token?: string;
+  user: User;
+  expires_at: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  terms_accepted: boolean;
+  organization?: string;
+}
+
+export interface ProfileUpdateRequest {
+  name?: string;
+  organization?: string;
+  preferences?: UserPreferences;
+}
+
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system';
+  notifications: boolean;
+  emailUpdates: boolean;
+}
+
+export interface RedisClient {
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string) => Promise<void>;
+  setEx: (key: string, seconds: number, value: string) => Promise<void>;
+  connect: () => Promise<void>;
+  disconnect: () => Promise<void>;
+}
+
+export interface MockAPIClient {
+  get: jest.Mock;
+  post: jest.Mock;
+  put: jest.Mock;
+  delete: jest.Mock;
+  uploadFile: jest.Mock;
+}
+
+export interface RouteContext {
+  params: Promise<{ [key: string]: string }>;
+}
+
+export interface ProblemDetails {
+  type: string;
+  title: string;
+  status: number;
+  detail: string;
+  instance?: string;
+}
+
+export interface BackendErrorResponse {
+  error?: string;
+  message?: string;
+  detail?: string;
+  status?: number;
+}
+
+export interface TestMockFunctions {
+  [key: string]: jest.Mock;
+}

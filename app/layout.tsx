@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { PerformanceMonitor } from '@/components/PerformanceMonitor';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -100,6 +101,7 @@ export default function RootLayout({
         <div id="root" className="relative">
           {children}
         </div>
+        <PerformanceMonitor />
       </body>
     </html>
   );
