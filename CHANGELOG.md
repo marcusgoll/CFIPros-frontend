@@ -138,8 +138,11 @@ None - this is the initial release.
 ### 🐛 Known Issues
 
 - Some TypeScript strict mode warnings in development (non-blocking)
-- Test coverage could be improved in utility functions
+- Test coverage could be improved in utility functions  
 - Bundle size optimization opportunities remain
+- Static page generation issues with React Server Components on some pages
+- ESLint and TypeScript build checks temporarily disabled for v1.0.0 release
+- Minor React Server Component event handler serialization warnings
 
 ### 📚 Documentation
 
