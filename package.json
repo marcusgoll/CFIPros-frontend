@@ -1,8 +1,30 @@
 {
   "name": "cfipros-frontend",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "CFIPros Frontend - Next.js 15 application for CFI training platform",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/marcusgoll/CFIPros-frontend.git"
+  },
+  "homepage": "https://cfipros.com",
+  "bugs": {
+    "url": "https://github.com/marcusgoll/CFIPros-frontend/issues"
+  },
+  "license": "UNLICENSED",
+  "author": {
+    "name": "Marcus Gollahon",
+    "url": "https://github.com/marcusgoll"
+  },
+  "keywords": [
+    "nextjs",
+    "typescript",
+    "aviation",
+    "cfi",
+    "training",
+    "acs",
+    "study-plan"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
