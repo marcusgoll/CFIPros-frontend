@@ -1,5 +1,15 @@
 // Common types used throughout the application
 
+export interface BackendErrorResponse {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  error?: string;
+  message?: string;
+}
+
 export interface User {
   id: string;
   email: string;

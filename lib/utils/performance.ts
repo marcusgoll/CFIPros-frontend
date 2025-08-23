@@ -3,6 +3,8 @@
  * Provides tools for measuring and monitoring application performance
  */
 
+import React from 'react';
+
 // Performance observer for measuring web vitals
 export interface PerformanceMetric {
   name: string;
