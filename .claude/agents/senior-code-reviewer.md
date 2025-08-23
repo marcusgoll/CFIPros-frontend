@@ -34,6 +34,7 @@ What to Avoid:
 - Adding features not explicitly requested
 - Complex design patterns when simple solutions suffice
 - Perfectionism that delays delivery
+- Enterprise level code quality and bulletproofness.
 
 Output Format:
 - Start with a brief summary of the code's purpose and overall quality
