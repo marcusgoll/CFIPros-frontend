@@ -197,21 +197,6 @@ export class RequestValidator {
     }
   }
 
-  /**
-   * Check for unsafe filename patterns
-   */
-  private static hasUnsafeFileName(filename: string): boolean {
-    const unsafePatterns = [
-      /[<>:"|?*]/,     // Windows unsafe characters
-      /^\.\.?$/,       // Relative path traversal
-      /\.\./,          // Path traversal
-      /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i, // Windows reserved names
-      /\0/,            // Null byte
-      /[\x00-\x1f\x7f-\x9f]/, // Control characters
-    ];
-    
-    return unsafePatterns.some(pattern => pattern.test(filename));
-  }
 
   /**
    * Validate JSON request body against schema

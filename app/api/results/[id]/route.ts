@@ -9,8 +9,15 @@ import { validateRequest } from '@/lib/api/validation';
 import { proxyRequest, getClientIP } from '@/lib/api/proxy';
 import { CommonErrors, handleAPIError } from '@/lib/api/errors';
 
-async function resultsHandler(request: NextRequest, context?: { params: Promise<{ id: string }> }) {
-  const { id } = await context?.params!;
+async function resultsHandler(
+  request: NextRequest, 
+  context?: { params?: Promise<{ id: string }> }
+) {
+  if (!context?.params) {
+    const error = CommonErrors.VALIDATION_ERROR('Missing route parameters');
+    return handleAPIError(error);
+  }
+  const { id } = await context.params;
   const clientIP = getClientIP(request);
   
   // Validate result ID format

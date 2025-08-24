@@ -34,7 +34,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
 
     if (typeof error === 'string') {
       message = error;
-    } else if ('code' in error) {
+    } else if ('code' in error && typeof error.code === 'string') {
       // APIError instance
       message = error.message;
       code = error.code;
@@ -66,10 +66,10 @@ export function useErrorHandler(): UseErrorHandlerReturn {
       showError(error);
     } else if (typeof error === 'object' && error !== null) {
       const errorObj = error as Record<string, unknown>;
-      if ('message' in errorObj && errorObj.message) {
-        showError(String(errorObj.message));
-      } else if ('detail' in errorObj && errorObj.detail) {
-        showError(String(errorObj.detail));
+      if ('message' in errorObj && errorObj['message']) {
+        showError(String(errorObj['message']));
+      } else if ('detail' in errorObj && errorObj['detail']) {
+        showError(String(errorObj['detail']));
       } else {
         showError('An unexpected error occurred');
       }

@@ -29,7 +29,11 @@ export function LoadingState({
   spinnerSize = 'md',
 }: LoadingStateProps) {
   if (error && ErrorComponent) {
-    return <ErrorComponent error={error} onRetry={onRetry} />;
+    const errorProps: { error: string; onRetry?: () => void } = { error };
+    if (onRetry) {
+      errorProps.onRetry = onRetry;
+    }
+    return <ErrorComponent {...errorProps} />;
   }
 
   if (error) {
@@ -240,7 +244,11 @@ export function withLoading<P extends object>(
 
     if (error) {
       if (ErrorComponent) {
-        return <ErrorComponent error={error} onRetry={onRetry} />;
+        const errorProps: { error: string; onRetry?: () => void } = { error };
+        if (onRetry) {
+          errorProps.onRetry = onRetry;
+        }
+        return <ErrorComponent {...errorProps} />;
       }
       
       return (

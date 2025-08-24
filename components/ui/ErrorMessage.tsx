@@ -9,7 +9,7 @@ import { Button } from './Button';
 import { cn } from '@/lib/utils';
 
 interface ErrorMessageProps {
-  error?: string | null;
+  error?: string | null | undefined;
   title?: string;
   variant?: 'error' | 'warning' | 'info';
   size?: 'sm' | 'md' | 'lg';
@@ -125,7 +125,7 @@ export function ErrorMessage({
  */
 
 interface FormErrorProps {
-  error?: string | null;
+  error?: string | null | undefined;
   className?: string;
 }
 
@@ -154,16 +154,28 @@ export function PageError({
   onRetry, 
   className 
 }: PageErrorProps) {
+  const errorMessageProps: {
+    error: string;
+    title: string;
+    variant: 'error';
+    size: 'lg';
+    className: string;
+    onRetry?: () => void;
+  } = {
+    error: error || 'An unexpected error occurred. Please try again.',
+    title,
+    variant: 'error',
+    size: 'lg',
+    className: 'max-w-md',
+  };
+
+  if (onRetry) {
+    errorMessageProps.onRetry = onRetry;
+  }
+
   return (
     <div className={cn('flex justify-center items-center min-h-[200px]', className)}>
-      <ErrorMessage
-        error={error || 'An unexpected error occurred. Please try again.'}
-        title={title}
-        variant="error"
-        size="lg"
-        onRetry={onRetry}
-        className="max-w-md"
-      />
+      <ErrorMessage {...errorMessageProps} />
     </div>
   );
 }
@@ -174,6 +186,8 @@ interface InlineErrorProps {
 }
 
 export function InlineError({ error, className }: InlineErrorProps) {
+  if (!error) return null;
+  
   return (
     <ErrorMessage
       error={error}

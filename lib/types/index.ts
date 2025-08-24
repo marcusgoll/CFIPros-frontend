@@ -1,4 +1,5 @@
 // Common types used throughout the application
+import type { NextRequest, NextResponse } from 'next/server';
 
 export interface BackendErrorResponse {
   type?: string;
@@ -208,6 +209,8 @@ export interface RedisClient {
   get: (key: string) => Promise<string | null>;
   set: (key: string, value: string) => Promise<void>;
   setEx: (key: string, seconds: number, value: string) => Promise<void>;
+  incr: (key: string) => Promise<number>;
+  ttl: (key: string) => Promise<number>;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
 }
@@ -221,8 +224,19 @@ export interface MockAPIClient {
 }
 
 export interface RouteContext {
-  params: Promise<{ [key: string]: string }>;
+  params?: Promise<{ [key: string]: string }>;
 }
+
+// Next.js 15 App Router route handler types
+export type NextRouteHandler<T = Record<string, string>> = (
+  request: NextRequest,
+  context?: { params?: Promise<T> }
+) => Promise<NextResponse> | NextResponse;
+
+export type SimpleRouteHandler = (
+  request: NextRequest,
+  context?: { params?: Promise<Record<string, string>> }
+) => Promise<NextResponse> | NextResponse;
 
 export interface ProblemDetails {
   type: string;
@@ -230,13 +244,6 @@ export interface ProblemDetails {
   status: number;
   detail: string;
   instance?: string;
-}
-
-export interface BackendErrorResponse {
-  error?: string;
-  message?: string;
-  detail?: string;
-  status?: number;
 }
 
 export interface TestMockFunctions {

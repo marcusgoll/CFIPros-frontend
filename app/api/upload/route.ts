@@ -3,7 +3,7 @@
  * Handles document upload, validation, and processing with enhanced security
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
 import { validateRequest } from '@/lib/api/validation';
 import { proxyFileUpload, getClientIP, addCorrelationId } from '@/lib/api/proxy';

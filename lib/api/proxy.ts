@@ -267,7 +267,8 @@ export function validateBackendResponse(data: unknown): boolean {
   }
 
   // Check for common error indicators
-  if (data.error && typeof data.error === 'string') {
+  const errorData = data as Record<string, unknown>;
+  if (errorData['error'] && typeof errorData['error'] === 'string') {
     return false;
   }
 

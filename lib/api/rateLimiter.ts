@@ -57,7 +57,7 @@ class RateLimiter {
           url: process.env['REDIS_URL'],
         });
         
-        await this.redisClient.connect();
+        await this.redisClient?.connect();
         console.log('Redis client connected for rate limiting');
       } catch (error) {
         console.warn('Failed to connect to Redis, using memory cache:', error);
@@ -84,6 +84,10 @@ class RateLimiter {
    * Redis-based rate limiting for production
    */
   private async checkRedis(key: string, config: RateLimitConfig): Promise<RateLimiterResult> {
+    if (!this.redisClient) {
+      return this.checkMemory(key, config);
+    }
+    
     try {
       const current = await this.redisClient.get(key);
       const now = Date.now();

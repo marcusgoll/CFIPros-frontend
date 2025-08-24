@@ -39,13 +39,16 @@ export class PerformanceTracker {
       // Observe layout shifts (CLS)
       const clsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
-            this.recordMetric({
-              name: 'CLS',
-              value: entry.value,
-              unit: 'score',
-              timestamp: Date.now(),
-            });
+          if (entry.entryType === 'layout-shift') {
+            const layoutShift = entry as any; // Cast to access layout-shift specific properties
+            if (!layoutShift.hadRecentInput) {
+              this.recordMetric({
+                name: 'CLS',
+                value: layoutShift.value,
+                unit: 'score',
+                timestamp: Date.now(),
+              });
+            }
           }
         }
       });
@@ -74,9 +77,10 @@ export class PerformanceTracker {
       const fidObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'first-input') {
+            const firstInput = entry as any; // Cast to access first-input specific properties
             this.recordMetric({
               name: 'FID',
-              value: entry.processingStart - entry.startTime,
+              value: firstInput.processingStart - entry.startTime,
               unit: 'ms',
               timestamp: Date.now(),
             });

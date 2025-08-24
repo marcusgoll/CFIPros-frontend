@@ -108,10 +108,15 @@ export class FileUploadSecurity {
       return patternCheck;
     }
 
-    return {
+    const result: FileSecurityResult = {
       isSecure: true,
-      warnings: warnings.length > 0 ? warnings : undefined,
     };
+    
+    if (warnings.length > 0) {
+      result.warnings = warnings;
+    }
+    
+    return result;
   }
 
   /**
@@ -311,10 +316,15 @@ export class FileUploadSecurity {
       warnings.push('Hidden file detected');
     }
 
-    return {
+    const result: FileSecurityResult = {
       isSecure: true,
-      warnings: warnings.length > 0 ? warnings : undefined,
     };
+    
+    if (warnings.length > 0) {
+      result.warnings = warnings;
+    }
+    
+    return result;
   }
 
   /**

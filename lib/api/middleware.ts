@@ -74,7 +74,7 @@ interface MiddlewareOptions {
 
 type RouteHandler = (
   request: NextRequest,
-  context?: { params: Promise<any> }
+  context?: { params?: Promise<any> }
 ) => Promise<NextResponse>;
 
 /**
@@ -84,7 +84,7 @@ export function withAPIMiddleware(
   handler: RouteHandler,
   options: MiddlewareOptions
 ): RouteHandler {
-  return async (request: NextRequest, context?: { params: Promise<any> }) => {
+  return async (request: NextRequest, context?: { params?: Promise<any> }) => {
     try {
       // Rate limiting
       const clientIP = getClientIP(request);
