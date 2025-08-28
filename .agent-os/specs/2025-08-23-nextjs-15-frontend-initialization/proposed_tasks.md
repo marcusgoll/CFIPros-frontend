@@ -77,6 +77,5 @@
 
 ## Changelog
 
-* 2025-08-28 12:30 — Updated by change request: Added hero section enhancement with 3 versions and audience-specific CTAs; Renumber map: None required; Preserved 43 completed tasks; Deprecated 0 tasks.
 * 2025-08-28 03:53 — Completed Task 6: Landing Page Header with mega menu navigation; Created MegaMenu and HeaderNavigation components with CFIPros logo, responsive design, keyboard navigation, and accessibility features.
 * 2025-08-27 22:40 — Added Task 6 for Landing Page Header update with mega menu navigation; Modified Task 3 to add integration subtask 3.9; No renumbering required; Preserved 24 completed tasks.

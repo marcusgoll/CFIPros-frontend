@@ -1,4 +1,5 @@
-import { Navigation } from "@/components/layout/Navigation";
+import { HeaderNavigation } from "@/components/layout/HeaderNavigation";
+import { NavigationErrorBoundary } from "@/components/layout/NavigationErrorBoundary";
 import { Footer } from "@/components/layout/Footer";
 
 export default function PublicLayout({
@@ -8,7 +9,9 @@ export default function PublicLayout({
 }) {
   return (
     <>
-      <Navigation />
+      <NavigationErrorBoundary>
+        <HeaderNavigation />
+      </NavigationErrorBoundary>
       <main className="min-h-screen">{children}</main>
       <Footer />
     </>
