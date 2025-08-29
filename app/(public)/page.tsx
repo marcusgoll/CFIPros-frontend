@@ -26,6 +26,7 @@ import {
 } from "@/components/layout/FeatureSpotlightMenu";
 import { FeatureScreenshotDisplay } from "@/components/layout/FeatureScreenshotDisplay";
 import { VideoModal } from "@/components/layout/VideoModal";
+import { BenefitZipperList } from "@/components/sections/BenefitZipperList";
 import { trackEvent } from "@/lib/analytics/telemetry";
 import { prefersReducedMotion } from "@/lib/utils";
 
@@ -116,6 +117,9 @@ export default function CFIProsHomePage() {
             />
           </div>
         </section>
+
+        {/* Benefit-Driven Zipper List */}
+        <BenefitZipperList />
 
         <LogoCloud />
         <NumberCounters />
