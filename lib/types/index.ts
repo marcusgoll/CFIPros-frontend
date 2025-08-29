@@ -1,4 +1,15 @@
 // Common types used throughout the application
+import type { NextRequest, NextResponse } from 'next/server';
+
+export interface BackendErrorResponse {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  error?: string;
+  message?: string;
+}
 
 export interface User {
   id: string;
@@ -153,4 +164,88 @@ export interface SortConfig {
 
 export interface FilterConfig {
   [key: string]: string | string[] | number | boolean;
+}
+
+// API specific types
+export interface APIResponse<T = unknown> {
+  data: T;
+  success: boolean;
+  message?: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token?: string;
+  user: User;
+  expires_at: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+  terms_accepted: boolean;
+  organization?: string;
+}
+
+export interface ProfileUpdateRequest {
+  name?: string;
+  organization?: string;
+  preferences?: UserPreferences;
+}
+
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system';
+  notifications: boolean;
+  emailUpdates: boolean;
+}
+
+export interface RedisClient {
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string) => Promise<void>;
+  setEx: (key: string, seconds: number, value: string) => Promise<void>;
+  incr: (key: string) => Promise<number>;
+  ttl: (key: string) => Promise<number>;
+  connect: () => Promise<void>;
+  disconnect: () => Promise<void>;
+}
+
+export interface MockAPIClient {
+  get: jest.Mock;
+  post: jest.Mock;
+  put: jest.Mock;
+  delete: jest.Mock;
+  uploadFile: jest.Mock;
+}
+
+export interface RouteContext {
+  params?: Promise<{ [key: string]: string }>;
+}
+
+// Next.js 15 App Router route handler types
+export type NextRouteHandler<T = Record<string, string>> = (
+  request: NextRequest,
+  context?: { params?: Promise<T> }
+) => Promise<NextResponse> | NextResponse;
+
+export type SimpleRouteHandler = (
+  request: NextRequest,
+  context?: { params?: Promise<Record<string, string>> }
+) => Promise<NextResponse> | NextResponse;
+
+export interface ProblemDetails {
+  type: string;
+  title: string;
+  status: number;
+  detail: string;
+  instance?: string;
+}
+
+export interface TestMockFunctions {
+  [key: string]: jest.Mock;
 }

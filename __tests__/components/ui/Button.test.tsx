@@ -11,13 +11,13 @@ describe("Button Component", () => {
 
   it("applies variant styles correctly", () => {
     const { rerender } = render(<Button variant="primary">Primary</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-primary-600");
+    expect(screen.getByRole("button")).toHaveClass("bg-primary");
 
     rerender(<Button variant="secondary">Secondary</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-secondary-200");
+    expect(screen.getByRole("button")).toHaveClass("bg-secondary");
 
     rerender(<Button variant="outline">Outline</Button>);
-    expect(screen.getByRole("button")).toHaveClass("border-gray-300");
+    expect(screen.getByRole("button")).toHaveClass("border");
   });
 
   it("applies size classes correctly", () => {

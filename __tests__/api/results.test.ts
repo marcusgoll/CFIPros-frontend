@@ -6,6 +6,7 @@
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/results/[id]/route';
 import { APIError } from '@/lib/api/errors';
+import type { MockAPIClient } from '@/lib/types';
 
 // Mock the API client
 jest.mock('@/lib/api/client', () => ({
@@ -21,8 +22,8 @@ jest.mock('@/lib/api/rateLimiter', () => ({
   },
 }));
 
-describe.skip('/api/results', () => {
-  let mockApiClient: any;
+describe('/api/results', () => {
+  let mockApiClient: MockAPIClient;
 
   beforeEach(() => {
     const { APIClient } = require('@/lib/api/client');

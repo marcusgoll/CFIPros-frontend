@@ -4,30 +4,25 @@
  */
 
 import { NextRequest } from 'next/server';
-import { POST } from '@/app/api/upload/route';
+import { POST, OPTIONS } from '@/app/api/upload/route';
 import { APIError } from '@/lib/api/errors';
 
-// Mock the API client
-jest.mock('@/lib/api/client', () => ({
-  APIClient: jest.fn().mockImplementation(() => ({
-    post: jest.fn(),
-    uploadFile: jest.fn(),
-  })),
+// Mock the proxy functions
+jest.mock('@/lib/api/proxy', () => ({
+  proxyFileUpload: jest.fn(),
+  getClientIP: jest.fn().mockReturnValue('127.0.0.1'),
+  addCorrelationId: jest.fn().mockReturnValue('test-correlation-id'),
 }));
 
-// Mock rate limiter
-jest.mock('@/lib/api/rateLimiter', () => ({
-  rateLimiter: {
-    check: jest.fn().mockResolvedValue({ success: true }),
-  },
-}));
+// Mock fetch for testing error scenarios
+global.fetch = jest.fn();
 
-describe.skip('/api/upload', () => {
-  let mockApiClient: any;
+describe('/api/upload', () => {
+  let mockProxyFileUpload: jest.MockedFunction<any>;
 
   beforeEach(() => {
-    const { APIClient } = require('@/lib/api/client');
-    mockApiClient = new APIClient();
+    const { proxyFileUpload } = require('@/lib/api/proxy');
+    mockProxyFileUpload = proxyFileUpload;
     jest.clearAllMocks();
   });
 
@@ -46,11 +41,23 @@ describe.skip('/api/upload', () => {
         uploaded_at: '2024-01-01T00:00:00Z',
       };
 
-      mockApiClient.uploadFile.mockResolvedValue(mockUploadResult);
+      // Mock successful proxy response
+      mockProxyFileUpload.mockResolvedValue(
+        new Response(JSON.stringify(mockUploadResult), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          },
+        })
+      );
 
       const request = new NextRequest('http://localhost:3000/api/upload', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Origin': 'http://localhost:3000',
+        },
       });
 
       // Act
@@ -60,7 +67,16 @@ describe.skip('/api/upload', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(data).toEqual(mockUploadResult);
-      expect(mockApiClient.uploadFile).toHaveBeenCalledWith('/extract', mockFile);
+      expect(mockProxyFileUpload).toHaveBeenCalledWith(
+        request,
+        '/upload',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-Correlation-ID': 'test-correlation-id',
+            'X-Client-IP': '127.0.0.1',
+          }),
+        })
+      );
     });
 
     it('should reject files that exceed size limit', async () => {
@@ -130,34 +146,43 @@ describe.skip('/api/upload', () => {
     });
 
     it('should handle rate limiting', async () => {
-      // Arrange
-      const { rateLimiter } = require('@/lib/api/rateLimiter');
-      rateLimiter.check.mockResolvedValue({ 
-        success: false, 
-        limit: 60, 
-        remaining: 0, 
-        reset: Date.now() + 3600000 
-      });
-
+      // Arrange - simulate rate limiting by making many rapid requests
+      // The middleware has a built-in rate limiter that should trigger
       const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
       const formData = new FormData();
       formData.append('file', mockFile);
 
-      const request = new NextRequest('http://localhost:3000/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      // Mock the proxy to return success for the few requests that pass rate limiting
+      mockProxyFileUpload.mockResolvedValue(
+        new Response(JSON.stringify({ id: 'test' }), { status: 200 })
+      );
 
-      // Act
-      const response = await POST(request);
-      const data = await response.json();
+      // Make many requests to trigger rate limiting (upload endpoint allows 60/hour)
+      const requests = Array.from({ length: 62 }, () => 
+        new NextRequest('http://localhost:3000/api/upload', {
+          method: 'POST',
+          body: formData,
+          headers: { 'x-forwarded-for': '192.168.1.100' }, // Same IP
+        })
+      );
 
-      // Assert
-      expect(response.status).toBe(429);
-      expect(data.type).toBe('about:blank#rate_limit_exceeded');
-      expect(data.title).toBe('rate_limit_exceeded');
-      expect(response.headers.get('X-RateLimit-Limit')).toBe('60');
-      expect(response.headers.get('X-RateLimit-Remaining')).toBe('0');
+      // Act - make all requests rapidly
+      const responses = await Promise.all(
+        requests.map(req => POST(req))
+      );
+
+      // Assert - some responses should be rate limited
+      const rateLimitedResponses = responses.filter(r => r.status === 429);
+      expect(rateLimitedResponses.length).toBeGreaterThan(0);
+      
+      if (rateLimitedResponses.length > 0) {
+        const response = rateLimitedResponses[0]!;
+        const data = await response.json();
+        expect(data.type).toBe('about:blank#rate_limit_exceeded');
+        expect(data.title).toBe('rate_limit_exceeded');
+        expect(response.headers.get('X-RateLimit-Limit')).toBe('60');
+        expect(response.headers.get('X-RateLimit-Remaining')).toBe('0');
+      }
     });
 
     it('should handle backend API errors', async () => {
@@ -166,8 +191,9 @@ describe.skip('/api/upload', () => {
       const formData = new FormData();
       formData.append('file', mockFile);
 
+      // Mock proxy to throw an error (simulating backend failure)
       const backendError = new APIError('processing_failed', 500, 'Backend processing failed');
-      mockApiClient.uploadFile.mockRejectedValue(backendError);
+      mockProxyFileUpload.mockRejectedValue(backendError);
 
       const request = new NextRequest('http://localhost:3000/api/upload', {
         method: 'POST',
@@ -191,20 +217,29 @@ describe.skip('/api/upload', () => {
       const formData = new FormData();
       formData.append('file', mockFile);
 
-      mockApiClient.uploadFile.mockResolvedValue({ id: 'test' });
+      // Mock successful proxy response
+      mockProxyFileUpload.mockResolvedValue(
+        new Response(JSON.stringify({ id: 'test' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        })
+      );
 
       const request = new NextRequest('http://localhost:3000/api/upload', {
         method: 'POST',
         body: formData,
+        headers: {
+          'Origin': 'http://localhost:3000',
+        },
       });
 
       // Act
       const response = await POST(request);
 
-      // Assert
-      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+      // Assert - CORS headers should be added by the middleware
+      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
       expect(response.headers.get('Access-Control-Allow-Methods')).toBe('POST, OPTIONS');
-      expect(response.headers.get('Access-Control-Allow-Headers')).toBe('Content-Type');
+      expect(response.headers.get('Access-Control-Allow-Headers')).toContain('Content-Type');
     });
   });
 

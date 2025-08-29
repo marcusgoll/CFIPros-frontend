@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { APIError, handleAPIError } from './errors';
 import { config } from '@/lib/config';
+import type { BackendErrorResponse } from '@/lib/types';
 
 export interface ProxyConfig {
   timeout?: number;
@@ -148,7 +149,7 @@ export async function proxyRequest(
  * Handle backend error responses
  */
 async function handleBackendError(response: Response): Promise<never> {
-  let errorData: any;
+  let errorData: BackendErrorResponse;
   
   try {
     errorData = await response.json();
@@ -259,14 +260,15 @@ export function addCorrelationId(request: NextRequest): string {
 /**
  * Validate backend response structure
  */
-export function validateBackendResponse(data: any): boolean {
+export function validateBackendResponse(data: unknown): boolean {
   // Basic validation - backend should return objects with expected structure
   if (!data || typeof data !== 'object') {
     return false;
   }
 
   // Check for common error indicators
-  if (data.error && typeof data.error === 'string') {
+  const errorData = data as Record<string, unknown>;
+  if (errorData['error'] && typeof errorData['error'] === 'string') {
     return false;
   }
 

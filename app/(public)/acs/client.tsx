@@ -233,25 +233,25 @@ export default function ACSIndexClient() {
           </div>
         )}
 
-        {/* Pagination (placeholder) */}
+        {/* Pagination (placeholder - static for SEO) */}
         {filteredCodes.length > 0 && (
           <div className="mt-8 flex justify-center">
             <nav className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" disabled>
+              <span className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">
                 Previous
-              </Button>
-              <Button variant="outline" size="sm" className="bg-primary-50">
+              </span>
+              <span className="inline-flex items-center justify-center rounded-lg border border-primary-600 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-600">
                 1
-              </Button>
-              <Button variant="outline" size="sm">
+              </span>
+              <span className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
                 2
-              </Button>
-              <Button variant="outline" size="sm">
+              </span>
+              <span className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
                 3
-              </Button>
-              <Button variant="outline" size="sm">
+              </span>
+              <span className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
                 Next
-              </Button>
+              </span>
             </nav>
           </div>
         )}
