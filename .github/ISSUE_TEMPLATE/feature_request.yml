@@ -1,0 +1,174 @@
+name: 💡 Feature Request
+description: Suggest a new feature or enhancement for CFIPros Frontend
+title: "💡 [Feature]: "
+labels: ["enhancement", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting a feature! Your ideas help make CFIPros better for the aviation community. ✈️
+
+  - type: checkboxes
+    attributes:
+      label: Pre-flight Checklist ✈️
+      description: Before requesting a feature, please ensure you've done the following
+      options:
+        - label: I've searched existing issues and feature requests
+          required: true
+        - label: I've read the [CONTRIBUTING.md](https://github.com/marcusgoll/CFIPros-frontend/blob/main/CONTRIBUTING.md)
+          required: true
+        - label: This feature would benefit the broader aviation/education community
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      description: What type of feature is this?
+      options:
+        - UI/UX Enhancement
+        - Performance Improvement
+        - Security Enhancement
+        - Accessibility Feature
+        - Mobile/Responsive Improvement
+        - Aviation-Specific Feature
+        - Developer Experience
+        - Testing/Quality Assurance
+        - Documentation
+        - Integration/API
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: Problem Statement
+      description: What problem does this feature solve?
+      placeholder: |
+        Describe the current pain point or limitation that this feature would address.
+        Include specific examples if possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution
+      description: Describe your ideal solution
+      placeholder: |
+        A clear and detailed description of what you want to happen.
+        Include specific functionality, user interactions, and expected behavior.
+    validations:
+      required: true
+
+  - type: textarea
+    id: aviation-use-case
+    attributes:
+      label: Aviation Training Use Case
+      description: How would this feature improve aviation training workflows?
+      placeholder: |
+        - Which aviation training scenarios would this help with?
+        - How would CFI instructors or students use this feature?
+        - What impact would this have on training efficiency or effectiveness?
+        - Are there specific aviation regulations or standards this addresses?
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-stories
+    attributes:
+      label: User Stories
+      description: Describe how different users would interact with this feature
+      placeholder: |
+        As a [type of user], I want [goal/desire] so that [benefit].
+        
+        Examples:
+        - As a CFI instructor, I want to quickly filter training materials so that I can find relevant content faster.
+        - As a student pilot, I want to track my progress so that I can see which areas need more study.
+    validations:
+      required: true
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups/Wireframes
+      description: Visual representation of your idea (optional but helpful)
+      placeholder: |
+        You can attach images, link to Figma designs, or provide ASCII art/sketches.
+        Even rough sketches help communicate your vision!
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: What alternatives have you considered?
+      placeholder: |
+        Describe any alternative solutions or features you've considered.
+        Why is your proposed solution better?
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority Level
+      description: How important is this feature to you and your aviation training workflow?
+      options:
+        - High - This would significantly improve my training workflow
+        - Medium - This would be a nice improvement
+        - Low - This would be a small convenience
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: complexity
+    attributes:
+      label: Implementation Considerations
+      description: Check any that might apply (don't worry if you're not sure)
+      options:
+        - label: This might require backend API changes
+        - label: This could impact mobile responsiveness
+        - label: This might need accessibility considerations
+        - label: This could affect performance
+        - label: This might require new dependencies
+        - label: This could impact security
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: How would you know this feature is working correctly?
+      placeholder: |
+        Define specific, testable criteria that would indicate successful implementation:
+        - [ ] Feature works correctly in Chrome, Firefox, Safari
+        - [ ] Feature is accessible via keyboard navigation
+        - [ ] Feature works on mobile devices
+        - [ ] Feature includes appropriate error handling
+        - [ ] Feature has been tested with aviation training content
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Anything else you'd like to add?
+      placeholder: |
+        - Links to similar features in other applications
+        - Research or user feedback that supports this feature
+        - Specific aviation industry standards or requirements
+        - Timeline considerations
+
+  - type: checkboxes
+    id: contribution-willingness
+    attributes:
+      label: Contribution Interest
+      description: Would you be interested in helping implement this feature?
+      options:
+        - label: I'd be willing to work on implementing this feature
+          required: false
+        - label: I could help with testing this feature
+          required: false
+        - label: I could provide aviation domain expertise
+          required: false
+        - label: I could help with documentation
+          required: false

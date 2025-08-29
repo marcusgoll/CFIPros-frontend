@@ -1,0 +1,137 @@
+name: 🐛 Bug Report
+description: Report a bug or unexpected behavior in the CFIPros Frontend
+title: "🐛 [Bug]: "
+labels: ["bug", "needs-triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the sections below to help us understand and reproduce the issue.
+
+  - type: checkboxes
+    attributes:
+      label: Pre-flight Checklist ✈️
+      description: Before reporting, please ensure you've done the following
+      options:
+        - label: I've searched existing issues and this hasn't been reported
+          required: true
+        - label: I've read the [CONTRIBUTING.md](https://github.com/marcusgoll/CFIPros-frontend/blob/main/CONTRIBUTING.md)
+          required: true
+        - label: I'm using the latest version of the code
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Bug Category
+      description: What type of issue is this?
+      options:
+        - UI/Visual Issue
+        - Performance Problem
+        - Security Concern
+        - File Upload Issue
+        - Navigation/Routing
+        - Form Validation
+        - Authentication
+        - Mobile/Responsive Issue
+        - Aviation Content Issue
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe what happened and what you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce
+      description: Step-by-step instructions to reproduce the bug
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe the expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Describe what actually happened
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots/Videos
+      description: If applicable, add screenshots or videos to help explain the problem
+      placeholder: Paste screenshots or drag and drop files here
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Information
+      description: Please provide details about your environment
+      placeholder: |
+        - OS: [e.g., Windows 11, macOS 13, Ubuntu 22.04]
+        - Browser: [e.g., Chrome 118, Firefox 119, Safari 17]
+        - Device: [e.g., Desktop, iPhone 15, Samsung Galaxy]
+        - Screen size: [e.g., 1920x1080, Mobile]
+        - Node.js version: [e.g., 18.17.0]
+    validations:
+      required: true
+
+  - type: textarea
+    id: console-errors
+    attributes:
+      label: Console Errors
+      description: Any errors shown in the browser console or terminal
+      render: shell
+      placeholder: Paste any error messages or logs here
+
+  - type: textarea
+    id: aviation-context
+    attributes:
+      label: Aviation Context (if applicable)
+      description: If this relates to aviation training workflows, please provide context
+      placeholder: |
+        - What aviation task were you performing?
+        - Which training materials were involved?
+        - How does this impact your flight instruction workflow?
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any other context or information that might be helpful
+      placeholder: Add any other context about the problem here
+
+  - type: checkboxes
+    id: contribution-willingness
+    attributes:
+      label: Contribution Interest
+      description: Would you be interested in contributing to fix this?
+      options:
+        - label: I'd be willing to work on fixing this issue
+          required: false
