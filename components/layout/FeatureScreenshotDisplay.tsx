@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play } from "lucide-react";
 import Image from "next/image";
 import { cn, prefersReducedMotion } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics/telemetry";
 
 export interface FeatureScreenshotDisplayProps {
   featureId: string;
@@ -23,7 +24,11 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const reducedMotion = prefersReducedMotion();
+
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second base delay
 
   const handleImageLoad = () => {
     setImageLoaded(true);
@@ -31,8 +36,32 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
   };
 
   const handleImageError = () => {
-    setImageError(true);
-    setImageLoaded(false);
+    if (retryCount < MAX_RETRIES) {
+      // Exponential backoff retry
+      const delay = RETRY_DELAY * Math.pow(2, retryCount);
+      setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        // Force reload by updating img src with timestamp
+        const img = document.querySelector(`[data-feature="${featureId}"] img`) as HTMLImageElement;
+        if (img) {
+          const separator = screenshotUrl.includes('?') ? '&' : '?';
+          img.src = `${screenshotUrl}${separator}retry=${retryCount + 1}&t=${Date.now()}`;
+        }
+      }, delay);
+    } else {
+      // Max retries reached - show error state
+      setImageError(true);
+      setImageLoaded(false);
+      
+      // Track image load failure for monitoring
+      trackEvent('image_load_failed', {
+        featureId,
+        featureName,
+        screenshotUrl,
+        retryCount,
+        component: 'FeatureScreenshotDisplay',
+      });
+    }
   };
 
   return (
@@ -42,6 +71,7 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
       animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
       transition={{ duration: reducedMotion ? 0.1 : 0.5, ease: "easeOut" }}
       className={cn("w-full", className)}
+      data-feature={featureId}
     >
 
       {/* Screenshot container */}

@@ -4,9 +4,30 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, Pause } from "lucide-react";
 import { cn, prefersReducedMotion } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics/telemetry";
 
-// Video path from environment configuration
-const DEMO_VIDEO_PATH = process.env.NEXT_PUBLIC_DEMO_VIDEO_PATH || "/videos/6739601-hd_1920_1080_24fps.mp4";
+// Video path from environment configuration with validation
+const getValidatedVideoPath = (): string => {
+  const envPath = process.env.NEXT_PUBLIC_DEMO_VIDEO_PATH;
+  const defaultPath = "/videos/6739601-hd_1920_1080_24fps.mp4";
+  
+  if (!envPath) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('NEXT_PUBLIC_DEMO_VIDEO_PATH not configured, using default path');
+    }
+    return defaultPath;
+  }
+  
+  // Basic validation - ensure it's a video file path
+  if (!envPath.match(/\.(mp4|webm|mov|avi)$/i)) {
+    console.error('Invalid video file extension in NEXT_PUBLIC_DEMO_VIDEO_PATH');
+    return defaultPath;
+  }
+  
+  return envPath;
+};
+
+const DEMO_VIDEO_PATH = getValidatedVideoPath();
 
 export interface VideoModalProps {
   featureId: string;
@@ -38,10 +59,36 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       // Don't preload on slow connections to save bandwidth
       if (typeof navigator !== 'undefined' && 'connection' in navigator) {
         const connection = (navigator as any).connection;
-        if (connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g')) {
+        
+        if (!connection) return true; // Default to preload if no connection info
+        
+        // Check for slow connection types
+        const slowTypes = ['slow-2g', '2g'];
+        if (slowTypes.includes(connection.effectiveType)) {
           return false;
         }
+        
+        // Check for limited data plans (save data mode)
+        if (connection.saveData === true) {
+          return false;
+        }
+        
+        // Check for very slow connections based on downlink
+        if (typeof connection.downlink === 'number' && connection.downlink < 0.5) {
+          return false; // Less than 500 kbps
+        }
+        
+        // Check round trip time (high latency)
+        if (typeof connection.rtt === 'number' && connection.rtt > 2000) {
+          return false; // More than 2 seconds RTT
+        }
       }
+      
+      // Also check for reduced motion preference as indicator of performance needs
+      if (prefersReducedMotion()) {
+        return false; // Users with motion sensitivity likely prefer minimal resource usage
+      }
+      
       return true;
     };
 
@@ -58,6 +105,10 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       
       video.addEventListener('error', () => {
         setVideoError(true);
+        trackEvent('video_preload_failed', {
+          videoPath: DEMO_VIDEO_PATH,
+          component: 'VideoModal_preload',
+        });
       });
       
       video.load();
@@ -214,6 +265,12 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 onError={() => {
                   setIsLoading(false);
                   setVideoError(true);
+                  trackEvent('video_load_failed', {
+                    featureId,
+                    featureName,
+                    videoPath: DEMO_VIDEO_PATH,
+                    component: 'VideoModal_player',
+                  });
                 }}
                 data-testid="video-player"
               >
