@@ -131,3 +131,26 @@ export function deepClone<T>(obj: T): T {
   }
   return obj;
 }
+
+/**
+ * Check if user prefers reduced motion
+ */
+export function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/**
+ * Get reduced motion variants for framer-motion
+ */
+export function getMotionVariants<T extends Record<string, any>>(
+  normalVariants: T,
+  reducedVariants?: Partial<T>
+): T {
+  if (!prefersReducedMotion()) return normalVariants;
+  
+  return {
+    ...normalVariants,
+    ...reducedVariants,
+  };
+}

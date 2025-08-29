@@ -27,6 +27,7 @@ import {
 import { FeatureScreenshotDisplay } from "@/components/layout/FeatureScreenshotDisplay";
 import { VideoModal } from "@/components/layout/VideoModal";
 import { trackEvent } from "@/lib/analytics/telemetry";
+import { prefersReducedMotion } from "@/lib/utils";
 
 export default function CFIProsHomePage() {
   const { scrollYProgress } = useScroll();
@@ -38,6 +39,7 @@ export default function CFIProsHomePage() {
   const defaultFeature = DEFAULT_FEATURES[defaultIndex]?.id || "upload";
   const [selectedFeature, setSelectedFeature] = useState(defaultFeature);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const reducedMotion = prefersReducedMotion();
 
   // Helper function to format feature names
   const getFeatureName = (featureId: string) => {
@@ -76,10 +78,10 @@ export default function CFIProsHomePage() {
         <section className="to-muted/20 bg-gradient-to-b from-background pb-8 pt-12">
           <div className="mx-auto max-w-7xl px-4 md:px-6">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+              whileInView={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: reducedMotion ? 0 : 0.2 }}
             >
               <FeatureSpotlightMenu
                 onSelect={(featureId) => {
@@ -88,7 +90,6 @@ export default function CFIProsHomePage() {
                     section: "landing_page",
                   });
                   setSelectedFeature(featureId);
-                  console.log("Selected feature:", featureId);
                 }}
               />
             </motion.div>
@@ -111,7 +112,6 @@ export default function CFIProsHomePage() {
                   section: "landing_page",
                 });
                 setVideoModalOpen(true);
-                console.log("Playing video for feature:", featureId);
               }}
             />
           </div>

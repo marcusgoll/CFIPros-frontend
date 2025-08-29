@@ -3,10 +3,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Play, Pause } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, prefersReducedMotion } from "@/lib/utils";
 
-// Using local mock video for all features
-const MOCK_VIDEO_PATH = "/videos/6739601-hd_1920_1080_24fps.mp4";
+// Video path from environment configuration
+const DEMO_VIDEO_PATH = process.env.NEXT_PUBLIC_DEMO_VIDEO_PATH || "/videos/6739601-hd_1920_1080_24fps.mp4";
 
 export interface VideoModalProps {
   featureId: string;
@@ -29,6 +29,31 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  const [videoPreloaded, setVideoPreloaded] = useState(false);
+  const reducedMotion = prefersReducedMotion();
+
+  // Preload video when component mounts
+  useEffect(() => {
+    const preloadVideo = () => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      video.src = DEMO_VIDEO_PATH;
+      
+      video.addEventListener('loadedmetadata', () => {
+        setVideoPreloaded(true);
+      });
+      
+      video.addEventListener('error', () => {
+        setVideoError(true);
+      });
+      
+      video.load();
+    };
+
+    if (!videoPreloaded && !videoError) {
+      preloadVideo();
+    }
+  }, [videoPreloaded, videoError]);
 
   // Handle escape key
   useEffect(() => {
@@ -96,11 +121,8 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   };
 
   if (!isOpen) {
-    console.log("VideoModal is closed");
     return null;
   }
-
-  console.log("VideoModal is opening for feature:", featureId);
 
   return (
     <AnimatePresence>
@@ -116,7 +138,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: reducedMotion ? 0 : 0.3 }}
         onClick={handleOverlayClick}
         data-testid="video-modal-overlay"
       >
@@ -133,10 +155,10 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         {/* Video container */}
         <motion.div
           className="relative mx-4 w-full max-w-6xl"
-          initial={{ scale: 0.9, opacity: 0, y: 50 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 50 }}
-          transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+          initial={reducedMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0, y: 50 }}
+          animate={reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
+          exit={reducedMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0, y: 50 }}
+          transition={{ duration: reducedMotion ? 0.1 : 0.4, delay: reducedMotion ? 0 : 0.1, ease: "easeOut" }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -165,10 +187,11 @@ export const VideoModal: React.FC<VideoModalProps> = ({
               {/* Video player */}
               <video
                 ref={videoRef}
-                src={MOCK_VIDEO_PATH}
+                src={DEMO_VIDEO_PATH}
                 className="h-full w-full object-cover"
                 controls
                 autoPlay
+                preload="metadata"
                 onLoadedData={() => {
                   setIsLoading(false);
                   setIsPlaying(true);

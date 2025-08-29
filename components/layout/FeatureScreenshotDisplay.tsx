@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play } from "lucide-react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, prefersReducedMotion } from "@/lib/utils";
 
 export interface FeatureScreenshotDisplayProps {
   featureId: string;
@@ -23,9 +23,25 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string | null>(null);
+  const reducedMotion = prefersReducedMotion();
+
+  // Progressive image loading
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      setImageSrc(screenshotUrl);
+      setImageLoaded(true);
+      setImageError(false);
+    };
+    img.onerror = () => {
+      setImageError(true);
+      setImageLoaded(false);
+    };
+    img.src = screenshotUrl;
+  }, [screenshotUrl]);
 
   const handleImageLoad = () => {
-    console.log("Image loaded for feature:", featureId);
     setImageLoaded(true);
     setImageError(false);
   };
@@ -39,17 +55,17 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
   return (
     <motion.div
       key={featureId}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: "easeOut" }}
+      initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+      animate={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+      transition={{ duration: reducedMotion ? 0.1 : 0.5, ease: "easeOut" }}
       className={cn("w-full", className)}
     >
 
       {/* Screenshot container */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
+        initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
+        animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+        transition={{ delay: reducedMotion ? 0 : 0.1, duration: reducedMotion ? 0.1 : 0.6, ease: "easeOut" }}
         className="relative overflow-hidden rounded-2xl shadow-2xl border-4 border-border/20"
       >
         {/* Skeleton loader for loading state */}
@@ -101,36 +117,35 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 
         {/* Screenshot image */}
         <div className="relative aspect-[16/9] w-full">
-          <img
-            src={screenshotUrl}
-            alt={`${featureName} feature screenshot`}
-            className={cn(
-              "w-full h-full object-cover transition-opacity duration-500",
-              imageLoaded ? "opacity-100" : "opacity-0"
-            )}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-          />
+          {imageSrc && (
+            <img
+              src={imageSrc}
+              alt={`${featureName} feature screenshot`}
+              className={cn(
+                "w-full h-full object-cover transition-opacity duration-500",
+                imageLoaded ? "opacity-100" : "opacity-0"
+              )}
+              loading="lazy"
+              decoding="async"
+            />
+          )}
 
           {/* Play button overlay */}
           <AnimatePresence>
             {imageLoaded && !imageError && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ delay: 0.3, duration: 0.4, ease: "backOut" }}
+                initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
+                animate={reducedMotion ? { opacity: 1 } : { opacity: 1, scale: 1 }}
+                exit={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
+                transition={{ delay: reducedMotion ? 0 : 0.3, duration: reducedMotion ? 0.1 : 0.4, ease: "backOut" }}
                 className="absolute inset-0 flex items-center justify-center"
               >
                 <motion.button
-                  onClick={() => {
-                    console.log("Play button clicked for feature:", featureId);
-                    onPlayClick(featureId);
-                  }}
+                  onClick={() => onPlayClick(featureId)}
                   className="group flex h-20 w-20 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm transition-all hover:h-24 hover:w-24 hover:bg-black/80 focus:h-24 focus:w-24 focus:bg-black/80 focus:outline-none focus:ring-4 focus:ring-primary/50 md:h-24 md:w-24 cursor-pointer"
                   aria-label={`Play demo video for ${featureName}`}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={reducedMotion ? {} : { scale: 1.1 }}
+                  whileTap={reducedMotion ? {} : { scale: 0.95 }}
                 >
                   <Play className="ml-1 h-8 w-8 fill-white text-white transition-transform group-hover:scale-110 md:h-10 md:w-10" />
                 </motion.button>
@@ -148,11 +163,11 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
                 {/* Pulsing ring effect */}
                 <motion.div
                   className="absolute h-20 w-20 rounded-full border-2 border-white/30 md:h-24 md:w-24 pointer-events-none"
-                  animate={{
+                  animate={reducedMotion ? {} : {
                     scale: [1, 1.2, 1],
                     opacity: [0.5, 0, 0.5],
                   }}
-                  transition={{
+                  transition={reducedMotion ? {} : {
                     duration: 2,
                     repeat: Infinity,
                     ease: "easeInOut",
