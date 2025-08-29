@@ -3,6 +3,7 @@
 import React from "react";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AlertTriangle, RefreshCw } from "lucide-react";
+import { sanitizeErrorMessage } from "@/lib/utils/errorSanitization";
 
 interface MockupErrorFallbackProps {
   error: Error;
@@ -85,11 +86,16 @@ export const MockupErrorBoundary: React.FC<MockupWrapperProps> = ({
       fallback={MockupErrorFallback}
       onError={(error, errorInfo) => {
         console.error(`Mockup error in ${sectionTitle}:`, error, errorInfo);
-        // In production, send to monitoring service
+        // In production, send to monitoring service with sanitized data
         if (typeof window !== 'undefined' && window.gtag) {
+          const sanitizedMessage = sanitizeErrorMessage(error.message);
           window.gtag('event', 'exception', {
-            description: `Mockup error: ${error.message}`,
+            description: `Mockup error: ${sanitizedMessage}`,
             fatal: false,
+            custom_parameters: {
+              section: sectionTitle,
+              component: 'MockupErrorBoundary'
+            }
           });
         }
       }}
@@ -109,11 +115,16 @@ export const BenefitErrorBoundary: React.FC<BenefitSectionWrapperProps> = ({ chi
       fallback={SectionErrorFallback}
       onError={(error, errorInfo) => {
         console.error('BenefitZipperList section error:', error, errorInfo);
-        // In production, send to monitoring service
+        // In production, send to monitoring service with sanitized data
         if (typeof window !== 'undefined' && window.gtag) {
+          const sanitizedMessage = sanitizeErrorMessage(error.message);
           window.gtag('event', 'exception', {
-            description: `BenefitZipper section error: ${error.message}`,
+            description: `BenefitZipper section error: ${sanitizedMessage}`,
             fatal: false,
+            custom_parameters: {
+              component: 'BenefitZipperList',
+              errorBoundary: 'SectionLevel'
+            }
           });
         }
       }}

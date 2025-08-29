@@ -14,6 +14,7 @@ import {
 
 import { prefersReducedMotion } from "@/lib/utils";
 import { useIntersectionObserver } from "@/lib/hooks/useIntersectionObserver";
+import { useResponsive } from "@/lib/hooks/useMediaQuery";
 import { BenefitErrorBoundary, MockupErrorBoundary } from "./BenefitErrorBoundary";
 import { 
   BENEFIT_CONFIG, 
@@ -223,7 +224,7 @@ const FeatureItem = memo<{
   reducedMotion: boolean;
   onInteraction?: () => void;
 }>(({ feature, index, isVisible, config, reducedMotion, onInteraction }) => {
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const { isMobile } = useResponsive();
   const variants = isMobile ? BENEFIT_ANIMATION_VARIANTS.mobile : BENEFIT_ANIMATION_VARIANTS.desktop;
   
   const handleClick = useCallback(() => {
@@ -405,7 +406,7 @@ const FeatureSectionComponent = memo<{
     }
   }, [isInView, section.id, onSectionView]);
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const { isMobile } = useResponsive();
   const variants = isMobile ? BENEFIT_ANIMATION_VARIANTS.mobile : BENEFIT_ANIMATION_VARIANTS.desktop;
 
   return (
