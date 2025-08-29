@@ -5,7 +5,7 @@ import { FeatureSpotlightMenu } from "@/components/layout/FeatureSpotlightMenu";
 import type { FeatureItem } from "@/components/layout/FeatureSpotlightMenu";
 
 // Mock ResizeObserver
-const mockResizeObserver = jest.fn().mockImplementation((callback) => ({
+const mockResizeObserver = jest.fn().mockImplementation((_callback: ResizeObserverCallback) => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
@@ -109,7 +109,7 @@ describe("FeatureSpotlightMenu Component", () => {
     it("sets middle feature as active by default", () => {
       render(<FeatureSpotlightMenu features={mockFeatures} />);
       
-      const middleFeature = mockFeatures[Math.floor(mockFeatures.length / 2)];
+      const middleFeature = mockFeatures[Math.floor(mockFeatures.length / 2)]!;
       const activeTab = screen.getByRole("tab", { name: middleFeature.label });
       expect(activeTab).toHaveAttribute("aria-selected", "true");
     });
@@ -369,7 +369,7 @@ describe("FeatureSpotlightMenu Component", () => {
     });
 
     it("handles single feature array", () => {
-      const singleFeature = [mockFeatures[0]];
+      const singleFeature = [mockFeatures[0]!];
       render(<FeatureSpotlightMenu features={singleFeature} />);
       
       const tabs = screen.getAllByRole("tab");

@@ -4,7 +4,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { POST, OPTIONS } from '@/app/api/upload/route';
+import { POST } from '@/app/api/upload/route';
 import { APIError } from '@/lib/api/errors';
 
 // Mock the proxy functions

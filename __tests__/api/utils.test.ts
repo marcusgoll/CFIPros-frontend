@@ -6,7 +6,7 @@
 import { rateLimiter } from '@/lib/api/rateLimiter';
 import { APIError, handleAPIError } from '@/lib/api/errors';
 import { validateRequest } from '@/lib/api/validation';
-import { proxyRequest } from '@/lib/api/proxy';
+// import { proxyRequest } from '@/lib/api/proxy'; // Unused import
 import { NextRequest, NextResponse } from 'next/server';
 
 // Mock external dependencies

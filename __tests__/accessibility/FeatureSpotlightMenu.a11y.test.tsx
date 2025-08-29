@@ -8,7 +8,7 @@ import type { FeatureItem } from "@/components/layout/FeatureSpotlightMenu";
 expect.extend(toHaveNoViolations);
 
 // Mock ResizeObserver and scroll methods
-const mockResizeObserver = jest.fn().mockImplementation((callback) => ({
+const mockResizeObserver = jest.fn().mockImplementation((_callback: ResizeObserverCallback) => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
   disconnect: jest.fn(),
@@ -130,7 +130,7 @@ describe("FeatureSpotlightMenu Accessibility", () => {
       
       // Initially, the middle feature should be selected
       const middleIndex = Math.floor(mockFeatures.length / 2);
-      const middleFeature = mockFeatures[middleIndex];
+      const middleFeature = mockFeatures[middleIndex]!;
       const activeTab = screen.getByRole("tab", { name: middleFeature.label });
       
       expect(activeTab).toHaveAttribute("aria-selected", "true");
@@ -234,7 +234,7 @@ describe("FeatureSpotlightMenu Accessibility", () => {
       
       // Test End key
       fireEvent.keyDown(firstTab, { key: "End" });
-      const lastTab = screen.getByRole("tab", { name: "Manage Settings" });
+      // const lastTab = screen.getByRole("tab", { name: "Manage Settings" });
       // Note: Implementation would need to support Home/End keys
     });
 
@@ -283,7 +283,7 @@ describe("FeatureSpotlightMenu Accessibility", () => {
       // Only one tab should be focusable at a time (tabindex="0")
       // Others should have tabindex="-1"
       const focusableTabs = tabs.filter(tab => tab.getAttribute("tabindex") === "0" || tab.getAttribute("tabindex") === null);
-      const nonFocusableTabs = tabs.filter(tab => tab.getAttribute("tabindex") === "-1");
+      // const nonFocusableTabs = tabs.filter(tab => tab.getAttribute("tabindex") === "-1");
       
       // Should have proper tabindex management
       expect(focusableTabs.length).toBeLessThanOrEqual(1);
@@ -305,16 +305,16 @@ describe("FeatureSpotlightMenu Accessibility", () => {
       
       const tablist = screen.getByRole("tablist");
       // Should have an accessible name or be labeled
-      const hasAccessibleName = tablist.getAttribute("aria-label") || 
-                               tablist.getAttribute("aria-labelledby") ||
-                               screen.queryByLabelText(/.+/);
+      // const hasAccessibleName = tablist.getAttribute("aria-label") || 
+      //                          tablist.getAttribute("aria-labelledby") ||
+      //                          screen.queryByLabelText(/.+/);
       
       // The component should provide context for screen readers
       expect(tablist).toBeInTheDocument();
     });
 
     it("announces state changes appropriately", () => {
-      const { rerender } = render(<FeatureSpotlightMenu features={mockFeatures} />);
+      render(<FeatureSpotlightMenu features={mockFeatures} />);
       
       // When selection changes, aria-selected should update
       const uploadTab = screen.getByRole("tab", { name: "Upload Files" });

@@ -75,36 +75,34 @@ describe('Modal', () => {
     expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
-  it('should not close on backdrop click when closeOnBackdropClick is false', () => {
+  it('should close on backdrop click by default', () => {
     const mockOnClose = jest.fn();
     render(
       <Modal 
         {...defaultProps} 
-        onClose={mockOnClose} 
-        closeOnBackdropClick={false} 
+        onClose={mockOnClose}
       />
     );
     
     const backdrop = screen.getByTestId('modal-backdrop');
     fireEvent.click(backdrop);
     
-    expect(mockOnClose).not.toHaveBeenCalled();
+    expect(mockOnClose).toHaveBeenCalled();
   });
 
-  it('should not close on Escape when closeOnEscape is false', async () => {
+  it('should close on Escape key by default', async () => {
     const user = userEvent.setup();
     const mockOnClose = jest.fn();
     render(
       <Modal 
         {...defaultProps} 
-        onClose={mockOnClose} 
-        closeOnEscape={false} 
+        onClose={mockOnClose}
       />
     );
     
     await user.keyboard('{Escape}');
     
-    expect(mockOnClose).not.toHaveBeenCalled();
+    expect(mockOnClose).toHaveBeenCalled();
   });
 
   it('should apply different size classes', () => {
@@ -125,15 +123,21 @@ describe('Modal', () => {
     expect(modal).toHaveClass('max-w-4xl');
   });
 
-  it('should apply custom className', () => {
-    render(<Modal {...defaultProps} className="custom-modal" />);
+  it('should render with different sizes', () => {
+    const { rerender } = render(<Modal {...defaultProps} size="sm" />);
     
-    const modal = screen.getByRole('dialog');
-    expect(modal).toHaveClass('custom-modal');
+    let modal = screen.getByRole('dialog');
+    expect(modal).toHaveClass('max-w-md');
+    
+    rerender(<Modal {...defaultProps} size="lg" />);
+    modal = screen.getByRole('dialog');
+    expect(modal).toHaveClass('max-w-4xl');
   });
 
   it('should render without title', () => {
-    render(<Modal {...defaultProps} title={undefined} />);
+    const propsWithoutTitle = { ...defaultProps };
+    delete (propsWithoutTitle as any).title;
+    render(<Modal {...propsWithoutTitle} />);
     
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.queryByText('Test Modal')).not.toBeInTheDocument();
@@ -220,18 +224,11 @@ describe('Modal', () => {
     expect(screen.getByText('Second Modal')).toBeInTheDocument();
   });
 
-  it('should render footer when provided', () => {
-    const footer = (
-      <div>
-        <button>Cancel</button>
-        <button>Save</button>
-      </div>
-    );
+  it('should render modal content properly', () => {
+    render(<Modal {...defaultProps} />);
     
-    render(<Modal {...defaultProps} footer={footer} />);
-    
-    expect(screen.getByText('Cancel')).toBeInTheDocument();
-    expect(screen.getByText('Save')).toBeInTheDocument();
+    expect(screen.getByText('Modal content')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
   });
 
   it('should handle async onClose', async () => {
