@@ -39,12 +39,10 @@ CFIPros provides every tool CFI candidates need to pass their checkride includin
 
 **🤝 Community Features**: Connect with other CFI candidates, share study materials, and get feedback from experienced instructors.
 
-Best of all, the frontend is **completely open source** with a generous free tier for students and instructors. Get started by [**signing up for CFIPros**](https://cfipros.com) or [**deploy your own instance**](#self-hosting).
+Best of all, the frontend is **completely open source** with a generous free tier for students and instructors. Get started by [**signing up for CFIPros**](https://cfipros.com) today!
 
 ## Table of Contents
 - [Getting Started with CFIPros](#getting-started-with-cfipros)
-- [CFIPros Cloud (Recommended)](#cfipros-cloud-recommended)
-- [Self-hosting the Open Source Frontend](#self-hosting-the-open-source-frontend-advanced)
 - [Setting up Your Training](#setting-up-your-training)
 - [Why CFIPros?](#why-cfipros)
 - [Contributing to CFIPros](#contributing-to-cfipros)
@@ -53,8 +51,8 @@ Best of all, the frontend is **completely open source** with a generous free tie
 
 ## Getting Started with CFIPros
 
-### CFIPros Cloud (Recommended)
-The fastest and most reliable way to get started with CFIPros is signing up for free at [**cfipros.com**](https://cfipros.com). Your first study plans, file uploads, progress tracking, and basic analytics are completely free, after which you pay based on usage.
+### 🚀 Start Your CFI Training Journey
+The fastest way to get started with CFIPros is signing up for free at [**cfipros.com**](https://cfipros.com). Your first study plans, file uploads, progress tracking, and basic analytics are completely free, after which you pay based on usage.
 
 **Start your CFI journey today:**
 1. 📝 **[Sign up for free](https://cfipros.com/signup)** - No credit card required
@@ -62,16 +60,17 @@ The fastest and most reliable way to get started with CFIPros is signing up for 
 3. 📚 **Get your study plan** - Receive a personalized CFI training roadmap
 4. 🚀 **Start studying** - Upload materials, track progress, connect with the community
 
-### Self-hosting the Open Source Frontend (Advanced)
-Want to run your own instance? Deploy the CFIPros frontend in one line on Linux with Docker:
+### 💻 For Developers
+This repository contains the open source frontend code that powers CFIPros. While you can explore the codebase, contribute improvements, and learn from our implementation, CFIPros operates as a software-as-a-service platform.
 
-```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/marcusgoll/CFIPros-frontend/HEAD/deploy.sh)"
-```
+**Developer contributions welcome:**
+- 🐛 **Bug fixes** and performance improvements
+- ✨ **Feature enhancements** for aviation training workflows
+- 📚 **Documentation** improvements and examples
+- 🔒 **Security** enhancements and vulnerability reports
+- 🎨 **UI/UX** improvements for better user experience
 
-Open source deployments are perfect for flight schools, individual instructors, or developers wanting to customize the platform. See our [self-hosting docs](https://docs.cfipros.com/self-hosting) for more info.
-
-> **Note**: Self-hosted instances require your own backend API. Contact us at [hello@cfipros.com](mailto:hello@cfipros.com) for API access or build your own following our [API documentation](https://docs.cfipros.com/api).
+Ready to contribute? Check out our [Contributing Guidelines](CONTRIBUTING.md) to get started.
 
 ## Setting up Your Training
 
@@ -200,25 +199,25 @@ We ❤️ contributions from both the aviation community and developers! Your in
 
 ## Open Source vs. Paid Features
 
-This repository is available under the MIT license - completely free to use, modify, and deploy.
+This repository is available under the MIT license - completely free to explore, learn from, and contribute to.
 
-### ✅ Open Source (Free Forever)
-- Complete frontend user interface
-- File upload and document management
-- Basic progress tracking and analytics  
-- Community forum access
-- Self-hosting deployment scripts
-- All UI components and design patterns
+### ✅ Open Source Contributions
+- Complete frontend user interface code
+- Modern React/Next.js implementation patterns
+- Aviation-specific UI components and design system
+- Security implementations and best practices
+- Testing strategies and quality assurance patterns
+- All source code available for learning and contribution
 
-### 🚀 CFIPros Cloud (Paid Plans)
-Our paid plans help support development and provide enhanced features:
+### 🚀 CFIPros Platform (SaaS)
+CFIPros operates as a software-as-a-service platform with these features:
 
-| Feature | Open Source | Basic ($29/mo) | Pro ($79/mo) | Flight School ($199/mo) |
-|---------|------------|----------------|-------------|------------------------|
-| **Users** | Self-hosted | 1 user | 1 user | Up to 50 students |
-| **AI Study Plans** | ❌ | ✅ 5/month | ✅ Unlimited | ✅ Unlimited |
-| **ACS Analysis** | ❌ | ✅ 20/month | ✅ Unlimited | ✅ Unlimited |
-| **Storage** | Self-managed | 1GB | 10GB | 100GB |
+| Feature | Free Tier | Basic ($29/mo) | Pro ($79/mo) | Flight School ($199/mo) |
+|---------|-----------|----------------|-------------|------------------------|
+| **Users** | 1 user | 1 user | 1 user | Up to 50 students |
+| **AI Study Plans** | ✅ 3/month | ✅ 5/month | ✅ Unlimited | ✅ Unlimited |
+| **ACS Analysis** | ✅ 5/month | ✅ 20/month | ✅ Unlimited | ✅ Unlimited |
+| **Storage** | 100MB | 1GB | 10GB | 100GB |
 | **Community** | Forums | Forums + Chat | All access | Private groups |
 | **Support** | Community | Email | Priority | Dedicated account manager |
 | **API Access** | ❌ | ❌ | ✅ | ✅ |
@@ -226,7 +225,7 @@ Our paid plans help support development and provide enhanced features:
 
 The pricing is completely transparent and available on our [pricing page](https://cfipros.com/pricing).
 
-**Need 100% open source?** Everything in this repository is free to use and modify. You can deploy your own instance and integrate with any backend you choose.
+**Want to contribute?** This open source frontend welcomes contributions from the aviation and developer communities. Help us make CFI training better for everyone!
 
 ## We're Hiring Pilots and Developers!
 
