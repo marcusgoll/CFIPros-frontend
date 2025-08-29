@@ -9,13 +9,12 @@ const nextConfig: NextConfig = {
   // Enable React strict mode for better development experience
   reactStrictMode: true,
 
-  // Temporarily disable linting and type checking during build for v1.0.0 release
-  // TODO: Fix ESLint errors and type issues in v1.0.1 patch release
+  // ESLint and TypeScript checking enabled for v1.0.1
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // Experimental features
