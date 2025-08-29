@@ -9,6 +9,7 @@ interface EnvironmentVariables {
   NODE_ENV?: 'development' | 'production' | 'test';
   REDIS_URL?: string;
   ALLOWED_ORIGINS?: string;
+  NEXT_PUBLIC_DEMO_VIDEO_PATH?: string;
 }
 
 // Validation functions
@@ -33,6 +34,7 @@ const validateEnvironmentVariables = (): EnvironmentVariables => {
   const nodeEnv = process.env['NODE_ENV'] as 'development' | 'production' | 'test' | undefined;
   const redisUrl = process.env['REDIS_URL'];
   const allowedOrigins = process.env['ALLOWED_ORIGINS'];
+  const demoVideoPath = process.env['NEXT_PUBLIC_DEMO_VIDEO_PATH'];
 
   // Required variables
   if (!backendUrl) {
@@ -59,11 +61,23 @@ const validateEnvironmentVariables = (): EnvironmentVariables => {
     });
   }
 
+  if (demoVideoPath) {
+    // Validate video file extension
+    if (!demoVideoPath.match(/\.(mp4|webm|mov|avi)$/i)) {
+      throw new Error(`NEXT_PUBLIC_DEMO_VIDEO_PATH must be a valid video file path, got: ${demoVideoPath}`);
+    }
+    // Ensure it starts with forward slash for proper routing
+    if (!demoVideoPath.startsWith('/')) {
+      throw new Error(`NEXT_PUBLIC_DEMO_VIDEO_PATH must start with '/', got: ${demoVideoPath}`);
+    }
+  }
+
   return {
     BACKEND_API_URL: backendUrl,
     NODE_ENV: nodeEnv,
     REDIS_URL: redisUrl,
     ALLOWED_ORIGINS: allowedOrigins,
+    NEXT_PUBLIC_DEMO_VIDEO_PATH: demoVideoPath,
   };
 };
 

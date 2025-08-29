@@ -17,8 +17,21 @@ export interface FeatureSpotlightMenuProps {
   className?: string;
 }
 
+// Export feature screenshot mapping for use in other components
+export const FEATURE_SCREENSHOTS: Record<string, string> = {
+  upload: "https://picsum.photos/800/450?random=1",
+  analyzer: "https://picsum.photos/800/450?random=2",
+  planner: "https://picsum.photos/800/450?random=3",
+  lessons: "https://picsum.photos/800/450?random=4",
+  quizzes: "https://picsum.photos/800/450?random=5",
+  "acs-lib": "https://picsum.photos/800/450?random=6",
+  dashboard: "https://picsum.photos/800/450?random=7",
+  schools: "https://picsum.photos/800/450?random=8",
+  reports: "https://picsum.photos/800/450?random=9",
+};
+
 // Default features for CFIPros aviation platform
-const DEFAULT_FEATURES: FeatureItem[] = [
+export const DEFAULT_FEATURES: FeatureItem[] = [
   {
     id: "upload",
     label: "Upload",
@@ -201,7 +214,7 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
   }
 
   return (
-    <div className={cn("relative pb-8 sm:pb-0", className)}>
+    <div className={cn("relative pb-4 sm:pb-0", className)}>
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
