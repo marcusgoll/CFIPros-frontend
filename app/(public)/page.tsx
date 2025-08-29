@@ -77,7 +77,7 @@ export default function CFIProsHomePage() {
         {heroVersion === 'C' && <HeroVersionC opacity={opacity} scale={scale} />}
         
         {/* Feature Spotlight Menu */}
-        <section className="py-16 bg-gradient-to-b from-background to-muted/20">
+        <section className="pt-8 pb-16 bg-gradient-to-b from-background to-muted/20">
           <div className="mx-auto max-w-7xl px-4 md:px-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
