@@ -1,195 +1,38 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Check, 
-  X, 
-  ArrowRightCircle, 
-  Sparkles, 
-  Info,
-  Building2,
-  CreditCard,
-  Users,
-  Zap
-} from "lucide-react";
+import { Check, X, ArrowRightCircle, Info, Sparkles, Users, CreditCard, Building2, Zap } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { trackEvent } from "@/lib/analytics/telemetry";
 import { cn } from "@/lib/utils";
+import ErrorBoundary, { FeatureTableErrorFallback } from "@/components/common/ErrorBoundary";
+import {
+  PRICING_TIERS,
+  CREDIT_SERVICES,
+  WHITE_LABEL_ADDON,
+  FEATURE_COMPARISON_DATA,
+  ANIMATION_CONSTANTS,
+  type PricingTier
+} from "@/lib/data/pricingData";
+import styles from "./PricingSection.module.css";
 
-interface PricingTier {
-  id: string;
-  name: string;
-  subtitle?: string;
-  monthlyPrice: string | number;
-  yearlyPrice?: string | number;
-  period: string;
-  description: string;
-  features: string[];
-  limitations?: string[];
-  cta: string;
-  ctaLink?: string;
-  highlight?: boolean;
-  badge?: string;
-  icon?: React.ReactNode;
-}
+// All data imports are now handled via the pricingData module
 
-interface CreditService {
-  name: string;
-  price: string;
-  unit: string;
-  description?: string;
-  margin?: string;
-  addon?: string;
-  popular?: boolean;
-}
+// Icon mapping utility
+const iconMap = {
+  Sparkles,
+  Users, 
+  CreditCard,
+  Building2,
+  Zap
+};
 
-const PRICING_TIERS: PricingTier[] = [
-  {
-    id: "free",
-    name: "Free",
-    monthlyPrice: 0,
-    period: "forever",
-    description: "Perfect for trying out our tools",
-    features: [
-      "Try all mini tools (daily limits)",
-      "Preview personalized study plans",
-      "Save up to 3 analysis results",
-      "Basic logbook compliance checks",
-      "ACS reference database access",
-      "Community support forum"
-    ],
-    limitations: [
-      "Daily usage limits",
-      "No advanced features",
-      "Limited storage"
-    ],
-    cta: "Get Started Free",
-    ctaLink: "/signup?plan=free",
-    highlight: false,
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    subtitle: "Individual Pilot",
-    monthlyPrice: 15,
-    yearlyPrice: 99,
-    period: "/month",
-    description: "Everything you need to pass your checkride",
-    features: [
-      "Unlimited daily tools (W&B, Crosswind, AKTR→ACS)",
-      "Currency tracking (Night/IFR requirements)",
-      "8710 eligibility checker & hour reconciliation",
-      "Adaptive flashcards & unlimited practice tests",
-      "CFI-AI tutor with official ACS citations",
-      "Credits for OCR & audit services",
-      "Professional exports (no watermarks)",
-      "Priority email support"
-    ],
-    cta: "Start 14-Day Free Trial",
-    ctaLink: "/signup?plan=pro",
-    highlight: true,
-    badge: "Most Popular",
-    icon: <Sparkles className="h-5 w-5" />
-  },
-  {
-    id: "cfi",
-    name: "CFI",
-    subtitle: "Instructor",
-    monthlyPrice: 39,
-    yearlyPrice: 399,
-    period: "/month",
-    description: "Manage students & grow your instruction business",
-    features: [
-      "Everything in Pro, plus:",
-      "Student progress dashboards & readiness scores",
-      "Complete endorsement library (FAR 61.x)",
-      "3 comprehensive logbook audits included/month",
-      "Weather-backup lesson plan generator",
-      "CFI billing tracker & timesheet export",
-      "Stage check & progress check tools",
-      "Student portfolio management",
-      "Customizable lesson templates",
-      "Priority phone & email support"
-    ],
-    cta: "Start CFI Free Trial",
-    ctaLink: "/signup?plan=cfi",
-    highlight: false,
-    icon: <Users className="h-5 w-5" />
-  },
-  {
-    id: "school",
-    name: "School",
-    subtitle: "Part 61/141",
-    monthlyPrice: 299,
-    yearlyPrice: 2999,
-    period: "/month",
-    description: "Complete training management for flight schools",
-    features: [
-      "Everything in CFI, plus:",
-      "Up to 10 instructor accounts included",
-      "Cohort analytics & fleet readiness tracking",
-      "DPE scheduling alerts & examiner insights",
-      "Insurance compliance & currency tracking",
-      "Multi-instructor coordination dashboard",
-      "White-label branding available (+$199/mo)",
-      "API access for school management systems",
-      "Personalized onboarding & training",
-      "Dedicated customer success manager"
-    ],
-    cta: "Schedule Demo",
-    ctaLink: "/contact-sales?plan=school",
-    highlight: false,
-    badge: "Enterprise",
-    icon: <Building2 className="h-5 w-5" />
-  },
-];
-
-const CREDIT_SERVICES: CreditService[] = [
-  {
-    name: "Logbook OCR Processing",
-    price: "$15",
-    unit: "50 pages",
-    description: "Convert paper logbooks to digital format instantly",
-    margin: "≥70% accuracy guaranteed",
-    popular: true
-  },
-  {
-    name: "Complete Checkride Audit",
-    price: "$49",
-    unit: "comprehensive review",
-    description: "Full IACRA readiness & compliance verification",
-    addon: "Human CFI Review +$49",
-    popular: true
-  },
-  {
-    name: "Bulk Import Service",
-    price: "$25",
-    unit: "100 flight entries",
-    description: "Import from ForeFlight, LogTen Pro, or any CSV"
-  },
-  {
-    name: "Custom Training Reports",
-    price: "$35",
-    unit: "detailed report",
-    description: "School analytics, progress tracking, & insights"
-  }
-];
-
-const WHITE_LABEL_ADDON = {
-  name: "White-Label Add-On",
-  monthlyPrice: 199,
-  yearlyPrice: 1999,
-  features: [
-    "Your school's branding",
-    "Custom domain (school.cfipros.com)",
-    "Branded student portal",
-    "Custom color scheme",
-    "Remove CFIPros branding",
-    "Marketing materials included"
-  ],
-  availableFor: ["school"]
+const renderIcon = (iconName?: string, className = "h-5 w-5") => {
+  if (!iconName) return null;
+  const IconComponent = iconMap[iconName as keyof typeof iconMap];
+  return IconComponent ? <IconComponent className={className} /> : null;
 };
 
 export function PricingSection() {
@@ -227,7 +70,8 @@ export function PricingSection() {
       : tier.monthlyPrice;
   };
 
-  const calculateSavings = (tier: PricingTier) => {
+  // Memoize calculateSavings function result to prevent unnecessary recalculations
+  const calculateSavings = useCallback((tier: PricingTier) => {
     if (typeof tier.monthlyPrice === "number" && 
         typeof tier.yearlyPrice === "number" && 
         tier.monthlyPrice > 0) {
@@ -237,7 +81,15 @@ export function PricingSection() {
       return { amount: savings, percentage };
     }
     return null;
-  };
+  }, []);
+
+  // Memoize savings calculations for all tiers
+  const tierSavings = useMemo(() => {
+    return PRICING_TIERS.reduce((acc, tier) => {
+      acc[tier.id] = calculateSavings(tier);
+      return acc;
+    }, {} as Record<string, { amount: number; percentage: number } | null>);
+  }, [calculateSavings]);
 
   return (
     <section id="pricing" className="py-20 relative">
@@ -292,14 +144,14 @@ export function PricingSection() {
         <div className="grid gap-6 lg:grid-cols-4 md:grid-cols-2 mb-16 mt-8">
           <AnimatePresence mode="wait">
             {PRICING_TIERS.map((tier, i) => {
-              const savings = calculateSavings(tier);
+              const savings = tierSavings[tier.id];
               return (
                 <motion.div
                   key={`${tier.id}-${billingPeriod}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: i * ANIMATION_CONSTANTS.STAGGER_DELAY }}
                   className={cn(
                     "relative",
                     tier.highlight && "lg:scale-105 z-10"
@@ -309,7 +161,7 @@ export function PricingSection() {
                   {tier.badge && (
                     <div className="absolute -top-4 left-0 right-0 flex justify-center z-20">
                       <span className="rounded-full bg-primary px-3 py-1 text-xs text-primary-foreground flex items-center gap-1 shadow-sm">
-                        {tier.icon}
+                        {renderIcon(tier.icon, "h-3 w-3")}
                         {tier.badge}
                       </span>
                     </div>
@@ -326,7 +178,7 @@ export function PricingSection() {
                     <div className="mb-6">
                       <div className="mb-4">
                         <div className="flex items-center gap-2 mb-2">
-                          {tier.icon}
+                          {renderIcon(tier.icon)}
                           <h3 className="text-xl font-semibold">{tier.name}</h3>
                         </div>
                         {tier.subtitle && (
@@ -410,7 +262,7 @@ export function PricingSection() {
                 key={service.name}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: i * ANIMATION_CONSTANTS.STAGGER_DELAY }}
                 viewport={{ once: true }}
                 className={cn(
                   "card-premium p-5 text-center relative",
@@ -516,10 +368,12 @@ export function PricingSection() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: ANIMATION_CONSTANTS.DURATION_SLOW / 1000 }}
               className="mt-12"
             >
+              <ErrorBoundary fallback={FeatureTableErrorFallback}>
               <FeatureComparisonTable tiers={PRICING_TIERS} />
+            </ErrorBoundary>
             </motion.div>
           )}
         </AnimatePresence>
@@ -529,42 +383,7 @@ export function PricingSection() {
 }
 
 function FeatureComparisonTable({ tiers }: { tiers: PricingTier[] }) {
-  const allFeatures = [
-    { category: "Core Tools", features: [
-      { name: "AKTR→ACS Mapper", description: "Map FAA test questions to specific ACS areas for targeted study", free: "3/day", pro: "Unlimited", cfi: "Unlimited", school: "Unlimited" },
-      { name: "Crosswind Calculator", description: "Calculate crosswind components for runway planning and training", free: "5/day", pro: "Unlimited", cfi: "Unlimited", school: "Unlimited" },
-      { name: "Weight & Balance", description: "Compute aircraft weight, CG, and loading for different configurations", free: "3/day", pro: "Unlimited", cfi: "Unlimited", school: "Unlimited" },
-      { name: "Currency Trackers", description: "Track night, passenger, and instrument currency requirements automatically", free: false, pro: true, cfi: true, school: true },
-      { name: "8710 Eligibility", description: "Verify eligibility requirements and totals reconciliation for certificates and ratings", free: false, pro: true, cfi: true, school: true },
-    ]},
-    { category: "Study Tools", features: [
-      { name: "Practice Tests", description: "FAA-style practice exams with detailed explanations and ACS references", free: "Preview only", pro: "Full access", cfi: "Full access", school: "Full access" },
-      { name: "SRS Flashcards", description: "Spaced repetition system flashcards that adapt to your learning progress", free: false, pro: true, cfi: true, school: true },
-      { name: "CFI-AI Tutor", description: "AI-powered tutor with official ACS citations and personalized explanations", free: false, pro: true, cfi: true, school: true },
-      { name: "Study Plans", description: "Personalized study plans based on your test results and weak areas", free: "Preview only", pro: "Customizable", cfi: "Customizable", school: "Customizable" },
-    ]},
-    { category: "Instructor Tools", features: [
-      { name: "Student Management", description: "Organize student folders with progress tracking and readiness scores", free: false, pro: false, cfi: true, school: true },
-      { name: "Endorsement Library", description: "Complete FAR 61.x endorsement library with customizable templates", free: false, pro: false, cfi: true, school: true },
-      { name: "Lesson Builder", description: "Create weather-backup lesson plans and structured training curricula", free: false, pro: false, cfi: true, school: true },
-      { name: "Progress Tracking", description: "Monitor individual student progress with detailed analytics and insights", free: false, pro: false, cfi: true, school: true },
-      { name: "Full Audits Included", description: "Comprehensive logbook audits with IACRA readiness verification", free: false, pro: false, cfi: "3/month", school: "10/month" },
-    ]},
-    { category: "School Features", features: [
-      { name: "Instructor Seats", description: "Number of instructor accounts included in your subscription", free: false, pro: false, cfi: "1", school: "10+" },
-      { name: "Cohort Analytics", description: "Track fleet-wide student progress and aggregate readiness metrics", free: false, pro: false, cfi: false, school: true },
-      { name: "DPE Radar", description: "Get alerts for DPE scheduling opportunities and examiner insights", free: false, pro: false, cfi: false, school: true },
-      { name: "Compliance Tracker", description: "Monitor insurance requirements and regulatory compliance across your fleet", free: false, pro: false, cfi: false, school: true },
-      { name: "API Access", description: "Integrate with your existing school management systems via REST API", free: false, pro: false, cfi: false, school: true },
-      { name: "White-Label Option", description: "Custom branding and domain for your school's personalized platform", free: false, pro: false, cfi: false, school: "Add-on" },
-    ]},
-    { category: "Support", features: [
-      { name: "Community Support", description: "Access to community forums and peer-to-peer assistance", free: true, pro: true, cfi: true, school: true },
-      { name: "Email Support", description: "Priority email support with faster response times", free: false, pro: "Priority", cfi: "Priority", school: "Priority" },
-      { name: "Phone Support", description: "Direct phone access to our support team for urgent issues", free: false, pro: false, cfi: true, school: true },
-      { name: "Dedicated Manager", description: "Assigned customer success manager for personalized onboarding and support", free: false, pro: false, cfi: false, school: true },
-    ]},
-  ];
+  const allFeatures = FEATURE_COMPARISON_DATA;
 
   const renderValue = (value: any) => {
     if (typeof value === "boolean") {
@@ -585,11 +404,11 @@ function FeatureComparisonTable({ tiers }: { tiers: PricingTier[] }) {
           Hover over feature names for detailed descriptions
         </p>
       </div>
-      <div className="w-full">
-        <table className="w-full border-collapse" style={{ minWidth: '800px' }}>
+      <div className="w-full overflow-x-auto">
+        <table className={cn(styles["comparisonTable"], "w-full border-collapse")}>
         <thead>
           <tr>
-            <th className="text-left p-4 font-semibold">Features</th>
+            <th className="text-left p-4 font-semibold" id="features-column">Features</th>
             {tiers.map((tier) => (
               <th key={tier.id} className="text-center p-4 font-semibold">
                 <div>
@@ -607,18 +426,26 @@ function FeatureComparisonTable({ tiers }: { tiers: PricingTier[] }) {
         <tbody>
           {allFeatures.map((category) => (
             <React.Fragment key={category.category}>
-              <tr className="bg-muted/40">
-                <td colSpan={5} className="p-4 font-semibold text-base text-foreground border-t border-b">
+              <tr className={styles["categoryHeader"]}>
+                <td colSpan={5} className="p-4 font-semibold text-lg text-foreground border-t border-b">
                   {category.category}
                 </td>
               </tr>
               {category.features.map((feature) => (
                 <tr key={feature.name} className="border-b border-border/50">
                   <td className="p-3 text-sm">
-                    <div className="relative group cursor-help flex items-center gap-2">
+                    <div 
+                      className={styles["featureCell"]}
+                      aria-describedby={`tooltip-${feature.name.replace(/\s+/g, '-').toLowerCase()}`}
+                    >
                       <span>{feature.name}</span>
                       <Info className="h-3 w-3 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity" />
-                      <div className="absolute left-0 top-full mt-2 w-64 p-2 bg-popover text-popover-foreground text-xs rounded-md shadow-md border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-100 z-50">
+                      <div 
+                        id={`tooltip-${feature.name.replace(/\s+/g, '-').toLowerCase()}`}
+                        className={cn(styles["featureTooltip"])}
+                        role="tooltip"
+                        aria-hidden="true"
+                      >
                         {feature.description}
                       </div>
                     </div>
