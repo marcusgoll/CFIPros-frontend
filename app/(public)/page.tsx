@@ -1,37 +1,79 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useScroll, useTransform, motion } from "framer-motion";
 import {
-  Plane,
-  ArrowRightCircle,
-  ArrowRight,
-  Users,
-  Star,
   FileSearch,
   LineChart,
   GraduationCap,
   Check,
-  Sparkles,
   Award,
   TrendingUp,
   Clock,
   Globe,
   Zap,
   Shield,
+  Star,
+  ArrowRightCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { PremiumButton } from "@/components/ui/PremiumButton";
+import { HeroVersionA } from "@/components/layout/HeroVersionA";
+import { HeroVersionB } from "@/components/layout/HeroVersionB";
+import { HeroVersionC } from "@/components/layout/HeroVersionC";
+import { trackEvent } from "@/lib/analytics/telemetry";
 
 export default function CFIProsHomePage() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
+  
+  // Hero version switching state - Default to Version C for production
+  const [heroVersion, setHeroVersion] = useState<'A' | 'B' | 'C'>('C');
+  
+  // Track hero view on mount
+  useEffect(() => {
+    trackEvent('hero_view', {
+      variant: `version_${heroVersion}`,
+      url: window.location.href,
+      referrer: document.referrer
+    });
+  }, [heroVersion]);
 
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      {/* Hero Version Switcher - Development Only */}
+      <div className="fixed top-4 left-4 z-50 flex gap-2 bg-background/90 backdrop-blur-sm rounded-lg p-2 border">
+        <button
+          onClick={() => setHeroVersion('A')}
+          className={`px-3 py-1 text-xs rounded ${
+            heroVersion === 'A' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          Version A
+        </button>
+        <button
+          onClick={() => setHeroVersion('B')}
+          className={`px-3 py-1 text-xs rounded ${
+            heroVersion === 'B' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          Version B
+        </button>
+        <button
+          onClick={() => setHeroVersion('C')}
+          className={`px-3 py-1 text-xs rounded ${
+            heroVersion === 'C' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          }`}
+        >
+          Version C
+        </button>
+      </div>
+
       <main id="main">
-        <Hero opacity={opacity} scale={scale} />
+        {heroVersion === 'A' && <HeroVersionA opacity={opacity} scale={scale} />}
+        {heroVersion === 'B' && <HeroVersionB opacity={opacity} scale={scale} />}
+        {heroVersion === 'C' && <HeroVersionC opacity={opacity} scale={scale} />}
         <LogoCloud />
         <NumberCounters />
         <FeatureMenu />
@@ -45,115 +87,6 @@ export default function CFIProsHomePage() {
   );
 }
 
-
-// Premium Hero Section with Gradients
-function Hero({ opacity, scale }: { opacity: any; scale: any }) {
-  return (
-    <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-      {/* Animated gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-muted/20 to-primary/5">
-        <div className="absolute top-1/4 -left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
-        <div className="absolute bottom-1/4 -right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse-slow" />
-      </div>
-
-      {/* Floating particles */}
-      <div className="absolute inset-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-primary/20 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
-      </div>
-
-      <motion.div
-        style={{ opacity, scale }}
-        className="relative z-10 mx-auto max-w-7xl px-4 md:px-6 text-center"
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-sm">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-primary">New: AI-Powered Study Plans</span>
-          </div>
-
-          <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight mb-6">
-            <span className="block text-foreground">Train smarter.</span>
-            <span className="block text-gradient-radial">Fly sooner.</span>
-          </h1>
-
-          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Professional pilot training platform with <strong>AI-powered study plans</strong>,{" "}
-            <strong>automated logbook auditing</strong>, and <strong>comprehensive ground school</strong>.
-          </p>
-
-          {/* Rating */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="flex items-center gap-1">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-5 w-5 fill-primary text-primary" />
-              ))}
-            </div>
-            <span className="text-sm text-muted-foreground">
-              4.8/5 from 1,248 pilots
-            </span>
-          </div>
-
-          {/* CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/upload">
-              <PremiumButton
-                variant="gradient"
-                size="lg"
-                rightIcon={<ArrowRightCircle className="h-5 w-5" />}
-                glow
-                pill
-              >
-                Start free analysis
-              </PremiumButton>
-            </Link>
-            <Link href="/acs">
-              <PremiumButton
-                variant="glass"
-                size="lg"
-                rightIcon={<ArrowRight className="h-5 w-5" />}
-              >
-                Browse ACS codes
-              </PremiumButton>
-            </Link>
-          </div>
-
-          {/* Social proof */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 0.6 }}
-            className="mt-12 flex items-center justify-center gap-2 text-sm text-muted-foreground"
-          >
-            <Users className="h-4 w-4" />
-            <span>Join 12,847+ pilots already training with CFIPros</span>
-          </motion.div>
-        </motion.div>
-      </motion.div>
-    </section>
-  );
-}
 
 // Logo Cloud
 function LogoCloud() {
