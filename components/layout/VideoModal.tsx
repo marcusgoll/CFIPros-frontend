@@ -32,9 +32,22 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const [videoPreloaded, setVideoPreloaded] = useState(false);
   const reducedMotion = prefersReducedMotion();
 
-  // Preload video when component mounts
+  // Network-aware video preloading
   useEffect(() => {
+    const shouldPreloadVideo = () => {
+      // Don't preload on slow connections to save bandwidth
+      if (typeof navigator !== 'undefined' && 'connection' in navigator) {
+        const connection = (navigator as any).connection;
+        if (connection && (connection.effectiveType === 'slow-2g' || connection.effectiveType === '2g')) {
+          return false;
+        }
+      }
+      return true;
+    };
+
     const preloadVideo = () => {
+      if (!shouldPreloadVideo()) return;
+      
       const video = document.createElement('video');
       video.preload = 'metadata';
       video.src = DEMO_VIDEO_PATH;
@@ -190,7 +203,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 src={DEMO_VIDEO_PATH}
                 className="h-full w-full object-cover"
                 controls
-                autoPlay
+                autoPlay={!reducedMotion}
                 preload="metadata"
                 onLoadedData={() => {
                   setIsLoading(false);

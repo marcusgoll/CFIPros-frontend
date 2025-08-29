@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play } from "lucide-react";
 import Image from "next/image";
@@ -23,23 +23,7 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [imageSrc, setImageSrc] = useState<string | null>(null);
   const reducedMotion = prefersReducedMotion();
-
-  // Progressive image loading
-  useEffect(() => {
-    const img = new Image();
-    img.onload = () => {
-      setImageSrc(screenshotUrl);
-      setImageLoaded(true);
-      setImageError(false);
-    };
-    img.onerror = () => {
-      setImageError(true);
-      setImageLoaded(false);
-    };
-    img.src = screenshotUrl;
-  }, [screenshotUrl]);
 
   const handleImageLoad = () => {
     setImageLoaded(true);
@@ -47,7 +31,6 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
   };
 
   const handleImageError = () => {
-    console.error("Image failed to load for feature:", featureId);
     setImageError(true);
     setImageLoaded(false);
   };
@@ -117,18 +100,18 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 
         {/* Screenshot image */}
         <div className="relative aspect-[16/9] w-full">
-          {imageSrc && (
-            <img
-              src={imageSrc}
-              alt={`${featureName} feature screenshot`}
-              className={cn(
-                "w-full h-full object-cover transition-opacity duration-500",
-                imageLoaded ? "opacity-100" : "opacity-0"
-              )}
-              loading="lazy"
-              decoding="async"
-            />
-          )}
+          <img
+            src={screenshotUrl}
+            alt={`${featureName} feature screenshot`}
+            className={cn(
+              "w-full h-full object-cover transition-opacity duration-500",
+              imageLoaded ? "opacity-100" : "opacity-0"
+            )}
+            loading="lazy"
+            decoding="async"
+            onLoad={handleImageLoad}
+            onError={handleImageError}
+          />
 
           {/* Play button overlay */}
           <AnimatePresence>
