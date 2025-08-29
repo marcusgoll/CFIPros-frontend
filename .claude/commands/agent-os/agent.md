@@ -12,12 +12,12 @@ encoding: UTF-8
 >
 > Core instructions used verbatim:
 >
-> * `@.claude/instructions/core/plan-product.md`
-> * `@.claude/instructions/core/analyze-product.md`
-> * `@.claude/instructions/core/create-spec.md`
-> * `@.claude/instructions/core/create-tasks.md`
-> * `@.claude/instructions/core/execute-tasks.md` (which loops via `execute-task.md`)
-> * `@.claude/instructions/core/complete-tasks.md`
+> * `@.agent-os/instructions/core/plan-product.md`
+> * `@.agent-os/instructions/core/analyze-product.md`
+> * `@.agent-os/instructions/core/create-spec.md`
+> * `@.agent-os/instructions/core/create-tasks.md`
+> * `@.agent-os/instructions/core/execute-tasks.md` (which loops via `execute-task.md`)
+> * `@.agent-os/instructions/core/complete-tasks.md`
 
 ## Inputs
 
@@ -54,8 +54,8 @@ post_merge:
   run_claude_md_link_updater: true
   update_decisions: true
 standards:
-  global_root: ~/.claude/standards
-  project_root: .claude/standards
+  global_root: ~/.agent-os/standards
+  project_root: .agent-os/standards
   files: [best-practices.md, code-style.md, tech-stack.md]
 planning:
   enforce_task_size: true
@@ -78,7 +78,7 @@ planning:
 ## Pre‑Flight
 
 \<pre\_flight\_check>
-EXECUTE: @.claude/instructions/meta/pre-flight.md
+EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 \</pre\_flight\_check>
 
 **Definition of Done**
@@ -99,16 +99,16 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 ### L0) Layer Sync & Precedence (Standards → Product → Specs)
 
 <step number="L0A" subagent="context-fetcher" name="load-standards" parallelizable="true">
-- Fetch **~/.claude/standards/** and project overrides **.claude/standards/** (best-practices.md, code-style.md, tech-stack.md).
+- Fetch **~/.agent-os/standards/** and project overrides **.agent-os/standards/** (best-practices.md, code-style.md, tech-stack.md).
 - Extract only relevant sections; return a merged view (project overrides have precedence).
 </step>
 <step number="L0B" subagent="project-manager" name="standards-specificity-check">
 - Flag vague rules (e.g., "Write tests"); propose concrete replacements (e.g., "Unit tests first, ≥80% coverage").
-- If helpful, delegate to **file-creator** to persist `.claude/.cache/standards-merged.md` (non‑destructive snapshot).
+- If helpful, delegate to **file-creator** to persist `.agent-os/.cache/standards-merged.md` (non‑destructive snapshot).
 </step>
 <step number="L0C" subagent="context-fetcher" name="check-product-layer">
-- If `.claude/product/` missing → EXECUTE `@.claude/instructions/core/plan-product.md`.
-- Else → EXECUTE `@.claude/instructions/core/analyze-product.md` (will refine product docs).
+- If `.agent-os/product/` missing → EXECUTE `@.agent-os/instructions/core/plan-product.md`.
+- Else → EXECUTE `@.agent-os/instructions/core/analyze-product.md` (will refine product docs).
 </step>
 <step number="L0D" subagent="prd-version-strategist" name="optional-prd-slimming" parallelizable="true">
 - IF `PRD.md` exists in repo, analyze and emit `MVP-PRD.md` to focus scope before spec work.
@@ -118,12 +118,12 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 
 <step number="1A" subagent="date-checker" name="determine-date">Output current date for spec folder naming.</step> <step number="1B" subagent="context-fetcher" name="prime-context" parallelizable="true">
 
-* Ensure `@.claude/product/mission-lite.md` and `@.claude/product/tech-stack.md` are in context (selective read if missing).
+* Ensure `@.agent-os/product/mission-lite.md` and `@.agent-os/product/tech-stack.md` are in context (selective read if missing).
 
   </step>
 
 <step number="1C" subagent="file-creator" name="run-create-spec">
-- EXECUTE: `@.claude/instructions/core/create-spec.md` with inputs; create `.claude/specs/YYYY-MM-DD-<slug>/` + spec docs.
+- EXECUTE: `@.agent-os/instructions/core/create-spec.md` with inputs; create `.agent-os/specs/YYYY-MM-DD-<slug>/` + spec docs.
 </step>
 <step number="1R" subagent="project-manager" name="spec-quality-gate">
 - Enforce planning tips: **Start Small** (≤ `planning.max_task_span_hours`, ≥ `planning.min_tasks` unless trivial), **Be Specific** (examples, versions, coverage), **Review Plans Carefully**.
@@ -133,7 +133,7 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 ### 2) Create Tasks (Design Review R2)
 
 <step number="2A" subagent="file-creator" name="run-create-tasks">
-- EXECUTE: `@.claude/instructions/core/create-tasks.md` → emit `tasks.md` with TDD‑oriented breakdown.
+- EXECUTE: `@.agent-os/instructions/core/create-tasks.md` → emit `tasks.md` with TDD‑oriented breakdown.
 </step>
 <step number="2R" subagent="senior-code-reviewer" name="design-review">
 - Review API/data/UX boundaries for **DRY**/**KISS**; validate error contracts & security; call out migrations & mark **REQUIRES_BACKUP**.
@@ -148,7 +148,7 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 - As tasks are implemented, run only task‑specific tests to keep loop fast; report failures succinctly.
 </step>
 <step number="3C" subagent="project-manager" name="execute-tasks">
-- EXECUTE: `@.claude/instructions/core/execute-tasks.md` (drives `execute-task.md` loops; maintains `tasks.md`).
+- EXECUTE: `@.agent-os/instructions/core/execute-tasks.md` (drives `execute-task.md` loops; maintains `tasks.md`).
 </step>
 <step number="3R" subagent="senior-code-reviewer" name="pre-pr-review">
 - Local review before PR: coverage ≥ threshold, naming, cohesion, DRY/KISS; suggest minimal refactors.
@@ -157,7 +157,7 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 ### 3P) PR & Suite (PR Review R4)
 
 <step number="3P1" subagent="project-manager" name="complete-tasks">
-- EXECUTE: `@.claude/instructions/core/complete-tasks.md` (full suite via **test-runner**, PR via **git-workflow**, recap draft, roadmap verification).
+- EXECUTE: `@.agent-os/instructions/core/complete-tasks.md` (full suite via **test-runner**, PR via **git-workflow**, recap draft, roadmap verification).
 </step>
 <step number="3P2" subagent="senior-code-reviewer" name="pr-review">
 - Enforce standards, security, reliability, readability, and DRY/KISS; attach actionable comments.
@@ -169,7 +169,7 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 ### 3U) Post‑Merge Documentation Upkeep
 
 <step number="3U" subagent="claude-md-link-updater" name="update-claude-md-links">
-- Scan `.claude/**/*.md` and `.claude/**/*.md`; update moved/renamed links and endpoint references; emit `link-report.md` under the active spec folder.
+- Scan `.claude/**/*.md` and `.agent-os/**/*.md`; update moved/renamed links and endpoint references; emit `link-report.md` under the active spec folder.
 </step>
 
 ### 4) Hygiene & Release
@@ -184,10 +184,10 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 ### 4S) Standards & Decisions Maintenance
 
 <step number="4S1" subagent="project-manager" name="decisions-roadmap-maintenance">
-- Append notable choices to `.claude/product/decisions.md` (if `post_merge.update_decisions`), update roadmap for shipped items.
+- Append notable choices to `.agent-os/product/decisions.md` (if `post_merge.update_decisions`), update roadmap for shipped items.
 </step>
 <step number="4S2" subagent="project-manager" name="standards-proposals">
-- From recurring review patterns, create `standards-proposals.md` in the spec folder with suggested updates to `~/.claude/standards/*.md` or project overrides.
+- From recurring review patterns, create `standards-proposals.md` in the spec folder with suggested updates to `~/.agent-os/standards/*.md` or project overrides.
 </step>
 
 ### 5) Final Recap
@@ -210,7 +210,7 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 ## Error & Incident Handling
 
 * **No changes/empty diff** during link update → report "no updates needed" and exit that step.
-* **Task blocking** → mark in `tasks.md` with ⚠️ and open `.claude/issues/YYYY-MM-DD-<slug>.md`.
+* **Task blocking** → mark in `tasks.md` with ⚠️ and open `.agent-os/issues/YYYY-MM-DD-<slug>.md`.
 * **Flaky tests** → retry ×3; quarantine with label; open issue; link in recap.
 * **Migration failure** → rollback; restore; attach logs; mark **BLOCKED**.
 * **Production incident** → branch `hotfix/{date}-{slug}`; patch + tests; bump patch; tag & release; back‑merge.
@@ -219,7 +219,7 @@ EXECUTE: @.claude/instructions/meta/pre-flight.md
 
 ## Outputs
 
-* Updated Product docs (as needed), Spec folder with `spec.md`, `spec-lite.md`, `tasks.md` (+ sub‑specs), recap under `.claude/recaps/`.
+* Updated Product docs (as needed), Spec folder with `spec.md`, `spec-lite.md`, `tasks.md` (+ sub‑specs), recap under `.agent-os/recaps/`.
 * PR merged to `main`; `link-report.md` with fixed/unresolved links.
 * Repo tidy; `CHANGELOG.md` updated; tag `{tag_prefix}X.Y.Z` (if released).
 * `standards-proposals.md`; roadmap and decisions updated.

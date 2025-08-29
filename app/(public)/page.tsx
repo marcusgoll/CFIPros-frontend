@@ -157,8 +157,7 @@ export default function CFIProsHomePage() {
           }}
         />
         {/* <Testimonials /> */}
-        <PricingSection />
-        <PremiumCTA />
+        <PricingSection />        <PremiumCTA />
       </main>
 
       {/* Video Modal */}
