@@ -21,6 +21,7 @@ import { PremiumButton } from "@/components/ui/PremiumButton";
 import { HeroVersionA } from "@/components/layout/HeroVersionA";
 import { HeroVersionB } from "@/components/layout/HeroVersionB";
 import { HeroVersionC } from "@/components/layout/HeroVersionC";
+import { FeatureSpotlightMenu } from "@/components/layout/FeatureSpotlightMenu";
 import { trackEvent } from "@/lib/analytics/telemetry";
 
 export default function CFIProsHomePage() {
@@ -74,6 +75,43 @@ export default function CFIProsHomePage() {
         {heroVersion === 'A' && <HeroVersionA opacity={opacity} scale={scale} />}
         {heroVersion === 'B' && <HeroVersionB opacity={opacity} scale={scale} />}
         {heroVersion === 'C' && <HeroVersionC opacity={opacity} scale={scale} />}
+        
+        {/* Feature Spotlight Menu */}
+        <section className="pt-8 pb-16 bg-gradient-to-b from-background to-muted/20">
+          <div className="mx-auto max-w-7xl px-4 md:px-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-8"
+            >
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Discover CFIPros Features
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Explore our comprehensive suite of aviation training tools designed by CFIs, for CFIs
+              </p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+            >
+              <FeatureSpotlightMenu 
+                onSelect={(featureId) => {
+                  trackEvent('feature_spotlight_click', {
+                    feature: featureId,
+                    section: 'landing_page'
+                  });
+                  console.log('Selected feature:', featureId);
+                }}
+              />
+            </motion.div>
+          </div>
+        </section>
+
         <LogoCloud />
         <NumberCounters />
         <FeatureMenu />

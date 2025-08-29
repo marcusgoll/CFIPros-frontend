@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { PerformanceMonitor } from '@/components/PerformanceMonitor';
+import { PostHogProvider } from '@/components/providers/PostHogProvider';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -98,10 +99,12 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="min-h-screen bg-gray-50 font-sans antialiased">
-        <div id="root" className="relative">
-          {children}
-        </div>
-        <PerformanceMonitor />
+        <PostHogProvider>
+          <div id="root" className="relative">
+            {children}
+          </div>
+          <PerformanceMonitor />
+        </PostHogProvider>
       </body>
     </html>
   );

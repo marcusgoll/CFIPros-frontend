@@ -73,30 +73,39 @@ class TelemetryService {
       const apiKey = config?.apiKey || process.env.NEXT_PUBLIC_POSTHOG_KEY;
       const apiHost = config?.apiHost || process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
       
-      if (apiKey) {
-        posthog.init(apiKey, {
-          api_host: apiHost,
-          capture_pageview: true,
-          capture_pageleave: true,
-          autocapture: false, // We'll manually track specific events
-          session_recording: {
-            enabled: false, // Enable when needed
-          },
-          persistence: 'localStorage',
-          loaded: (posthog) => {
-            if (this.debugMode) {
-              console.log('🔍 PostHog initialized', {
-                sessionId: posthog.get_session_id(),
-                distinctId: posthog.get_distinct_id()
-              });
+      if (apiKey && apiKey !== 'your_posthog_api_key_here') {
+        try {
+          posthog.init(apiKey, {
+            api_host: apiHost,
+            capture_pageview: true,
+            capture_pageleave: true,
+            autocapture: false, // We'll manually track specific events
+            session_recording: {
+              enabled: false, // Enable when needed
+            },
+            persistence: 'localStorage',
+            loaded: (posthog) => {
+              if (this.debugMode) {
+                console.log('🔍 PostHog initialized successfully', {
+                  sessionId: posthog.get_session_id(),
+                  distinctId: posthog.get_distinct_id()
+                });
+              }
             }
+          });
+          
+          // Set session ID from PostHog
+          this.sessionId = posthog.get_session_id() || this.sessionId;
+        } catch (error) {
+          if (this.debugMode) {
+            console.error('❌ PostHog initialization failed:', error);
           }
-        });
-        
-        // Set session ID from PostHog
-        this.sessionId = posthog.get_session_id() || this.sessionId;
-      } else if (this.debugMode) {
-        console.warn('⚠️ PostHog API key not found. Running in debug mode only.');
+        }
+      } else {
+        if (this.debugMode) {
+          console.warn('⚠️ PostHog API key not configured. Add NEXT_PUBLIC_POSTHOG_KEY to .env.local');
+          console.log('📝 Instructions: Replace "your_posthog_api_key_here" with your actual PostHog API key');
+        }
       }
     }
     
@@ -130,13 +139,19 @@ class TelemetryService {
 
     this.events.push(event);
     
-    // Send to PostHog
-    if (typeof window !== 'undefined' && posthog) {
-      posthog.capture(name, {
-        ...properties,
-        sessionId: this.sessionId,
-        timestamp: event.timestamp
-      });
+    // Send to PostHog with proper safety checks
+    if (this.isPostHogReady()) {
+      try {
+        posthog.capture(name, {
+          ...properties,
+          sessionId: this.sessionId,
+          timestamp: event.timestamp
+        });
+      } catch (error) {
+        if (this.debugMode) {
+          console.warn('Failed to send event to PostHog:', error);
+        }
+      }
     }
     
     if (this.debugMode) {
@@ -227,6 +242,16 @@ class TelemetryService {
     const fallback = test.variants[0];
     this.storeVariant(test.id, fallback);
     return fallback;
+  }
+
+  /**
+   * Check if PostHog is ready and available
+   */
+  private isPostHogReady(): boolean {
+    return typeof window !== 'undefined' && 
+           typeof posthog !== 'undefined' && 
+           posthog.__loaded === true &&
+           this.isInitialized;
   }
 
   /**

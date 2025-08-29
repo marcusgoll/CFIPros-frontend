@@ -3,15 +3,82 @@
  * Validates required environment variables at startup
  */
 
+// Environment variable validation schema
+interface EnvironmentVariables {
+  BACKEND_API_URL: string;
+  NODE_ENV?: 'development' | 'production' | 'test';
+  REDIS_URL?: string;
+  ALLOWED_ORIGINS?: string;
+}
+
+// Validation functions
+const validateUrl = (url: string, name: string): void => {
+  try {
+    new URL(url);
+  } catch {
+    throw new Error(`${name} must be a valid URL, got: ${url}`);
+  }
+};
+
+const validateEnvironment = (env?: string): void => {
+  const validEnvs = ['development', 'production', 'test'];
+  if (env && !validEnvs.includes(env)) {
+    throw new Error(`NODE_ENV must be one of: ${validEnvs.join(', ')}, got: ${env}`);
+  }
+};
+
+// Runtime validation
+const validateEnvironmentVariables = (): EnvironmentVariables => {
+  const backendUrl = process.env['BACKEND_API_URL'];
+  const nodeEnv = process.env['NODE_ENV'] as 'development' | 'production' | 'test' | undefined;
+  const redisUrl = process.env['REDIS_URL'];
+  const allowedOrigins = process.env['ALLOWED_ORIGINS'];
+
+  // Required variables
+  if (!backendUrl) {
+    throw new Error('BACKEND_API_URL environment variable is required');
+  }
+  validateUrl(backendUrl, 'BACKEND_API_URL');
+
+  // Optional but validated if present
+  if (nodeEnv) {
+    validateEnvironment(nodeEnv);
+  }
+
+  if (redisUrl) {
+    validateUrl(redisUrl, 'REDIS_URL');
+  }
+
+  if (allowedOrigins) {
+    // Validate each origin in the comma-separated list
+    const origins = allowedOrigins.split(',').map(o => o.trim());
+    origins.forEach((origin, index) => {
+      if (origin && !origin.startsWith('http://') && !origin.startsWith('https://')) {
+        throw new Error(`ALLOWED_ORIGINS[${index}] must start with http:// or https://, got: ${origin}`);
+      }
+    });
+  }
+
+  return {
+    BACKEND_API_URL: backendUrl,
+    NODE_ENV: nodeEnv,
+    REDIS_URL: redisUrl,
+    ALLOWED_ORIGINS: allowedOrigins,
+  };
+};
+
+// Validate environment variables at module load
+const validatedEnv = validateEnvironmentVariables();
+
 export const config = {
-  // Backend API configuration
-  backendUrl: process.env['BACKEND_API_URL'] || 'https://api.cfipros.com/v1',
+  // Backend API configuration (validated)
+  backendUrl: validatedEnv.BACKEND_API_URL,
   
-  // Redis configuration (optional)
-  redisUrl: process.env['REDIS_URL'],
+  // Redis configuration (optional, validated if present)
+  redisUrl: validatedEnv.REDIS_URL,
   
-  // CORS configuration
-  allowedOrigins: process.env['ALLOWED_ORIGINS']?.split(',') || [
+  // CORS configuration (validated if present)
+  allowedOrigins: validatedEnv.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [
     'http://localhost:3000',
     'http://localhost:3001', 
     'https://cfipros.com',
@@ -42,15 +109,13 @@ export const config = {
     allowedExtensions: ['.pdf', '.jpg', '.jpeg', '.png', '.webp'],
   },
   
-  // Environment flags
-  isDevelopment: process.env.NODE_ENV === 'development',
-  isProduction: process.env.NODE_ENV === 'production',
+  // Environment flags (validated)
+  isDevelopment: validatedEnv.NODE_ENV === 'development',
+  isProduction: validatedEnv.NODE_ENV === 'production',
+  
+  // Runtime environment validation status
+  environmentValidated: true,
 } as const;
-
-// Validate critical configuration at startup
-if (!config.backendUrl) {
-  throw new Error('BACKEND_API_URL environment variable is required');
-}
 
 // Type exports for better TypeScript support
 export type Config = typeof config;

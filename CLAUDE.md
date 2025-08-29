@@ -29,12 +29,19 @@ frontend/
 │   └── layout.tsx           # Root layout with performance monitoring
 ├── components/              # Reusable UI components
 │   ├── forms/              # Form components with validation
+│   ├── layout/             # Layout components (navigation, hero, spotlight menu)
+│   ├── providers/          # Context providers and error boundaries
+│   ├── sections/           # Page sections (hero, features)
 │   └── ui/                 # Basic UI components
 ├── lib/                    # Core utilities and services
+│   ├── analytics/          # Analytics and telemetry services
 │   ├── api/                # API client, middleware, validation
+│   ├── config/             # Configuration files and navigation
 │   ├── hooks/              # Custom React hooks
 │   ├── security/           # Security modules (file upload, etc.)
-│   ├── utils/              # Utility functions
+│   ├── services/           # Business logic services
+│   ├── types/              # TypeScript type definitions
+│   ├── utils/              # Utility functions and performance monitoring
 │   └── validation/         # Zod schemas
 ├── __tests__/              # Test suites
 └── public/                 # Static assets
@@ -297,4 +304,4 @@ npm run analyze
 - **Commit Style**: Conventional commits with emoji prefixes
 - **Release Process**: Semantic versioning with annotated tags
 
-Last updated: 2025-08-23 (v1.0.0 release)
+Last updated: 2025-08-29 (post-v1.0.0 with FeatureSpotlightMenu implementation)

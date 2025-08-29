@@ -18,20 +18,26 @@ export interface UseABTestResult {
  * @returns The assigned variant and helper functions
  */
 export function useABTest(test: ABTest): UseABTestResult {
-  const [variant, setVariant] = useState<ABTestVariant | null>(null);
+  // Use fallback variant (control) to prevent hydration mismatch
+  const fallbackVariant = test.variants[0];
+  const [variant, setVariant] = useState<ABTestVariant | null>(fallbackVariant);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    // Only run on client side
+    // Mark as hydrated
+    setIsHydrated(true);
+    
+    // Only run on client side after hydration
     if (typeof window === 'undefined') {
+      setVariant(fallbackVariant);
       setIsLoading(false);
       return;
     }
 
     // Check if test is active
     if (!test.isActive) {
-      // Default to control variant if test is not active
-      setVariant(test.variants[0]);
+      setVariant(fallbackVariant);
       setIsLoading(false);
       return;
     }
@@ -39,30 +45,36 @@ export function useABTest(test: ABTest): UseABTestResult {
     // Check date range if specified
     const now = new Date();
     if (test.startDate && now < test.startDate) {
-      setVariant(test.variants[0]);
+      setVariant(fallbackVariant);
       setIsLoading(false);
       return;
     }
     if (test.endDate && now > test.endDate) {
-      setVariant(test.variants[0]);
+      setVariant(fallbackVariant);
       setIsLoading(false);
       return;
     }
 
-    // Get assigned variant
-    const assignedVariant = telemetry.getABTestVariant(test);
-    setVariant(assignedVariant);
-    setIsLoading(false);
-  }, [test]);
+    // Get assigned variant only after hydration
+    try {
+      const assignedVariant = telemetry.getABTestVariant(test);
+      setVariant(assignedVariant);
+    } catch (error) {
+      console.warn('A/B test variant assignment failed:', error);
+      setVariant(fallbackVariant);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [test, fallbackVariant]);
 
   const trackConversion = (conversionType: string) => {
-    if (variant) {
+    if (isHydrated && variant) {
       telemetry.trackABTestConversion(test.id, variant.id, conversionType);
     }
   };
 
   return {
-    variant,
+    variant: isHydrated ? variant : fallbackVariant,
     isLoading,
     trackConversion
   };
