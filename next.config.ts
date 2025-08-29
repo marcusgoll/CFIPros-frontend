@@ -30,8 +30,29 @@ const nextConfig: NextConfig = {
 
   // Image optimization configuration
   images: {
-    domains: ["api.cfipros.com"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.cfipros.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'via.placeholder.com',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+        port: '',
+        pathname: '/**',
+      },
+    ],
     formats: ["image/webp", "image/avif"],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
   },
 
   // Environment variables that should be available on the client side

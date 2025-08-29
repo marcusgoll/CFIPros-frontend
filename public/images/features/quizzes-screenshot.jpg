@@ -1,0 +1,15 @@
+<svg width="1200" height="675" viewBox="0 0 1200 675" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1f2937;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4b5563;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="675" fill="url(#bg5)"/>
+  <rect x="100" y="100" width="1000" height="475" rx="20" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+  <rect x="150" y="150" width="200" height="150" rx="10" fill="rgba(59,130,246,0.3)"/>
+  <rect x="400" y="150" width="200" height="150" rx="10" fill="rgba(16,185,129,0.3)"/>
+  <rect x="650" y="150" width="200" height="150" rx="10" fill="rgba(245,158,11,0.3)"/>
+  <text x="600" y="400" text-anchor="middle" fill="white" font-family="Arial" font-size="48" font-weight="bold">Dashboard</text>
+  <text x="600" y="450" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Arial" font-size="24">Flight Training Analytics</text>
+</svg>

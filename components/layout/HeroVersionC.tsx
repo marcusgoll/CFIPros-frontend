@@ -14,8 +14,8 @@ interface HeroVersionCProps {
 
 export function HeroVersionC({ opacity, scale }: HeroVersionCProps) {
   return (
-    <section 
-      className="relative min-h-[80vh] flex items-start justify-start overflow-hidden bg-background pt-16 sm:pt-24"
+    <section
+      className="relative flex items-start justify-start overflow-hidden bg-background pt-16 sm:pt-24"
       aria-label="Hero section with clean value proposition"
       data-testid="hero-version-c"
     >
@@ -25,19 +25,18 @@ export function HeroVersionC({ opacity, scale }: HeroVersionCProps) {
       {/* Hero Content */}
       <motion.div
         style={{ opacity, scale }}
-        className="relative z-10 container mx-auto px-4 py-8"
+        className="container relative z-10 mx-auto px-4 pt-8"
       >
-        <div className="max-w-4xl mx-auto text-center space-y-6">
-          
+        <div className="mx-auto max-w-4xl space-y-6 text-center">
           {/* Dream Outcome Headline - Clear Desired Result */}
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight text-foreground"
+            className="text-4xl font-bold leading-tight text-foreground sm:text-5xl lg:text-6xl"
           >
-            Pass Your Checkride on the{' '}
-            <span className="bg-primary text-primary-foreground px-4 py-2 rounded-xl inline-block">
+            Pass Your Checkride on the{" "}
+            <span className="inline-block rounded-xl bg-primary px-4 py-2 text-primary-foreground">
               First Try
             </span>
           </motion.h1>
@@ -47,10 +46,15 @@ export function HeroVersionC({ opacity, scale }: HeroVersionCProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed"
+            className="mx-auto max-w-3xl text-lg leading-relaxed text-muted-foreground sm:text-xl"
           >
-            <strong>Upload your FAA test results, get a personalized study plan in under 2 minutes.</strong><br />
-            No more guessing what to study - our AI identifies your exact weak areas so you can focus on what matters most.
+            <strong>
+              Upload your FAA test results, get a personalized study plan in
+              under 2 minutes.
+            </strong>
+            <br />
+            No more guessing what to study - our AI identifies your exact weak
+            areas so you can focus on what matters most.
           </motion.p>
 
           {/* Perceived Likelihood - Risk Reduction */}
@@ -58,7 +62,7 @@ export function HeroVersionC({ opacity, scale }: HeroVersionCProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex justify-center items-center gap-6 text-sm text-muted-foreground mb-6"
+            className="mb-6 flex items-center justify-center gap-6 text-sm text-muted-foreground"
           >
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-green-500" />
@@ -83,20 +87,20 @@ export function HeroVersionC({ opacity, scale }: HeroVersionCProps) {
           >
             <Button
               size="lg"
-              className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-12 py-4 h-auto text-xl rounded-md shadow-lg hover:shadow-xl transition-all"
+              className="hover:bg-primary/90 h-auto rounded-md bg-primary px-12 py-4 text-xl font-bold text-primary-foreground shadow-lg transition-all hover:shadow-xl"
               tabIndex={0}
-              onClick={() => trackHeroCTA('Get My Study Plan Now', 'version_c')}
+              onClick={() => trackHeroCTA("Get My Study Plan Now", "version_c")}
             >
-              <GraduationCap className="h-6 w-6 mr-3" />
+              <GraduationCap className="mr-3 h-6 w-6" />
               Get My Study Plan Now
             </Button>
-            
+
             {/* Secondary benefit reinforcement */}
-            <p className="text-sm text-muted-foreground text-center">
-              Join student pilots who stopped wasting time on topics they already know
+            <p className="text-center text-sm text-muted-foreground">
+              Join student pilots who stopped wasting time on topics they
+              already know
             </p>
           </motion.div>
-
         </div>
       </motion.div>
     </section>

@@ -1,0 +1,213 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Play, Pause } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Using local mock video for all features
+const MOCK_VIDEO_PATH = "/videos/6739601-hd_1920_1080_24fps.mp4";
+
+export interface VideoModalProps {
+  featureId: string;
+  featureName: string;
+  isOpen: boolean;
+  onClose: () => void;
+  className?: string;
+}
+
+export const VideoModal: React.FC<VideoModalProps> = ({
+  featureId,
+  featureName,
+  isOpen,
+  onClose,
+  className,
+}) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [videoError, setVideoError] = useState(false);
+
+  // Handle escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("keydown", handleEscape);
+      // Prevent body scroll
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.removeEventListener("keydown", handleEscape);
+        document.body.style.overflow = "unset";
+      };
+    }
+  }, [isOpen, onClose]);
+
+  // Focus management
+  useEffect(() => {
+    if (isOpen && closeButtonRef.current) {
+      closeButtonRef.current.focus();
+    }
+  }, [isOpen]);
+
+  // Focus trap
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== "Tab") return;
+
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+
+      const focusableElements = dialog.querySelectorAll(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), iframe'
+      );
+      const firstElement = focusableElements[0] as HTMLElement;
+      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault();
+          lastElement?.focus();
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault();
+          firstElement?.focus();
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleTab);
+    return () => document.removeEventListener("keydown", handleTab);
+  }, [isOpen]);
+
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  if (!isOpen) {
+    console.log("VideoModal is closed");
+    return null;
+  }
+
+  console.log("VideoModal is opening for feature:", featureId);
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${featureName} demo video`}
+        className={cn(
+          "fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm",
+          className
+        )}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        onClick={handleOverlayClick}
+        data-testid="video-modal-overlay"
+      >
+        {/* Close button */}
+        <button
+          ref={closeButtonRef}
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-black/70 text-white transition-all hover:bg-black/90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+          aria-label="Close video"
+        >
+          <X className="h-6 w-6" />
+        </button>
+
+        {/* Video container */}
+        <motion.div
+          className="relative mx-4 w-full max-w-6xl"
+          initial={{ scale: 0.9, opacity: 0, y: 50 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 50 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="mb-4 text-center">
+            <h2 className="text-2xl font-bold text-white md:text-3xl">
+              {featureName} Demo
+            </h2>
+            <p className="mt-2 text-gray-300">
+              Watch how {featureName.toLowerCase()} works in action
+            </p>
+          </div>
+
+          {/* Video container with skeleton loader */}
+          <div className="relative overflow-hidden rounded-lg shadow-2xl bg-gray-900">
+            <div className="aspect-video w-full relative">
+              {/* Skeleton loader */}
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-800 animate-pulse">
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full animate-pulse"></div>
+                    <div className="h-4 w-32 mx-auto bg-gray-700 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Video player */}
+              <video
+                ref={videoRef}
+                src={MOCK_VIDEO_PATH}
+                className="h-full w-full object-cover"
+                controls
+                autoPlay
+                onLoadedData={() => {
+                  setIsLoading(false);
+                  setIsPlaying(true);
+                }}
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+                onError={() => {
+                  setIsLoading(false);
+                  setVideoError(true);
+                }}
+                data-testid="video-player"
+              >
+                Your browser does not support the video tag.
+              </video>
+              
+              {/* Error state */}
+              {videoError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+                  <div className="text-center">
+                    <X className="w-16 h-16 mx-auto mb-4 text-red-500" />
+                    <p className="text-white">Failed to load video</p>
+                    <p className="text-gray-400 text-sm mt-2">Please try again later</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* Decorative border */}
+            <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-white/10" />
+          </div>
+
+          {/* Footer */}
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-400">
+              Press Escape or click outside to close
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
