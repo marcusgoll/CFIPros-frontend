@@ -95,11 +95,18 @@ junit.xml
 
 # Business-sensitive files and directories
 .agent-os/
+.claude/
 .internal/
 .private/
 business/
 internal/
 proprietary/
+
+# Claude AI assistant files
+**/claude.md
+**/CLAUDE.md
+**/*claude*.md
+**/*CLAUDE*.md
 
 # Business configuration files
 config/production.ts
