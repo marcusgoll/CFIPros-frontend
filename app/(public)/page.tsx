@@ -26,6 +26,7 @@ import {
 } from "@/components/layout/FeatureSpotlightMenu";
 import { FeatureScreenshotDisplay } from "@/components/layout/FeatureScreenshotDisplay";
 import { VideoModal } from "@/components/layout/VideoModal";
+import { BenefitZipperList } from "@/components/sections/BenefitZipperList";
 import { trackEvent } from "@/lib/analytics/telemetry";
 import { prefersReducedMotion } from "@/lib/utils";
 
@@ -120,7 +121,21 @@ export default function CFIProsHomePage() {
         <LogoCloud />
         <NumberCounters />
         <FeatureMenu />
-        <FeatureZipper />
+        <BenefitZipperList 
+          onSectionView={(sectionId) => {
+            trackEvent("benefit_section_view", {
+              section: sectionId,
+              page: "landing_page",
+            });
+          }}
+          onFeatureInteraction={(sectionId, featureIndex) => {
+            trackEvent("benefit_feature_interaction", {
+              section: sectionId,
+              feature_index: featureIndex,
+              page: "landing_page",
+            });
+          }}
+        />
         <WhyUs />
         <Testimonials />
         <Pricing />
@@ -331,80 +346,6 @@ function FeatureMenu() {
   );
 }
 
-// Feature Zipper with Glass Cards
-function FeatureZipper() {
-  const features = [
-    {
-      key: "ai",
-      title: "AI-Powered Analysis",
-      desc: "Machine learning identifies your weak areas and creates personalized study plans.",
-      icon: <Zap className="h-5 w-5" />,
-    },
-    {
-      key: "ocr",
-      title: "Smart OCR & Cleanup",
-      desc: "Upload any logbook format - we'll extract and organize the data automatically.",
-      icon: <FileSearch className="h-5 w-5" />,
-    },
-    {
-      key: "realtime",
-      title: "Real-time Progress",
-      desc: "Track improvement with detailed analytics and performance metrics.",
-      icon: <TrendingUp className="h-5 w-5" />,
-    },
-    {
-      key: "secure",
-      title: "Bank-level Security",
-      desc: "Your data is encrypted and protected with enterprise-grade security.",
-      icon: <Shield className="h-5 w-5" />,
-    },
-  ];
-
-  return (
-    <section className="bg-muted/30 py-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-12 text-center"
-        >
-          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-            Built for modern training
-          </h2>
-          <p className="mx-auto max-w-2xl text-muted-foreground">
-            Advanced technology meets practical aviation training
-          </p>
-        </motion.div>
-
-        <div className="grid gap-6 md:grid-cols-2">
-          {features.map((feature, i) => (
-            <motion.div
-              key={feature.key}
-              initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.1 }}
-              viewport={{ once: true }}
-              className="glass-hover group cursor-pointer rounded-xl p-6"
-            >
-              <div className="flex items-start gap-4">
-                <div className="bg-primary/10 rounded-lg p-3 text-primary transition-transform group-hover:scale-110">
-                  {feature.icon}
-                </div>
-                <div className="flex-1">
-                  <h3 className="mb-2 font-semibold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {feature.desc}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 // Interactive Why Us Section
 function WhyUs() {
