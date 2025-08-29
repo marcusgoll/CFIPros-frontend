@@ -112,7 +112,7 @@ describe("useOverflow Hook", () => {
 
     it("detects when scrolled to the end", () => {
       const mockElement = createMockElement({
-        scrollLeft: 99, // 200 - 100 - 1 (accounting for the -1 in maxScrollLeft calculation)
+        scrollLeft: 100, // 200 - 100 (exactly at maxScrollLeft)
         scrollWidth: 200,
         clientWidth: 100,
       });
@@ -131,7 +131,7 @@ describe("useOverflow Hook", () => {
 
     it("handles edge case where scrollLeft equals maxScrollLeft", () => {
       const mockElement = createMockElement({
-        scrollLeft: 100, // exactly at maxScrollLeft (200 - 100)
+        scrollLeft: 99.5, // slightly less than maxScrollLeft (200 - 100)
         scrollWidth: 200,
         clientWidth: 100,
       });

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, Search, BookOpen, BarChart3, Target, Award, ChevronLeft, ChevronRight } from "lucide-react";
+import { Upload, Search, BookOpen, BarChart3, Target, Award, Calendar, Layers, Building } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // TypeScript interfaces as specified in tasks.md
@@ -30,286 +30,274 @@ const DEFAULT_FEATURES: FeatureItem[] = [
     Icon: Search,
   },
   {
-    id: "study-plans",
-    label: "Study Plans", 
+    id: "planner",
+    label: "Planner", 
+    Icon: Calendar,
+  },
+  {
+    id: "lessons",
+    label: "Lessons",
     Icon: BookOpen,
   },
   {
-    id: "analytics",
-    label: "Analytics",
-    Icon: BarChart3,
-  },
-  {
-    id: "practice",
-    label: "Practice",
+    id: "quizzes",
+    label: "Quizzes",
     Icon: Target,
   },
   {
-    id: "certification",
-    label: "Certification",
+    id: "acs-lib",
+    label: "ACS Lib",
+    Icon: Layers,
+  },
+  {
+    id: "dashboard",
+    label: "Dashboard",
+    Icon: BarChart3,
+  },
+  {
+    id: "schools",
+    label: "Schools",
+    Icon: Building,
+  },
+  {
+    id: "reports",
+    label: "Reports",
     Icon: Award,
   },
 ];
+
+// Custom hook for overflow detection
+export function useOverflow(ref: React.RefObject<HTMLElement>) {
+  const [state, setState] = useState({ canLeft: false, canRight: false });
+  
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    const maxScrollLeft = scrollWidth - clientWidth;
+    setState({
+      canLeft: scrollLeft > 0,
+      canRight: Math.ceil(scrollLeft) < maxScrollLeft,
+    });
+  }, [ref]);
+
+  useEffect(() => {
+    update();
+    const el = ref.current;
+    if (!el) return;
+    
+    const onScroll = () => update();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    
+    const onResize = () => update();
+    window.addEventListener("resize", onResize);
+    
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(update);
+      ro.observe(el);
+    }
+    
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      if (ro) ro.disconnect();
+    };
+  }, [update]);
+  
+  return state;
+}
 
 export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
   features = DEFAULT_FEATURES,
   onSelect,
   className,
 }) => {
-  // State management for active selection and scroll indicators
-  const [activeId, setActiveId] = useState<string>(() => {
-    if (features.length === 0) return "";
-    // Set middle feature as active by default
-    const middleIndex = Math.floor(features.length / 2);
-    return features[middleIndex]?.id || features[0]?.id || "";
-  });
+  const listRef = useRef<HTMLUListElement>(null);
+  const defaultIndex = Math.floor(features.length / 2);
+  const [active, setActive] = useState<string>(features[defaultIndex]?.id || "");
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
+  const { canLeft, canRight } = useOverflow(listRef);
 
-  const [showLeftArrow, setShowLeftArrow] = useState(false);
-  const [showRightArrow, setShowRightArrow] = useState(false);
+  const select = useCallback((id: string) => {
+    setActive(id);
+    if (onSelect) onSelect(id);
+    const idx = features.findIndex(f => f.id === id);
+    if (idx >= 0) centerItem(idx, true);
+  }, [features, onSelect]);
 
-  // Refs for scroll management
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-
-  // Update scroll indicators based on scroll position
-  const updateScrollIndicators = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const { scrollLeft, scrollWidth, clientWidth } = container;
-    setShowLeftArrow(scrollLeft > 0);
-    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 1);
+  const scrollByAmount = useCallback((dir: number) => {
+    const el = listRef.current;
+    if (!el) return;
+    const amount = Math.max(240, Math.floor(el.clientWidth * 0.7));
+    el.scrollBy({ left: dir * amount, behavior: "smooth" });
   }, []);
 
-  // Handle scroll events with throttling
-  const handleScroll = useCallback(() => {
-    updateScrollIndicators();
-  }, [updateScrollIndicators]);
+  const onKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      const next = (idx + 1) % features.length;
+      select(features[next].id);
+      requestAnimationFrame(() => {
+        const nextElement = listRef.current?.children[next] as HTMLElement;
+        nextElement?.focus();
+      });
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      const prev = (idx - 1 + features.length) % features.length;
+      select(features[prev].id);
+      requestAnimationFrame(() => {
+        const prevElement = listRef.current?.children[prev] as HTMLElement;
+        prevElement?.focus();
+      });
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      select(features[idx].id);
+    }
+  }, [features, select]);
 
-  // Handle feature selection
-  const handleFeatureSelect = useCallback((featureId: string) => {
-    setActiveId(featureId);
-    onSelect?.(featureId);
-  }, [onSelect]);
-
-  // Scroll to specific position
-  const scrollTo = useCallback((direction: "left" | "right") => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const scrollAmount = container.clientWidth * 0.6; // Scroll 60% of container width
-    container.scrollBy({
-      left: direction === "right" ? scrollAmount : -scrollAmount,
-      behavior: "smooth",
-    });
+  // Center a tab within the scroll container
+  const centerItem = useCallback((index: number, smooth = false) => {
+    const el = listRef.current;
+    if (!el) return;
+    const child = el.children[index] as HTMLElement;
+    if (!child) return;
+    const childRect = child.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const childCenter = childRect.left - elRect.left + childRect.width / 2;
+    const target = childCenter - el.clientWidth / 2;
+    el.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
   }, []);
 
-  // Keyboard navigation support
-  const handleKeyDown = useCallback((event: React.KeyboardEvent, featureId: string) => {
-    const currentIndex = features.findIndex(f => f.id === featureId);
-    if (currentIndex === -1) return;
-
-    let nextIndex = currentIndex;
-    let handled = false;
-
-    switch (event.key) {
-      case "ArrowLeft":
-        event.preventDefault();
-        nextIndex = currentIndex > 0 ? currentIndex - 1 : features.length - 1;
-        handled = true;
-        break;
-      case "ArrowRight":
-        event.preventDefault();
-        nextIndex = currentIndex < features.length - 1 ? currentIndex + 1 : 0;
-        handled = true;
-        break;
-      case "Home":
-        event.preventDefault();
-        nextIndex = 0;
-        handled = true;
-        break;
-      case "End":
-        event.preventDefault();
-        nextIndex = features.length - 1;
-        handled = true;
-        break;
-      case "Enter":
-      case " ":
-        event.preventDefault();
-        handleFeatureSelect(featureId);
-        return;
-      default:
-        break;
-    }
-
-    if (handled) {
-      const nextFeature = features[nextIndex];
-      if (nextFeature) {
-        handleFeatureSelect(nextFeature.id);
-        // Focus the next tab - try both approaches for reliability
-        setTimeout(() => {
-          const nextTab = document.querySelector(`[data-feature-id="${nextFeature.id}"]`) as HTMLElement;
-          if (nextTab) {
-            nextTab.focus();
-          }
-        }, 0);
-      }
-    }
-  }, [features, handleFeatureSelect]);
-
-  // Setup scroll listener and initial scroll indicator state
+  // On mount, center the default (middle) feature
   useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+    // Next frame so widths are measured
+    requestAnimationFrame(() => centerItem(defaultIndex, false));
+  }, [defaultIndex, centerItem]);
 
-    // Add scroll listener
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    
-    // Initial update
-    updateScrollIndicators();
-    
-    // Setup ResizeObserver for responsive updates
-    const resizeObserver = new ResizeObserver(() => {
-      updateScrollIndicators();
-    });
-    resizeObserver.observe(container);
+  // Hide swipe hint after user interaction or timeout
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSwipeHint(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
-    // Cleanup
-    return () => {
-      container.removeEventListener("scroll", handleScroll);
-      resizeObserver.disconnect();
-    };
-  }, [handleScroll, updateScrollIndicators]);
+  // Hide swipe hint on user interaction
+  const handleUserInteraction = useCallback(() => {
+    setShowSwipeHint(false);
+  }, []);
 
   // If no features, render empty state
   if (features.length === 0) {
     return (
-      <div className={cn("relative rounded-2xl border border-gray-200 bg-white p-4", className)}>
+      <div className={cn(
+        "relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-background p-4",
+        className
+      )}>
         <div role="tablist" className="flex justify-center">
-          <p className="text-gray-500 text-sm">No features available</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No features available</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={cn("relative rounded-2xl border border-gray-200 bg-white shadow-sm", className)}>
-      {/* Left scroll arrow */}
-      {showLeftArrow && (
-        <button
-          type="button"
-          onClick={() => scrollTo("left")}
-          aria-label="Scroll left"
-          className="
-            absolute left-2 top-1/2 z-10 -translate-y-1/2
-            flex h-8 w-8 items-center justify-center
-            rounded-full bg-white shadow-md border border-gray-200
-            text-gray-600 hover:text-gray-900 hover:bg-gray-50
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-            transition-colors duration-200
-          "
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-      )}
+    <div className={cn("relative pb-8 sm:pb-0", className)}>
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
 
-      {/* Right scroll arrow */}
-      {showRightArrow && (
-        <button
-          type="button"
-          onClick={() => scrollTo("right")}
-          aria-label="Scroll right"
-          className="
-            absolute right-2 top-1/2 z-10 -translate-y-1/2
-            flex h-8 w-8 items-center justify-center
-            rounded-full bg-white shadow-md border border-gray-200
-            text-gray-600 hover:text-gray-900 hover:bg-gray-50
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-            transition-colors duration-200
-          "
-        >
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
+      {/* Scroll container with border */}
+      <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-background">
+        
+        {/* Mobile swipe gradient indicators */}
+        <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10 rounded-l-2xl sm:hidden" />
+        <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10 rounded-r-2xl sm:hidden" />
+        
+        {/* Mobile swipe hint */}
+        {showSwipeHint && (
+          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 sm:hidden">
+            <div className="flex items-center gap-1 text-xs text-gray-400 animate-pulse">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                <path d="M10 17l5-5-5-5"/>
+                <path d="M14 12H3"/>
+              </svg>
+              <span>Swipe to explore</span>
+            </div>
+          </div>
+        )}
+        {/* Left scroll arrow (only on desktop when overflow) */}
+        {canLeft && (
+          <button
+            type="button"
+            onClick={() => scrollByAmount(-1)}
+            className="absolute left-1 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-background shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            aria-label="Scroll left"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M15 18l-6-6 6-6"/>
+            </svg>
+          </button>
+        )}
 
-      {/* Scrollable features container */}
-      <div
-        ref={scrollContainerRef}
-        role="tablist"
-        aria-label="Feature selection"
-        className="
-          flex overflow-x-auto scroll-smooth py-6 px-4
-          scrollbar-hide
-          gap-6
-          sm:gap-8 sm:px-6
-          md:gap-10 md:px-8
-          min-w-fit
-        "
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-      >
-        {features.map((feature) => {
-            const isActive = activeId === feature.id;
-            const IconComponent = feature.Icon;
-            
+        {/* Right scroll arrow (only on desktop when overflow) */}
+        {canRight && (
+          <button
+            type="button"
+            onClick={() => scrollByAmount(1)}
+            className="absolute right-1 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-background shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            aria-label="Scroll right"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </button>
+        )}
+
+        {/* Feature tabs */}
+        <ul
+          ref={listRef}
+          role="tablist"
+          className="flex justify-center gap-0.5 sm:gap-1 overflow-x-auto scroll-smooth px-4 sm:px-6 py-2 sm:py-3 items-center select-none snap-x snap-mandatory no-scrollbar"
+          style={{ WebkitOverflowScrolling: "touch" }}
+          onTouchStart={handleUserInteraction}
+          onScroll={handleUserInteraction}
+        >
+          {features.map(({ id, label, Icon }, idx) => {
+            const isActive = id === active;
             return (
-              <button
-                key={feature.id}
-                type="button"
-                role="tab"
-                data-feature-id={feature.id}
-                tabIndex={isActive ? 0 : -1}
-                aria-selected={isActive}
-                onClick={() => handleFeatureSelect(feature.id)}
-                onKeyDown={(e) => handleKeyDown(e, feature.id)}
-                aria-label={feature.label}
-                className={cn(
-                  "flex flex-col items-center gap-3 min-w-fit transition-colors duration-200",
-                  "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-lg p-2",
-                  isActive
-                    ? "text-[#1e9df1]"
-                    : "text-gray-600 hover:text-gray-900"
-                )}
-              >
-                {/* Feature icon */}
-                <div className={cn(
-                  "flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-200",
-                  isActive
-                    ? "bg-blue-50 border-2 border-[#1e9df1]/20"
-                    : "bg-gray-50 border-2 border-transparent hover:bg-gray-100"
-                )}>
-                  {IconComponent ? (
-                    <IconComponent className="h-6 w-6" />
-                  ) : (
-                    <div className="h-6 w-6 bg-gray-300 rounded" />
+              <li key={id} className="snap-start first:ml-10 last:mr-10 sm:first:ml-12 sm:last:mr-12">
+                <button
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => select(id)}
+                  onKeyDown={(e) => onKeyDown(e, idx)}
+                  className={cn(
+                    "group relative flex h-full min-w-[92px] sm:min-w-[108px] flex-col items-center justify-center gap-1 rounded-xl bg-transparent px-2.5 py-3 text-sm sm:text-base cursor-pointer transition-colors",
+                    isActive 
+                      ? 'text-[#1e9df1]' 
+                      : 'text-foreground hover:text-[#1e9df1]'
                   )}
-                </div>
-                
-                {/* Feature label */}
-                <span className={cn(
-                  "text-sm font-medium whitespace-nowrap transition-colors duration-200",
-                  isActive
-                    ? "text-[#1e9df1]"
-                    : "text-gray-700 hover:text-gray-900"
-                )}>
-                  {feature.label}
-                </span>
-              </button>
+                >
+                  <span className="inline-flex h-8 w-8 items-center justify-center">
+                    <Icon className="w-6 h-6" />
+                  </span>
+                  <span className="font-medium">{label}</span>
+                  
+                  {/* Bottom primary indicator */}
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "pointer-events-none absolute inset-x-4 bottom-0 h-1 origin-center rounded-full transition-transform bg-[#1e9df1]",
+                      isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                    )}
+                  />
+                </button>
+              </li>
             );
           })}
-      </div>
-
-      {/* Active indicator line */}
-      <div className="relative h-1 mx-4">
-        <div className="absolute inset-0 bg-gray-100 rounded-full" />
-        {activeId && (
-          <div
-            className="absolute h-full bg-[#1e9df1] rounded-full transition-all duration-300"
-            style={{
-              width: `${100 / features.length}%`,
-              left: `${(features.findIndex(f => f.id === activeId) / features.length) * 100}%`,
-            }}
-            aria-hidden="true"
-          />
-        )}
+        </ul>
       </div>
     </div>
   );
