@@ -28,7 +28,7 @@ export function HeaderNavigation() {
 
   return (
     <nav 
-      className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50"
+      className="bg-background/95 backdrop-blur-sm shadow-sm border-b border-border sticky top-0 z-50"
       aria-label="Main navigation"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -41,7 +41,7 @@ export function HeaderNavigation() {
                 alt="CFIPros"
                 width={40}
                 height={40}
-                className="h-10 w-auto"
+                className="h-10 w-auto dark:brightness-0 dark:invert transition-all"
               />
             </Link>
           </div>
@@ -55,7 +55,7 @@ export function HeaderNavigation() {
 
             {/* For Flight Schools - Last position */}
             <div className="ml-1">
-              <Link href="/schools" className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-accent hover:text-accent-foreground transition-colors">
+              <Link href="/schools" className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors">
                 For Flight Schools
               </Link>
             </div>

@@ -13,7 +13,13 @@ export type EventName =
   | 'conversion_start'
   | 'conversion_complete'
   | 'ab_test_impression'
-  | 'ab_test_conversion';
+  | 'ab_test_conversion'
+  | 'feature_spotlight_click'
+  | 'feature_preview_video'
+  | 'benefit_section_view'
+  | 'benefit_feature_interaction'
+  | 'pricing_plan_select'
+  | 'pricing_toggle_billing';
 
 export interface TelemetryEvent {
   name: EventName;

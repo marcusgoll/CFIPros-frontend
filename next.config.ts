@@ -17,13 +17,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
+  // Turbopack configuration (moved from experimental)
+  turbopack: {},
+
   // Experimental features
-  experimental: {
-    // Enable turbo mode for faster builds
-    turbo: {
-      rules: {},
-    },
-  },
+  experimental: {},
 
   // Server external packages
   serverExternalPackages: [],
