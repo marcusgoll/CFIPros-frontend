@@ -79,7 +79,7 @@ jobs:
 
       - name: 📊 Coverage comment (PR only)
         if: github.event_name == 'pull_request' && matrix.node-version == '18.x'
-        uses: romeovs/lcov-reporter-action@v0.3.1
+        uses: romeovs/lcov-reporter-action@v0.4.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           lcov-file: ./coverage/lcov.info
