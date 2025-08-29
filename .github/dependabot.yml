@@ -17,21 +17,18 @@ updates:
     commit-message:
       prefix: "⬆️"
       include: "scope"
-    # Security updates
+    # Allow all direct and indirect dependencies
     allow:
       - dependency-type: "direct"
-        update-types: ["version-update:semver-patch", "version-update:semver-minor"]
       - dependency-type: "indirect"
-        update-types: ["version-update:semver-patch"]
-    # Critical security updates
+    # Ignore major updates and restrict to patch/minor only
     ignore:
-      # Ignore major updates for stable dependencies
-      - dependency-name: "react"
+      # Ignore major updates for all dependencies by default
+      - dependency-type: "all"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "next"
-        update-types: ["version-update:semver-major"]
+      # Ignore minor updates for indirect dependencies (security patches only)
+      - dependency-type: "indirect"
+        update-types: ["version-update:semver-minor"]
     
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
