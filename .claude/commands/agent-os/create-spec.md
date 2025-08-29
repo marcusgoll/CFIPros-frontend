@@ -1,6 +1,5 @@
-# Analyze Product
+# Create Spec
 
-Analyze your product's codebase and install Agent OS
+Create specifications for new features
 
-Refer to the instructions located in this file:
-@.agent-os/instructions/core/analyze-product.md
+Note: Original instructions were located at .agent-os/instructions/core/create-spec.md but have been removed. This command may need updating or removal.

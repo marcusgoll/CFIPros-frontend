@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SimplePerformanceMonitor } from '@/components/SimplePerformanceMonitor';
 import { PostHogProvider } from '@/components/providers/PostHogProvider';
+import { ThemeProvider } from '@/components/providers/ThemeProvider';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -98,13 +99,20 @@ export default function RootLayout({
         <meta name="theme-color" content="#3b82f6" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className="min-h-screen bg-gray-50 font-sans antialiased">
-        <PostHogProvider>
-          <div id="root" className="relative">
-            {children}
-          </div>
-          <SimplePerformanceMonitor />
-        </PostHogProvider>
+      <body className="min-h-screen bg-background font-sans antialiased">
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <PostHogProvider>
+            <div id="root" className="relative">
+              {children}
+            </div>
+            <SimplePerformanceMonitor />
+          </PostHogProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

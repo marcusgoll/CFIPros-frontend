@@ -19,6 +19,7 @@ import { FeatureScreenshotDisplay } from "@/components/layout/FeatureScreenshotD
 import { VideoModal } from "@/components/layout/VideoModal";
 import { BenefitZipperList } from "@/components/sections/BenefitZipperList";
 import { PricingSection } from "@/components/sections/PricingSection";
+import { PremiumCTA } from "@/components/sections/PremiumCTA";
 import { trackEvent } from "@/lib/analytics/telemetry";
 import { prefersReducedMotion } from "@/lib/utils";
 
@@ -157,7 +158,7 @@ export default function CFIProsHomePage() {
         />
         {/* <Testimonials /> */}
         <PricingSection />
-        <CallToAction />
+        <PremiumCTA />
       </main>
 
       {/* Video Modal */}
@@ -249,41 +250,3 @@ function Testimonials() {
 }
 
 
-// Premium CTA Section
-function CallToAction() {
-  return (
-    <section className="from-muted/30 bg-gradient-to-b to-background py-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-premium p-12 text-center md:p-16"
-        >
-          <div className="from-primary/20 to-accent/20 absolute inset-0 bg-gradient-to-br" />
-          <div className="relative z-10">
-            <h2 className="mb-4 text-3xl font-bold text-white md:text-4xl">
-              Ready to accelerate your training?
-            </h2>
-            <p className="mx-auto mb-8 max-w-2xl text-white/90">
-              Join thousands of pilots who are training smarter, not harder
-            </p>
-            <Link href="/upload">
-              <PremiumButton
-                variant="secondary"
-                size="lg"
-                rightIcon={<ArrowRightCircle className="h-5 w-5" />}
-                className="bg-white text-primary hover:bg-white/90"
-              >
-                Start your free analysis
-              </PremiumButton>
-            </Link>
-            <p className="mt-4 text-sm text-white/70">
-              No credit card required • 5-minute setup
-            </p>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
