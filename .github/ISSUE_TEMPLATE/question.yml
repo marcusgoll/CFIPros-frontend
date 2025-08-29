@@ -1,0 +1,92 @@
+name: ❓ Question or Discussion
+description: Ask a question about CFIPros Frontend or start a discussion
+title: "❓ [Question]: "
+labels: ["question", "discussion"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got a question? We're here to help! Whether it's about development, aviation training workflows, or how to contribute, feel free to ask. 🛩️
+
+  - type: dropdown
+    id: question-type
+    attributes:
+      label: Question Type
+      description: What type of question is this?
+      options:
+        - Development/Technical
+        - Aviation Training Workflow
+        - Contributing/Open Source
+        - Architecture/Design Decisions
+        - Performance/Optimization
+        - Security Implementation
+        - Testing Strategy
+        - Documentation
+        - General Discussion
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: |
+        Please be as specific as possible. Include context about what you're trying to accomplish or understand.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant background information
+      placeholder: |
+        - What are you working on?
+        - What have you already tried?
+        - What documentation have you consulted?
+        - Are you a pilot, CFI, developer, or other role?
+
+  - type: textarea
+    id: aviation-context
+    attributes:
+      label: Aviation Context (if applicable)
+      description: If this relates to aviation training, please provide context
+      placeholder: |
+        - What type of aviation training is involved?
+        - Which regulations or standards apply?
+        - How does this relate to CFI training workflows?
+        - Are you working with specific aviation documents or materials?
+
+  - type: textarea
+    id: attempted-solutions
+    attributes:
+      label: What You've Tried
+      description: What approaches or solutions have you already attempted?
+      placeholder: |
+        List anything you've already tried, including:
+        - Documentation you've read
+        - Code you've experimented with
+        - Similar projects you've looked at
+        - Forum posts or Stack Overflow questions
+
+  - type: textarea
+    id: expected-outcome
+    attributes:
+      label: Expected Outcome
+      description: What are you hoping to achieve or understand?
+      placeholder: Describe what success looks like for your question or goal
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: Additional Information
+      description: Any other details that might be helpful
+      placeholder: |
+        - Code snippets (if relevant)
+        - Error messages
+        - Links to relevant resources
+        - Screenshots (if applicable)

@@ -1,8 +1,7 @@
 {
   "name": "cfipros-frontend",
   "version": "1.0.0",
-  "private": true,
-  "description": "CFIPros Frontend - Next.js 15 application for CFI training platform",
+  "description": "Production-ready Next.js 15 frontend for aviation training platforms - Built by CFIPros.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/marcusgoll/CFIPros-frontend.git"
@@ -11,7 +10,7 @@
   "bugs": {
     "url": "https://github.com/marcusgoll/CFIPros-frontend/issues"
   },
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": {
     "name": "Marcus Gollahon",
     "url": "https://github.com/marcusgoll"
@@ -60,6 +59,7 @@
     "stripe": "^17.3.1",
     "swr": "^2.2.5",
     "tailwind-merge": "^2.5.4",
+    "web-vitals": "^5.1.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -71,6 +71,7 @@
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.5.14",
+    "@types/jest-axe": "^3.5.9",
     "@types/node": "^22.9.3",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

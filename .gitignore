@@ -93,5 +93,137 @@ junit.xml
 *.db
 *.sqlite
 
-# Agent OS (preserve the directory structure)
-# .agent-os is intentionally NOT ignored as it contains project configuration
+# Business-sensitive files and directories
+.agent-os/
+.claude/
+.internal/
+.private/
+business/
+internal/
+proprietary/
+
+# Claude AI assistant files
+**/claude.md
+**/CLAUDE.md
+**/*claude*.md
+**/*CLAUDE*.md
+
+# Business configuration files
+config/production.ts
+config/business.ts
+config/internal.ts
+.env.production
+.env.business
+
+# API keys and secrets (additional protection)
+**/secrets/
+**/*secret*
+**/*key*.json
+**/*credentials*.json
+
+# Business documents and specifications
+docs/internal/
+docs/business/
+docs/proprietary/
+specs/business/
+specs/internal/
+
+# Deployment and infrastructure configs
+docker-compose.prod.yml
+docker-compose.production.yml
+k8s/
+kubernetes/
+deployment/production/
+infrastructure/
+
+# Business analytics and reporting
+analytics/internal/
+reports/business/
+metrics/proprietary/
+
+# Customer data and backups
+customer-data/
+backups/
+exports/
+dumps/
+
+# License and legal files (business-specific)
+licenses/business/
+legal/internal/
+
+# Third-party integrations (production configs)
+integrations/production/
+webhooks/production/
+
+# Monitoring and alerting configs
+monitoring/production/
+alerts/business/
+
+# SSL certificates and security
+ssl/
+certificates/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Business logic and proprietary services
+lib/business/
+lib/services/proprietary/
+lib/utils/business/
+services/proprietary/
+utils/business/
+
+# Business-specific API routes
+app/api/business/
+app/api/proprietary/
+app/api/internal/
+app/api/admin/
+app/api/analytics/
+app/api/billing/
+app/api/enterprise/
+
+# Business algorithms and models
+algorithms/
+models/business/
+ai/proprietary/
+ml/business/
+
+# Business configurations and constants
+lib/config/business.ts
+lib/config/proprietary.ts
+lib/constants/business.ts
+lib/constants/proprietary.ts
+
+# Proprietary middleware and utilities
+middleware/business/
+middleware/proprietary/
+middleware/enterprise/
+
+# Business-specific types and schemas
+types/business/
+types/proprietary/
+schemas/business/
+validation/proprietary/
+
+# Customer-specific customizations
+customizations/
+themes/business/
+branding/enterprise/
+
+# Business intelligence and reporting
+bi/
+reporting/business/
+dashboards/internal/
+
+# Proprietary integrations
+integrations/business/
+connectors/proprietary/
+apis/enterprise/
+
+# Revenue and billing logic
+billing/
+revenue/
+subscriptions/business/
+payments/proprietary/

@@ -85,7 +85,9 @@ export function useOverflow(ref: React.RefObject<HTMLElement>) {
   
   const update = useCallback(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const { scrollLeft, scrollWidth, clientWidth } = el;
     const maxScrollLeft = scrollWidth - clientWidth;
     setState({
@@ -97,7 +99,9 @@ export function useOverflow(ref: React.RefObject<HTMLElement>) {
   useEffect(() => {
     update();
     const el = ref.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     
     const onScroll = () => update();
     el.addEventListener("scroll", onScroll, { passive: true });
@@ -141,7 +145,9 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
 
   const scrollByAmount = useCallback((dir: number) => {
     const el = listRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const amount = Math.max(240, Math.floor(el.clientWidth * 0.7));
     el.scrollBy({ left: dir * amount, behavior: "smooth" });
   }, []);
@@ -172,7 +178,9 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
   // Center a tab within the scroll container
   const centerItem = useCallback((index: number, smooth = false) => {
     const el = listRef.current;
-    if (!el) return;
+    if (!el) {
+      return;
+    }
     const child = el.children[index] as HTMLElement;
     if (!child) return;
     const childRect = child.getBoundingClientRect();

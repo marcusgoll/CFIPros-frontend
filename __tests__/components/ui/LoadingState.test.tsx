@@ -158,7 +158,7 @@ describe('InlineLoading', () => {
   });
 
   it('should use small spinner size', () => {
-    render(<InlineLoading loading={true} />);
+    render(<InlineLoading loading={true}>Content</InlineLoading>);
     
     expect(screen.getByTestId('loading-spinner')).toHaveAttribute('data-size', 'sm');
   });

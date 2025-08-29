@@ -1,0 +1,47 @@
+version: 2
+
+updates:
+  # Enable version updates for npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    assignees:
+      - "marcusgoll"
+    labels:
+      - "dependencies"
+      - "automated-pr"
+    commit-message:
+      prefix: "⬆️"
+      include: "scope"
+    # Security updates
+    allow:
+      - dependency-type: "direct"
+        update-types: ["version-update:semver-patch", "version-update:semver-minor"]
+      - dependency-type: "indirect"
+        update-types: ["version-update:semver-patch"]
+    # Critical security updates
+    ignore:
+      # Ignore major updates for stable dependencies
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+    
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    commit-message:
+      prefix: "🔧"
+    labels:
+      - "github-actions"
+      - "automated-pr"
