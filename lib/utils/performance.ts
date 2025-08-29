@@ -40,7 +40,7 @@ export class PerformanceTracker {
       const clsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'layout-shift') {
-            const layoutShift = entry as any; // Cast to access layout-shift specific properties
+            const layoutShift = entry as PerformanceEntry & { hadRecentInput: boolean; value: number }; // Cast to access layout-shift specific properties
             if (!layoutShift.hadRecentInput) {
               this.recordMetric({
                 name: 'CLS',
@@ -77,7 +77,7 @@ export class PerformanceTracker {
       const fidObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'first-input') {
-            const firstInput = entry as any; // Cast to access first-input specific properties
+            const firstInput = entry as PerformanceEntry & { processingStart: number }; // Cast to access first-input specific properties
             this.recordMetric({
               name: 'FID',
               value: firstInput.processingStart - entry.startTime,
@@ -202,7 +202,7 @@ export function measureWebVitals(): void {
 // Memory usage monitoring
 export function measureMemoryUsage(): void {
   if (typeof window !== 'undefined' && 'memory' in performance) {
-    const memory = (performance as any).memory;
+    const memory = (performance as Performance & { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
     const tracker = PerformanceTracker.getInstance();
     
     tracker.recordMetric({

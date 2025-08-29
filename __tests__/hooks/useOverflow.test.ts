@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { useOverflow } from "@/components/layout/FeatureSpotlightMenu";
-import { RefObject } from "react";
+import { MutableRefObject } from "react";
 
 // Mock ResizeObserver
 const mockResizeObserver = jest.fn().mockImplementation((callback) => ({
@@ -31,7 +31,7 @@ const createMockElement = (scrollProps: {
 });
 
 describe("useOverflow Hook", () => {
-  let mockRef: RefObject<HTMLElement>;
+  let mockRef: MutableRefObject<HTMLElement | null>;
 
   beforeEach(() => {
     jest.clearAllMocks();

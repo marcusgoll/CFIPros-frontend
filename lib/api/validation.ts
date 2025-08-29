@@ -68,7 +68,7 @@ export class RequestValidator {
         };
       }
 
-      if (!config.fileUpload.allowedTypes.includes(file.type as any)) {
+      if (!config.fileUpload.allowedTypes.includes(file.type)) {
         return {
           isValid: false,
           error: `Unsupported file type: ${file.type}. Supported types: ${config.fileUpload.allowedTypes.join(', ')}`,
@@ -76,7 +76,7 @@ export class RequestValidator {
       }
 
       const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-      if (!config.fileUpload.allowedExtensions.includes(extension as any)) {
+      if (!config.fileUpload.allowedExtensions.includes(extension)) {
         return {
           isValid: false,
           error: `Unsupported file extension: ${extension}. Supported extensions: ${config.fileUpload.allowedExtensions.join(', ')}`,

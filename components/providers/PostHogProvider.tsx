@@ -17,7 +17,7 @@ export function PostHogProvider({ children }: PostHogProviderProps) {
     const initializeAnalytics = async () => {
       try {
         // Only initialize on client side
-        if (typeof window === 'undefined') return;
+        if (typeof window === 'undefined') {return;}
 
         // Check for required environment variables
         const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;

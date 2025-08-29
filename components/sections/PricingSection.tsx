@@ -30,7 +30,7 @@ const iconMap = {
 };
 
 const renderIcon = (iconName?: string, className = "h-5 w-5") => {
-  if (!iconName) return null;
+  if (!iconName) {return null;}
   const IconComponent = iconMap[iconName as keyof typeof iconMap];
   return IconComponent ? <IconComponent className={className} /> : null;
 };
@@ -385,7 +385,7 @@ export function PricingSection() {
 function FeatureComparisonTable({ tiers }: { tiers: PricingTier[] }) {
   const allFeatures = FEATURE_COMPARISON_DATA;
 
-  const renderValue = (value: any) => {
+  const renderValue = (value: boolean | string | number) => {
     if (typeof value === "boolean") {
       return value ? (
         <Check className="h-5 w-5 text-primary mx-auto" />

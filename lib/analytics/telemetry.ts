@@ -21,9 +21,11 @@ export type EventName =
   | 'pricing_plan_select'
   | 'pricing_toggle_billing';
 
+export type TelemetryValue = string | number | boolean | null | undefined;
+
 export interface TelemetryEvent {
   name: EventName;
-  properties?: Record<string, any>;
+  properties?: Record<string, TelemetryValue>;
   timestamp?: number;
   sessionId?: string;
   userId?: string;
@@ -70,7 +72,7 @@ class TelemetryService {
     apiKey?: string;
     apiHost?: string;
   }) {
-    if (this.isInitialized) return;
+    if (this.isInitialized) {return;}
     
     this.debugMode = config?.debugMode ?? this.debugMode;
     
@@ -134,7 +136,7 @@ class TelemetryService {
   /**
    * Track a telemetry event with PostHog
    */
-  track(name: EventName, properties?: Record<string, any>) {
+  track(name: EventName, properties?: Record<string, TelemetryValue>) {
     const event: TelemetryEvent = {
       name,
       properties,
@@ -331,7 +333,7 @@ class TelemetryService {
   /**
    * Set user identity for tracking
    */
-  identify(userId: string, traits?: Record<string, any>) {
+  identify(userId: string, traits?: Record<string, TelemetryValue>) {
     if (typeof window !== 'undefined' && posthog) {
       posthog.identify(userId, traits);
     }
@@ -348,7 +350,7 @@ class TelemetryService {
   }
 
   private getStoredVariant(testId: string): ABTestVariant | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {return null;}
     
     const stored = localStorage.getItem(`ab_test_${testId}`);
     return stored ? JSON.parse(stored) : null;
@@ -382,7 +384,7 @@ class TelemetryService {
 export const telemetry = TelemetryService.getInstance();
 
 // Export convenience functions
-export const trackEvent = (name: EventName, properties?: Record<string, any>) => {
+export const trackEvent = (name: EventName, properties?: Record<string, TelemetryValue>) => {
   telemetry.track(name, properties);
 };
 

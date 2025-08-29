@@ -20,7 +20,7 @@ export function SimplePerformanceMonitor({
   const [vitals, setVitals] = useState<WebVital[]>([]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {return;}
 
     trackWebVitals((vital) => {
       logWebVital(vital);

@@ -1,27 +1,32 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
 import {
-  Check,
   Star,
-  ArrowRightCircle,
 } from "lucide-react";
-import Link from "next/link";
-import { PremiumButton } from "@/components/ui/PremiumButton";
 import { HeroVersionC } from "@/components/layout/HeroVersionC";
 import {
-  FeatureSpotlightMenu,
   FEATURE_SCREENSHOTS,
   DEFAULT_FEATURES,
 } from "@/components/layout/FeatureSpotlightMenu";
-import { FeatureScreenshotDisplay } from "@/components/layout/FeatureScreenshotDisplay";
-import { VideoModal } from "@/components/layout/VideoModal";
-import { BenefitZipperList } from "@/components/sections/BenefitZipperList";
-import { PricingSection } from "@/components/sections/PricingSection";
-import { PremiumCTA } from "@/components/sections/PremiumCTA";
 import { trackEvent } from "@/lib/analytics/telemetry";
 import { prefersReducedMotion } from "@/lib/utils";
+
+// Dynamic imports for heavy components
+const FeatureSpotlightMenu = lazy(() => import("@/components/layout/FeatureSpotlightMenu").then(m => ({ default: m.FeatureSpotlightMenu })));
+const FeatureScreenshotDisplay = lazy(() => import("@/components/layout/FeatureScreenshotDisplay").then(m => ({ default: m.FeatureScreenshotDisplay })));
+const VideoModal = lazy(() => import("@/components/layout/VideoModal").then(m => ({ default: m.VideoModal })));
+const BenefitZipperList = lazy(() => import("@/components/sections/BenefitZipperList").then(m => ({ default: m.BenefitZipperList })));
+const PricingSection = lazy(() => import("@/components/sections/PricingSection").then(m => ({ default: m.PricingSection })));
+const PremiumCTA = lazy(() => import("@/components/sections/PremiumCTA").then(m => ({ default: m.PremiumCTA })));
+
+// Loading fallback component
+const SectionLoading = ({ height = "h-64" }: { height?: string }) => (
+  <div className={`${height} flex items-center justify-center bg-muted/20 animate-pulse`}>
+    <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
+  </div>
+);
 
 export default function CFIProsHomePage() {
   const [isMounted, setIsMounted] = useState(false);
@@ -107,15 +112,17 @@ export default function CFIProsHomePage() {
               viewport={{ once: true }}
               transition={{ delay: reducedMotion ? 0 : 0.2 }}
             >
-              <FeatureSpotlightMenu
-                onSelect={(featureId) => {
-                  trackEvent("feature_spotlight_click", {
-                    feature: featureId,
-                    section: "landing_page",
-                  });
-                  setSelectedFeature(featureId);
-                }}
-              />
+              <Suspense fallback={<SectionLoading height="h-32" />}>
+                <FeatureSpotlightMenu
+                  onSelect={(featureId) => {
+                    trackEvent("feature_spotlight_click", {
+                      feature: featureId,
+                      section: "landing_page",
+                    });
+                    setSelectedFeature(featureId);
+                  }}
+                />
+              </Suspense>
             </motion.div>
           </div>
         </section>
@@ -123,50 +130,61 @@ export default function CFIProsHomePage() {
         {/* Feature Screenshot Display */}
         <section className="bg-muted/20 pb-6">
           <div className="mx-auto max-w-7xl px-4 md:px-6">
-            <FeatureScreenshotDisplay
-              featureId={selectedFeature}
-              featureName={getFeatureName(selectedFeature)}
-              screenshotUrl={
-                FEATURE_SCREENSHOTS[selectedFeature] ||
-                FEATURE_SCREENSHOTS.upload
-              }
-              onPlayClick={(featureId) => {
-                trackEvent("feature_preview_video", {
-                  feature: featureId,
-                  section: "landing_page",
-                });
-                setVideoModalOpen(true);
-              }}
-            />
+            <Suspense fallback={<SectionLoading height="h-96" />}>
+              <FeatureScreenshotDisplay
+                featureId={selectedFeature}
+                featureName={getFeatureName(selectedFeature)}
+                screenshotUrl={
+                  FEATURE_SCREENSHOTS[selectedFeature] ||
+                  FEATURE_SCREENSHOTS.upload
+                }
+                onPlayClick={(featureId) => {
+                  trackEvent("feature_preview_video", {
+                    feature: featureId,
+                    section: "landing_page",
+                  });
+                  setVideoModalOpen(true);
+                }}
+              />
+            </Suspense>
           </div>
         </section>
 
-        <BenefitZipperList 
-          onSectionView={(sectionId) => {
-            trackEvent("benefit_section_view", {
-              section: sectionId,
-              page: "landing_page",
-            });
-          }}
-          onFeatureInteraction={(sectionId, featureIndex) => {
-            trackEvent("benefit_feature_interaction", {
-              section: sectionId,
-              feature_index: featureIndex,
-              page: "landing_page",
-            });
-          }}
-        />
+        <Suspense fallback={<SectionLoading height="h-screen" />}>
+          <BenefitZipperList 
+            onSectionView={(sectionId) => {
+              trackEvent("benefit_section_view", {
+                section: sectionId,
+                page: "landing_page",
+              });
+            }}
+            onFeatureInteraction={(sectionId, featureIndex) => {
+              trackEvent("benefit_feature_interaction", {
+                section: sectionId,
+                feature_index: featureIndex,
+                page: "landing_page",
+              });
+            }}
+          />
+        </Suspense>
         {/* <Testimonials /> */}
-        <PricingSection />        <PremiumCTA />
+        <Suspense fallback={<SectionLoading height="h-96" />}>
+          <PricingSection />
+        </Suspense>
+        <Suspense fallback={<SectionLoading height="h-64" />}>
+          <PremiumCTA />
+        </Suspense>
       </main>
 
       {/* Video Modal */}
-      <VideoModal
-        featureId={selectedFeature}
-        featureName={getFeatureName(selectedFeature)}
-        isOpen={videoModalOpen}
-        onClose={() => setVideoModalOpen(false)}
-      />
+      <Suspense fallback={null}>
+        <VideoModal
+          featureId={selectedFeature}
+          featureName={getFeatureName(selectedFeature)}
+          isOpen={videoModalOpen}
+          onClose={() => setVideoModalOpen(false)}
+        />
+      </Suspense>
     </div>
   );
 }

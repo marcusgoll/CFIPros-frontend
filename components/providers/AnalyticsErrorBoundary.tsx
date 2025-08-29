@@ -29,7 +29,7 @@ export class AnalyticsErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log analytics errors without blocking the app
     console.warn('Analytics Error Boundary caught an error:', {
       error: error.message,

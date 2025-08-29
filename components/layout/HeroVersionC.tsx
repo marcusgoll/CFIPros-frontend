@@ -8,8 +8,8 @@ import { BackgroundShapes } from "@/components/ui/BackgroundShapes";
 import { trackHeroCTA } from "@/lib/analytics/telemetry";
 
 interface HeroVersionCProps {
-  opacity: any;
-  scale: any;
+  opacity: number;
+  scale: number;
 }
 
 export function HeroVersionC({ opacity, scale }: HeroVersionCProps) {

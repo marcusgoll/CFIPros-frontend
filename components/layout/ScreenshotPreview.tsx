@@ -53,13 +53,13 @@ export const ScreenshotPreview: React.FC<ScreenshotPreviewProps> = ({
 
   // Focus trap
   useEffect(() => {
-    if (!isVisible) return;
+    if (!isVisible) {return;}
 
     const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") return;
+      if (e.key !== "Tab") {return;}
 
       const dialog = dialogRef.current;
-      if (!dialog) return;
+      if (!dialog) {return;}
 
       const focusableElements = dialog.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'

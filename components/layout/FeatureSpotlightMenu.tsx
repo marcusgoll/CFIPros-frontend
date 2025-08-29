@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export interface FeatureItem {
   id: string;
   label: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<any>;
 }
 
 export interface FeatureSpotlightMenuProps {
@@ -118,7 +118,7 @@ export function useOverflow(ref: React.RefObject<HTMLElement>) {
     return () => {
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
-      if (ro) ro.disconnect();
+      if (ro) {ro.disconnect();}
     };
   }, [update]);
   
@@ -138,9 +138,9 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
 
   const select = useCallback((id: string) => {
     setActive(id);
-    if (onSelect) onSelect(id);
+    if (onSelect) {onSelect(id);}
     const idx = features.findIndex(f => f.id === id);
-    if (idx >= 0) centerItem(idx, true);
+    if (idx >= 0) {centerItem(idx, true);}
   }, [features, onSelect]);
 
   const scrollByAmount = useCallback((dir: number) => {
@@ -156,7 +156,7 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
     if (e.key === "ArrowRight") {
       e.preventDefault();
       const next = (idx + 1) % features.length;
-      select(features[next].id);
+      select(features[next]?.id || '');
       requestAnimationFrame(() => {
         const nextElement = listRef.current?.children[next] as HTMLElement;
         nextElement?.focus();
@@ -164,14 +164,14 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
     } else if (e.key === "ArrowLeft") {
       e.preventDefault();
       const prev = (idx - 1 + features.length) % features.length;
-      select(features[prev].id);
+      select(features[prev]?.id || '');
       requestAnimationFrame(() => {
         const prevElement = listRef.current?.children[prev] as HTMLElement;
         prevElement?.focus();
       });
     } else if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      select(features[idx].id);
+      select(features[idx]?.id || '');
     }
   }, [features, select]);
 
@@ -182,7 +182,7 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
       return;
     }
     const child = el.children[index] as HTMLElement;
-    if (!child) return;
+    if (!child) {return;}
     const childRect = child.getBoundingClientRect();
     const elRect = el.getBoundingClientRect();
     const childCenter = childRect.left - elRect.left + childRect.width / 2;

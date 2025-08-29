@@ -51,7 +51,7 @@ class RateLimiter {
     // Only initialize Redis in production
     if (process.env.NODE_ENV === 'production' && process.env['REDIS_URL']) {
       try {
-        // @ts-ignore - Redis is dynamically imported only in production
+        // @ts-expect-error - Redis is dynamically imported only in production
         const { createClient } = await import('redis');
         this.redisClient = createClient({
           url: process.env['REDIS_URL'],

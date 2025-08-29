@@ -139,7 +139,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
 
   const uploadAll = useCallback(async () => {
     const pendingFiles = files.filter(f => f.status === "pending");
-    if (pendingFiles.length === 0) return;
+    if (pendingFiles.length === 0) {return;}
 
     setIsUploading(true);
     

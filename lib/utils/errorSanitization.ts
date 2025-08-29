@@ -3,7 +3,7 @@
  * Removes sensitive information like file paths, URLs, and credentials
  */
 export function sanitizeErrorMessage(message: string): string {
-  if (!message) return '';
+  if (!message) {return '';}
   
   return message
     // Remove file paths (Windows and Unix)
@@ -28,7 +28,7 @@ export function sanitizeErrorMessage(message: string): string {
  * Sanitize stack trace for safe logging
  */
 export function sanitizeStackTrace(stack: string | undefined): string {
-  if (!stack) return '';
+  if (!stack) {return '';}
   
   return stack
     .split('\n')

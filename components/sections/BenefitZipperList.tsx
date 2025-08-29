@@ -336,44 +336,6 @@ export const BenefitZipperList: React.FC<BenefitZipperListProps> = memo(({
               );
             })}
           </div>
-
-          {/* Bottom CTA */}
-          {showCTA && (
-            <motion.div
-              ref={ctaRef}
-              initial={reducedMotion ? { opacity: 0 } : BENEFIT_ANIMATION_VARIANTS.desktop.hidden}
-              animate={ctaInView ? (reducedMotion ? { opacity: 1 } : BENEFIT_ANIMATION_VARIANTS.desktop.visible) : {}}
-              transition={{ duration: mergedConfig.ANIMATION_DURATION, delay: 0.2 }}
-              className={BENEFIT_CLASSES.ctaContainer}
-            >
-              {customCTA || (
-                <div className={BENEFIT_CLASSES.glassCard}>
-                  <h3 className="text-xl font-semibold mb-2">
-                    Ready to transform your training?
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    Join 12,847+ pilots who've already accelerated their aviation career
-                  </p>
-                  <div className={BENEFIT_CLASSES.buttonContainer}>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-6 py-3 bg-gradient-premium text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-shadow"
-                    >
-                      Start Free Analysis
-                    </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="px-6 py-3 border border-border rounded-lg font-medium hover:border-primary transition-colors"
-                    >
-                      View Demo
-                    </motion.button>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
         </div>
       </section>
     </BenefitErrorBoundary>

@@ -50,7 +50,7 @@ export function formatRelativeTime(date: Date | string): string {
  * Truncate text to a specified length
  */
 export function truncate(text: string, length: number): string {
-  if (text.length <= length) return text;
+  if (text.length <= length) {return text;}
   return text.slice(0, length).trim() + "...";
 }
 
@@ -90,7 +90,7 @@ export function isValidEmail(email: string): boolean {
  * Format file size in bytes to human-readable format
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
+  if (bytes === 0) {return "0 Bytes";}
   
   const k = 1024;
   const sizes = ["Bytes", "KB", "MB", "GB"];
@@ -117,9 +117,9 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  * Deep clone an object
  */
 export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== "object") return obj;
-  if (obj instanceof Date) return new Date(obj.getTime()) as T;
-  if (obj instanceof Array) return obj.map(item => deepClone(item)) as T;
+  if (obj === null || typeof obj !== "object") {return obj;}
+  if (obj instanceof Date) {return new Date(obj.getTime()) as T;}
+  if (obj instanceof Array) {return obj.map(item => deepClone(item)) as T;}
   if (typeof obj === "object") {
     const clonedObj = {} as T;
     for (const key in obj) {
@@ -136,18 +136,18 @@ export function deepClone<T>(obj: T): T {
  * Check if user prefers reduced motion
  */
 export function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {return false;}
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 /**
  * Get reduced motion variants for framer-motion
  */
-export function getMotionVariants<T extends Record<string, any>>(
+export function getMotionVariants<T extends Record<string, unknown>>(
   normalVariants: T,
   reducedVariants?: Partial<T>
 ): T {
-  if (!prefersReducedMotion()) return normalVariants;
+  if (!prefersReducedMotion()) {return normalVariants;}
   
   return {
     ...normalVariants,

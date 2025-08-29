@@ -10,7 +10,7 @@ export interface HealthTestResult {
   test: string;
   status: 'pass' | 'fail' | 'warning';
   message: string;
-  data?: any;
+  data?: unknown;
 }
 
 export async function runPostHogHealthTests(): Promise<HealthTestResult[]> {

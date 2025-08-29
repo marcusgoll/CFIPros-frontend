@@ -114,7 +114,54 @@ const nextConfig: NextConfig = {
         ...config.resolve.alias,
         "@": __dirname,
       };
+
+      // Optimize bundle splitting for better performance
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          ...config.optimization.splitChunks,
+          cacheGroups: {
+            ...config.optimization.splitChunks.cacheGroups,
+            // Separate Framer Motion into its own chunk
+            framerMotion: {
+              test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+              name: 'framer-motion',
+              chunks: 'all',
+              priority: 20,
+            },
+            // Separate Lucide React into its own chunk
+            lucideReact: {
+              test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+              name: 'lucide-react',
+              chunks: 'all',
+              priority: 20,
+            },
+            // Separate Clerk into its own chunk
+            clerk: {
+              test: /[\\/]node_modules[\\/]@clerk[\\/]/,
+              name: 'clerk',
+              chunks: 'all',
+              priority: 20,
+            },
+            // Group common vendor libraries
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+              priority: 10,
+            },
+          },
+        },
+      };
     }
+
+    // Enable tree shaking for better performance
+    config.optimization = {
+      ...config.optimization,
+      usedExports: true,
+      sideEffects: false,
+    };
+
     return config;
   },
 

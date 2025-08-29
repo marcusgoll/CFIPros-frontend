@@ -73,10 +73,10 @@ export function PerformanceMonitor({
     };
 
     const threshold = thresholds[name];
-    if (!threshold) return 'text-gray-600';
+    if (!threshold) {return 'text-gray-600';}
 
-    if (value <= threshold.good) return 'text-green-600';
-    if (value <= threshold.poor) return 'text-yellow-600';
+    if (value <= threshold.good) {return 'text-green-600';}
+    if (value <= threshold.poor) {return 'text-yellow-600';}
     return 'text-red-600';
   };
 
@@ -182,7 +182,7 @@ export function PerformanceDebugPanel() {
   const [report, setReport] = useState<ReturnType<typeof generatePerformanceReport> | null>(null);
   
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'development') return;
+    if (process.env.NODE_ENV !== 'development') {return;}
     
     const interval = setInterval(() => {
       setReport(generatePerformanceReport());

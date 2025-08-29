@@ -23,7 +23,7 @@ export interface FeaturePreviewData {
 }
 
 // Feature spotlight menu extensions
-export interface EnhancedFeatureItem extends Record<string, any> {
+export interface EnhancedFeatureItem {
   id: string;
   label: string;
   Icon: React.ComponentType<{ className?: string }>;

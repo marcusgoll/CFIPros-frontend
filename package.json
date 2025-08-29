@@ -41,6 +41,7 @@
     "analyze:browser": "cross-env ANALYZE=true BUNDLE_ANALYZE=browser npm run build"
   },
   "dependencies": {
+    "@clerk/nextjs": "^6.31.6",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-navigation-menu": "^1.2.14",
     "@radix-ui/react-slot": "^1.2.3",

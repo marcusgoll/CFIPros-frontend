@@ -411,7 +411,7 @@ export class FileUploadSecurity {
    */
   private static async fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
-      const FileReader = (global as any).FileReader;
+      const FileReader = (typeof global !== 'undefined' && global.FileReader) ? (global as typeof globalThis & { FileReader: typeof window.FileReader }).FileReader : window.FileReader;
       
       if (FileReader) {
         const reader = new FileReader();
