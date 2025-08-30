@@ -227,3 +227,5 @@ billing/
 revenue/
 subscriptions/business/
 payments/proprietary/
+# clerk configuration (can include secrets)
+/.clerk/

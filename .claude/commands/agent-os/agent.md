@@ -35,14 +35,14 @@ encoding: UTF-8
 
 ```yaml
 branching:
-  base: main
+  base: master
   feature_prefix: feature/
   hotfix_prefix: hotfix/
   naming: "{prefix}{yyyy-mm-dd}-{slug}"
 reviews:
   coverage_min: 0.80
   required_reviewers: 1
-  protected_branches: ["main"]
+  protected_branches: ["master"]
   enforce_conventional_commits: true
 ci_checks:
   required: ["lint", "test", "build", "typecheck", "audit"]
@@ -87,7 +87,7 @@ EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 * Spec + tasks pass planning gates (specificity, task sizing, acceptance clarity).
 * Local TDD loop complete; coverage ≥ configured threshold.
 * Reviews passed: **R1 spec, R2 design, R3 pre‑PR, R4 PR**.
-* Merged to **main**; CLAUDE.md links updated; repo hygiene + (optional) release complete.
+* Merged to **master**; CLAUDE.md links updated; repo hygiene + (optional) release complete.
 * Recap written; roadmap/decisions updated; standards proposals captured.
 
 ---
@@ -162,7 +162,7 @@ EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 <step number="3P2" subagent="senior-code-reviewer" name="pr-review">
 - Enforce standards, security, reliability, readability, and DRY/KISS; attach actionable comments.
 </step>
-<step number="3P3" subagent="git-workflow" name="merge-to-main">
+<step number="3P3" subagent="git-workflow" name="merge-to-master">
 - Ensure protected branch checks (CI + approvals) and merge per policy (squash/rebase).
 </step>
 
@@ -220,7 +220,7 @@ EXECUTE: @.agent-os/instructions/meta/pre-flight.md
 ## Outputs
 
 * Updated Product docs (as needed), Spec folder with `spec.md`, `spec-lite.md`, `tasks.md` (+ sub‑specs), recap under `.agent-os/recaps/`.
-* PR merged to `main`; `link-report.md` with fixed/unresolved links.
+* PR merged to `master`; `link-report.md` with fixed/unresolved links.
 * Repo tidy; `CHANGELOG.md` updated; tag `{tag_prefix}X.Y.Z` (if released).
 * `standards-proposals.md`; roadmap and decisions updated.
 

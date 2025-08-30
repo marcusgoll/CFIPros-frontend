@@ -32,11 +32,12 @@ describe('APIClient', () => {
     it('should make successful GET request', async () => {
       const result = await client.get('/test');
 
-      expect(mockFetch).toHaveBeenCalledWith('/test', {
+      expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/v1/test', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: expect.any(AbortSignal),
       });
       expect(result).toEqual(mockResponse);
     });
@@ -44,11 +45,12 @@ describe('APIClient', () => {
     it('should include query parameters', async () => {
       await client.get('/test?page=1&limit=10');
 
-      expect(mockFetch).toHaveBeenCalledWith('/test?page=1&limit=10', {
+      expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/v1/test?page=1&limit=10', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: expect.any(AbortSignal),
       });
     });
 
@@ -57,12 +59,13 @@ describe('APIClient', () => {
         'Authorization': 'Bearer token' 
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('/test', {
+      expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/v1/test', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer token',
         },
+        signal: expect.any(AbortSignal),
       });
     });
   });

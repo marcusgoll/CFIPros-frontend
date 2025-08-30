@@ -8,11 +8,13 @@ import { featuresMenu, instructorsMenu } from '@/lib/config/navigation';
 
 interface MobileNavigationProps {
   isSignedIn: boolean;
+  isLoaded: boolean;
   SignInButton: React.ComponentType<{ mode?: string; children: React.ReactNode }>;
   SignUpButton: React.ComponentType<{ mode?: string; children: React.ReactNode }>;
+  UserButton: React.ComponentType<{ afterSignOutUrl?: string }>;
 }
 
-export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: MobileNavigationProps) {
+export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpButton, UserButton }: MobileNavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -215,9 +217,14 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
 
             {/* Mobile Authentication */}
             <div className="border-t border-border pt-4 mt-4 space-y-2">
-              {isSignedIn ? (
+              {!isLoaded ? (
+                <div className="px-3 py-2 space-y-2">
+                  <div className="h-10 bg-muted animate-pulse rounded-md"></div>
+                  <div className="h-10 bg-muted animate-pulse rounded-md"></div>
+                </div>
+              ) : isSignedIn ? (
                 <div className="px-3 py-2">
-                  <div>User Button</div>
+                  <UserButton afterSignOutUrl="/" />
                 </div>
               ) : (
                 <>

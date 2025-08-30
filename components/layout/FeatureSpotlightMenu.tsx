@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 export interface FeatureItem {
   id: string;
   label: string;
-  Icon: React.ComponentType<any>;
+  Icon: React.ComponentType<{ className?: string }>;
 }
 
 export interface FeatureSpotlightMenuProps {

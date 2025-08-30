@@ -3,21 +3,14 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-// TODO: Install Clerk when upgrading Next.js version
-// import { useUser, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
-
-// Temporary mock for auth until Clerk is properly installed
-const useUser = () => ({ isSignedIn: false });
-const SignInButton = ({ mode, children }: { mode?: string; children: React.ReactNode }) => <>{children}</>;
-const SignUpButton = ({ mode, children }: { mode?: string; children: React.ReactNode }) => <>{children}</>;
-const UserButton = ({ afterSignOutUrl }: { afterSignOutUrl?: string }) => <div>User Button</div>;
+import { useUser, SignInButton, SignUpButton, UserButton } from '@clerk/nextjs';
 import { Button } from '@/components/ui';
 import { DesktopNavigation } from '@/components/layout/Navigation/DesktopNavigation';
 import { InstructorDropdown } from '@/components/layout/Navigation/InstructorDropdown';
 import { MobileNavigation } from '@/components/layout/Navigation/MobileNavigation';
 
 export function HeaderNavigation() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, isLoaded } = useUser();
 
   // Memoize auth components to prevent unnecessary re-renders
   const authComponents = useMemo(() => ({
@@ -63,7 +56,12 @@ export function HeaderNavigation() {
 
           {/* Desktop Authentication */}
           <div className="hidden lg:flex items-center space-x-4">
-            {isSignedIn ? (
+            {!isLoaded ? (
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-8 bg-muted animate-pulse rounded"></div>
+                <div className="w-20 h-8 bg-muted animate-pulse rounded"></div>
+              </div>
+            ) : isSignedIn ? (
               <UserButton afterSignOutUrl="/" />
             ) : (
               <>
@@ -84,8 +82,10 @@ export function HeaderNavigation() {
           {/* Mobile Navigation */}
           <MobileNavigation 
             isSignedIn={isSignedIn}
+            isLoaded={isLoaded}
             SignInButton={authComponents.SignInButton}
             SignUpButton={authComponents.SignUpButton}
+            UserButton={authComponents.UserButton}
           />
         </div>
       </div>

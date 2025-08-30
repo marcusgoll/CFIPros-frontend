@@ -1,18 +1,15 @@
-'use client';
-
 import React from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
 
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error?: Error;
-  errorInfo?: React.ErrorInfo;
-}
-
-interface ErrorBoundaryProps {
+export interface ErrorBoundaryProps {
   children: React.ReactNode;
   fallback?: React.ComponentType<{ error?: Error; resetError: () => void }>;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+}
+
+export interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+  errorInfo?: React.ErrorInfo;
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
@@ -21,7 +18,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     this.state = { hasError: false };
   }
 
-  static override getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     // Update state so the next render will show the fallback UI
     return { 
       hasError: true,
@@ -29,7 +26,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     };
   }
 
-  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to monitoring service
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
@@ -43,7 +40,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   resetError = () => {
-    this.setState({ hasError: false });
+    this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
   render() {
@@ -56,32 +53,56 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
       // Default fallback UI
       return (
-        <div className="flex flex-col items-center justify-center p-8 border border-destructive/20 bg-destructive/5 rounded-lg">
-          <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
-          <h3 className="text-lg font-semibold text-destructive mb-2">
-            Something went wrong
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
-            We encountered an error while loading this component. Please try refreshing or contact support if the problem persists.
-          </p>
-          <button
-            onClick={this.resetError}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Try Again
-          </button>
-          {process.env.NODE_ENV === 'development' && this.state.error && (
-            <details className="mt-4 w-full">
-              <summary className="cursor-pointer text-sm font-medium">
-                Error Details (Development)
-              </summary>
-              <pre className="mt-2 p-4 bg-muted rounded text-xs overflow-auto">
-                {this.state.error.toString()}
-                {this.state.errorInfo?.componentStack}
-              </pre>
-            </details>
-          )}
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="max-w-md mx-auto text-center p-6">
+            <div className="mb-4">
+              <div className="w-16 h-16 mx-auto mb-4 bg-destructive/10 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-destructive"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">
+              Oops! Something went wrong
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              We encountered an unexpected error. Please try refreshing the page or contact support if the issue persists.
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={this.resetError}
+                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+              >
+                Refresh Page
+              </button>
+            </div>
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="mt-6 text-left">
+                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">
+                  Error Details (Development)
+                </summary>
+                <pre className="mt-2 p-4 bg-muted rounded text-xs overflow-auto max-h-32">
+                  {this.state.error.stack}
+                </pre>
+              </details>
+            )}
+          </div>
         </div>
       );
     }
@@ -90,33 +111,21 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
-// Hook version for functional components
-export function useErrorHandler() {
-  return React.useCallback((error: Error, errorInfo?: React.ErrorInfo) => {
-    console.error('Error caught by error handler:', error, errorInfo);
-    // Could send to error tracking service here
-  }, []);
+// Feature table error fallback component
+export function FeatureTableErrorFallback({ error, resetError }: { error?: Error; resetError: () => void }) {
+  return (
+    <div className="border border-destructive/20 bg-destructive/5 rounded-lg p-4 text-center">
+      <div className="text-destructive text-sm mb-2">
+        Failed to load feature comparison table
+      </div>
+      <button
+        onClick={resetError}
+        className="text-xs px-3 py-1 bg-destructive/10 hover:bg-destructive/20 rounded transition-colors"
+      >
+        Try Again
+      </button>
+    </div>
+  );
 }
-
-// Specific fallback for feature comparison table
-export const FeatureTableErrorFallback: React.FC<{ 
-  error?: Error; 
-  resetError: () => void; 
-}> = ({ resetError }) => (
-  <div className="flex flex-col items-center justify-center p-12 border border-border bg-muted/20 rounded-lg">
-    <AlertTriangle className="h-8 w-8 text-destructive mb-3" />
-    <h4 className="text-base font-medium mb-2">Feature Comparison Unavailable</h4>
-    <p className="text-sm text-muted-foreground mb-4 text-center">
-      We're having trouble loading the feature comparison table. 
-    </p>
-    <button
-      onClick={resetError}
-      className="inline-flex items-center gap-2 px-3 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors text-sm"
-    >
-      <RefreshCw className="h-3 w-3" />
-      Retry
-    </button>
-  </div>
-);
 
 export default ErrorBoundary;

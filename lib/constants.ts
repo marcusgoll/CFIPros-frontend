@@ -35,7 +35,7 @@ export const ROUTES = {
 } as const;
 
 export const FILE_CONFIG = {
-  maxFileSize: 25 * 1024 * 1024, // 25MB
+  maxFileSize: 10 * 1024 * 1024, // 10MB
   allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
   allowedExtensions: [".pdf", ".jpg", ".jpeg", ".png"],
 } as const;

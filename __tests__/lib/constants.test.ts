@@ -5,6 +5,7 @@
 
 import {
   APP_CONFIG,
+  API_CONFIG,
   FILE_CONFIG,
   ROUTES,
   VALIDATION,
@@ -133,7 +134,7 @@ describe('Application Constants', () => {
       
       // Error messages should correspond to validation rules
       // File size should be consistent
-      expect(FILE_CONFIG.maxFileSize).toBe(25 * 1024 * 1024);
+      expect(FILE_CONFIG.maxFileSize).toBe(10 * 1024 * 1024);
     });
     
     it('should have valid enum-like constants', () => {

@@ -37,7 +37,7 @@ const ResultIdSchema = z.string().regex(
   'Invalid result ID format'
 );
 
-export interface ValidationResult<T = any> {
+export interface ValidationResult<T = unknown> {
   isValid: boolean;
   data?: T;
   error?: string;

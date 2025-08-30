@@ -74,7 +74,7 @@ interface MiddlewareOptions {
 
 type RouteHandler = (
   request: NextRequest,
-  context?: { params?: Promise<Record<string, string>> }
+  context: { params: Promise<Record<string, string>> }
 ) => Promise<NextResponse>;
 
 /**
@@ -84,7 +84,7 @@ export function withAPIMiddleware(
   handler: RouteHandler,
   options: MiddlewareOptions
 ): RouteHandler {
-  return async (request: NextRequest, context?: { params?: Promise<Record<string, string>> }) => {
+  return async (request: NextRequest, context: { params: Promise<Record<string, string>> }) => {
     try {
       // Rate limiting
       const clientIP = getClientIP(request);
@@ -137,8 +137,8 @@ export function withAPIMiddleware(
 /**
  * Simple OPTIONS handler for CORS preflight
  */
-export function createOptionsHandler(methods: string[] = ['GET', 'POST']): RouteHandler {
-  return async (request: NextRequest) => {
+export function createOptionsHandler(methods: string[] = ['GET', 'POST']) {
+  return async (request: NextRequest, context: { params: Promise<Record<string, string>> }) => {
     const response = new NextResponse(null, { status: 200 });
     return addCORSHeaders(response, request, methods.join(', '));
   };
