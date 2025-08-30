@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
@@ -54,7 +54,7 @@ jobs:
         node-version: ['18.x', '20.x']
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 📦 Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -90,7 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
@@ -132,7 +132,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
@@ -173,7 +173,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🔒 Run Snyk security scan
         uses: snyk/actions/node@master
@@ -201,7 +201,7 @@ jobs:
     if: github.event_name == 'pull_request'
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
@@ -267,7 +267,7 @@ jobs:
       url: ${{ steps.deploy.outputs.url }}
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 📦 Download build artifacts
         uses: actions/download-artifact@v5
@@ -309,7 +309,7 @@ jobs:
     needs: [deploy-preview]
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 📊 Run Lighthouse CI
         uses: treosh/lighthouse-ci-action@v9
