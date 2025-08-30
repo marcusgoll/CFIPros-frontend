@@ -52,8 +52,8 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="min-h-[200px] flex items-center justify-center p-8">
           <div className="text-center max-w-md">
-            <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-red-100 rounded-full">
-              <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-destructive/10 rounded-full">
+              <svg className="w-8 h-8 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path 
                   strokeLinecap="round" 
                   strokeLinejoin="round" 
@@ -62,15 +62,15 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                 />
               </svg>
             </div>
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            <h2 className="text-lg font-semibold text-foreground mb-2">
               Something went wrong
             </h2>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               We encountered an unexpected error. Please try again or refresh the page.
             </p>
             <button
               onClick={this.retry}
-              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -79,10 +79,10 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
             </button>
             {process.env.NODE_ENV === "development" && this.state.error && (
               <details className="mt-4 text-left">
-                <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">
+                <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground">
                   Error Details (Development Only)
                 </summary>
-                <pre className="mt-2 text-xs text-red-600 bg-red-50 p-3 rounded border overflow-auto max-h-32">
+                <pre className="mt-2 text-xs text-destructive bg-destructive/5 p-3 rounded border overflow-auto max-h-32">
                   {this.state.error.toString()}
                   {this.state.errorInfo?.componentStack}
                 </pre>
@@ -114,22 +114,22 @@ export function UploadErrorBoundary({ children }: { children: React.ReactNode })
 
 function UploadErrorFallback({ retry }: { error: Error | undefined; retry: () => void }) {
   return (
-    <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-      <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center bg-red-100 rounded-full">
-        <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-6 text-center">
+      <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center bg-destructive/10 rounded-full">
+        <svg className="w-6 h-6 text-destructive" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4" />
         </svg>
       </div>
-      <h3 className="text-lg font-medium text-red-900 mb-2">
+      <h3 className="text-lg font-medium text-destructive-foreground mb-2">
         Upload System Error
       </h3>
-      <p className="text-red-700 mb-4">
+      <p className="text-destructive mb-4">
         The upload system encountered an error and needs to be restarted. 
         Your files are safe and you can try uploading again.
       </p>
       <button
         onClick={retry}
-        className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+        className="inline-flex items-center px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2 transition-colors"
       >
         <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
