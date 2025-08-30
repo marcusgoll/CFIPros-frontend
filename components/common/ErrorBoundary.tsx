@@ -5,31 +5,32 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorBoundaryState {
   hasError: boolean;
-  error?: Error;
-  errorInfo?: React.ErrorInfo;
+  error: Error | undefined;
+  errorInfo: React.ErrorInfo | undefined;
 }
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
-  fallback?: React.ComponentType<{ error?: Error; resetError: () => void }>;
+  fallback?: React.ComponentType<{ error: Error | undefined; resetError: () => void }>;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: undefined, errorInfo: undefined };
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     // Update state so the next render will show the fallback UI
     return { 
       hasError: true,
-      error 
+      error,
+      errorInfo: undefined,
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to monitoring service
     console.error('ErrorBoundary caught an error:', error, errorInfo);
     
@@ -38,7 +39,8 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     
     this.setState({
       error,
-      errorInfo
+      errorInfo,
+      hasError: true,
     });
   }
 

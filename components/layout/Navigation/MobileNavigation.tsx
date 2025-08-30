@@ -9,9 +9,9 @@ import { featuresMenu, instructorsMenu } from '@/lib/config/navigation';
 interface MobileNavigationProps {
   isSignedIn: boolean;
   isLoaded: boolean;
-  SignInButton: React.ComponentType<{ mode?: string; children: React.ReactNode }>;
-  SignUpButton: React.ComponentType<{ mode?: string; children: React.ReactNode }>;
-  UserButton: React.ComponentType<{ afterSignOutUrl?: string }>;
+  SignInButton: React.ComponentType<any>;
+  SignUpButton: React.ComponentType<any>;
+  UserButton: React.ComponentType<any>;
 }
 
 export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpButton, UserButton }: MobileNavigationProps) {
@@ -35,63 +35,58 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
 
   // Focus management and close mobile menu when clicking outside
   useEffect(() => {
-    if (mobileMenuOpen) {
-      // Lock body scroll
-      document.body.style.overflow = 'hidden';
-      
-      // Focus management - trap focus within mobile menu
-      const menuElement = mobileMenuRef.current;
-      if (menuElement) {
-        const focusableElements = menuElement.querySelectorAll(
-          'a, button, [tabindex]:not([tabindex="-1"])'
-        );
-        const firstFocusable = focusableElements[0] as HTMLElement;
-        const lastFocusable = focusableElements[focusableElements.length - 1] as HTMLElement;
+    // Lock/unlock body scroll
+    document.body.style.overflow = mobileMenuOpen ? 'hidden' : 'unset';
 
-        // Focus first element when menu opens
-        firstFocusable?.focus();
+    // Focus management - trap focus within mobile menu
+    const menuElement = mobileMenuRef.current;
+    let handleTabKey: ((e: KeyboardEvent) => void) | null = null;
+    let handleClickOutside: ((event: MouseEvent) => void) | null = null;
 
-        // Trap focus
-        const handleTabKey = (e: KeyboardEvent) => {
-          if (e.key === 'Tab') {
-            if (e.shiftKey && document.activeElement === firstFocusable) {
-              e.preventDefault();
-              lastFocusable?.focus();
-            } else if (!e.shiftKey && document.activeElement === lastFocusable) {
-              e.preventDefault();
-              firstFocusable?.focus();
-            }
+    if (mobileMenuOpen && menuElement) {
+      const focusableElements = menuElement.querySelectorAll(
+        'a, button, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstFocusable = focusableElements[0] as HTMLElement;
+      const lastFocusable = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+      // Focus first element when menu opens
+      firstFocusable?.focus();
+
+      // Trap focus
+      handleTabKey = (e: KeyboardEvent) => {
+        if (e.key === 'Tab') {
+          if (e.shiftKey && document.activeElement === firstFocusable) {
+            e.preventDefault();
+            lastFocusable?.focus();
+          } else if (!e.shiftKey && document.activeElement === lastFocusable) {
+            e.preventDefault();
+            firstFocusable?.focus();
           }
-          
-          // Close on Escape
-          if (e.key === 'Escape') {
-            closeMobileMenu();
-            // Return focus to menu button
-            const menuButton = document.querySelector('[aria-controls="mobile-menu"]') as HTMLElement;
-            menuButton?.focus();
-          }
-        };
+        }
+        // Close on Escape
+        if (e.key === 'Escape') {
+          closeMobileMenu();
+          const menuButton = document.querySelector('[aria-controls="mobile-menu"]') as HTMLElement;
+          menuButton?.focus();
+        }
+      };
+      document.addEventListener('keydown', handleTabKey);
 
-        document.addEventListener('keydown', handleTabKey);
-
-        // Handle clicks outside
-        const handleClickOutside = (event: MouseEvent) => {
-          if (menuElement && !menuElement.contains(event.target as Node)) {
-            closeMobileMenu();
-          }
-        };
-        
-        document.addEventListener('mousedown', handleClickOutside);
-
-        return () => {
-          document.removeEventListener('keydown', handleTabKey);
-                  document.removeEventListener('mousedown', handleClickOutside);
-                  document.body.style.overflow = 'unset';
-                };
-              }
-            } else {
-              document.body.style.overflow = 'unset';
+      // Handle clicks outside
+      handleClickOutside = (event: MouseEvent) => {
+        if (menuElement && !menuElement.contains(event.target as Node)) {
+          closeMobileMenu();
+        }
+      };
+      document.addEventListener('mousedown', handleClickOutside);
     }
+
+    return () => {
+      if (handleTabKey) document.removeEventListener('keydown', handleTabKey);
+      if (handleClickOutside) document.removeEventListener('mousedown', handleClickOutside);
+      document.body.style.overflow = 'unset';
+    };
   }, [mobileMenuOpen, closeMobileMenu]);
 
   // Close mobile menu on resize

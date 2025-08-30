@@ -40,8 +40,10 @@ export const ScreenshotPreview: React.FC<ScreenshotPreviewProps> = ({
 
     if (isVisible) {
       document.addEventListener("keydown", handleEscape);
-      return () => document.removeEventListener("keydown", handleEscape);
     }
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [isVisible, onClose]);
 
   // Focus management
@@ -53,8 +55,6 @@ export const ScreenshotPreview: React.FC<ScreenshotPreviewProps> = ({
 
   // Focus trap
   useEffect(() => {
-    if (!isVisible) return;
-
     const handleTab = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
 
@@ -80,8 +80,12 @@ export const ScreenshotPreview: React.FC<ScreenshotPreviewProps> = ({
       }
     };
 
-    document.addEventListener("keydown", handleTab);
-    return () => document.removeEventListener("keydown", handleTab);
+    if (isVisible) {
+      document.addEventListener("keydown", handleTab);
+    }
+    return () => {
+      document.removeEventListener("keydown", handleTab);
+    };
   }, [isVisible]);
 
   const handleOverlayClick = (e: React.MouseEvent) => {

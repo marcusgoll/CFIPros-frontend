@@ -38,8 +38,8 @@ export async function runPostHogHealthTests(): Promise<HealthTestResult[]> {
 }
 
 function testEnvironmentVariables(): HealthTestResult {
-  const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+  const apiKey = process.env['NEXT_PUBLIC_POSTHOG_KEY'];
+  const apiHost = process.env['NEXT_PUBLIC_POSTHOG_HOST'];
 
   if (!apiKey) {
     return {

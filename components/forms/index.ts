@@ -1,6 +1,13 @@
 // Form components barrel export
 export { ContactForm } from './ContactForm';
 export { LoginForm } from './LoginForm';
+export { FileUploader } from './FileUploader';
+export { AktrToAcsUploader } from './AktrToAcsUploader';
 
 // Re-export form types for convenience
-export type { ContactFormData, LoginFormData } from '@/lib/validation/schemas';
+export type { 
+  ContactFormData, 
+  LoginFormData, 
+  AktrFileUploadFormData 
+} from '@/lib/validation/schemas';
+export type { FileUploadProgress } from './FileUploader';

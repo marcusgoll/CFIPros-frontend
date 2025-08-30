@@ -19,7 +19,16 @@ export type EventName =
   | 'benefit_section_view'
   | 'benefit_feature_interaction'
   | 'pricing_plan_select'
-  | 'pricing_toggle_billing';
+  | 'pricing_toggle_billing'
+  | 'image_load_failed'
+  | 'video_preload_failed'
+  | 'video_load_failed'
+  | 'upload_started'
+  | 'upload_completed'
+  | 'upload_failed'
+  | 'upload_file_added'
+  | 'upload_file_removed'
+  | 'upload_validation_error';
 
 export interface TelemetryEvent {
   name: EventName;
@@ -49,7 +58,7 @@ class TelemetryService {
   private events: TelemetryEvent[] = [];
   private sessionId: string;
   private isInitialized = false;
-  private debugMode = process.env.NODE_ENV === 'development';
+  private debugMode = process.env['NODE_ENV'] === 'development';
 
   private constructor() {
     this.sessionId = this.generateSessionId();
@@ -76,8 +85,8 @@ class TelemetryService {
     
     // Initialize PostHog
     if (typeof window !== 'undefined') {
-      const apiKey = config?.apiKey || process.env.NEXT_PUBLIC_POSTHOG_KEY;
-      const apiHost = config?.apiHost || process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
+      const apiKey = config?.apiKey || process.env['NEXT_PUBLIC_POSTHOG_KEY'];
+      const apiHost = config?.apiHost || process.env['NEXT_PUBLIC_POSTHOG_HOST'] || 'https://app.posthog.com';
       
       if (apiKey && apiKey !== 'your_posthog_api_key_here') {
         try {
@@ -86,9 +95,6 @@ class TelemetryService {
             capture_pageview: true,
             capture_pageleave: true,
             autocapture: false, // We'll manually track specific events
-            session_recording: {
-              enabled: false, // Enable when needed
-            },
             persistence: 'localStorage',
             loaded: (posthog) => {
               if (this.debugMode) {
@@ -137,11 +143,13 @@ class TelemetryService {
   track(name: EventName, properties?: Record<string, any>) {
     const event: TelemetryEvent = {
       name,
-      properties,
       timestamp: Date.now(),
       sessionId: this.sessionId,
       userId: this.getUserId()
     };
+    if (properties) {
+      event.properties = properties;
+    }
 
     this.events.push(event);
     
@@ -176,6 +184,61 @@ class TelemetryService {
       referrer: document.referrer,
       timeOnPage: this.getTimeOnPage(),
       scrollDepth: this.getScrollDepth()
+    });
+  }
+
+  /**
+   * Track file upload events
+   */
+  trackUploadStarted(files: File[]) {
+    const fileTypes = [...new Set(files.map(f => f.type))];
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    
+    this.track('upload_started', {
+      fileCount: files.length,
+      totalSize,
+      fileTypes,
+      averageFileSize: totalSize / files.length,
+    });
+  }
+
+  trackUploadCompleted(files: File[], processingTime: number) {
+    this.track('upload_completed', {
+      fileCount: files.length,
+      processingTime,
+      success: true,
+    });
+  }
+
+  trackUploadFailed(files: File[], error: string) {
+    this.track('upload_failed', {
+      fileCount: files.length,
+      error,
+      success: false,
+    });
+  }
+
+  trackFileAdded(file: File) {
+    this.track('upload_file_added', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+  }
+
+  trackFileRemoved(file: File) {
+    this.track('upload_file_removed', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+  }
+
+  trackValidationError(error: string, files?: File[]) {
+    this.track('upload_validation_error', {
+      error,
+      fileCount: files?.length || 0,
+      fileTypes: files ? [...new Set(files.map(f => f.type))] : [],
     });
   }
 
@@ -388,6 +451,30 @@ export const trackEvent = (name: EventName, properties?: Record<string, any>) =>
 
 export const trackHeroCTA = (ctaText: string, variant?: string) => {
   telemetry.trackHeroCTAClick(ctaText, variant);
+};
+
+export const trackUploadStarted = (files: File[]) => {
+  telemetry.trackUploadStarted(files);
+};
+
+export const trackUploadCompleted = (files: File[], processingTime: number) => {
+  telemetry.trackUploadCompleted(files, processingTime);
+};
+
+export const trackUploadFailed = (files: File[], error: string) => {
+  telemetry.trackUploadFailed(files, error);
+};
+
+export const trackFileAdded = (file: File) => {
+  telemetry.trackFileAdded(file);
+};
+
+export const trackFileRemoved = (file: File) => {
+  telemetry.trackFileRemoved(file);
+};
+
+export const trackValidationError = (error: string, files?: File[]) => {
+  telemetry.trackValidationError(error, files);
 };
 
 export const initTelemetry = (config?: { debugMode?: boolean }) => {

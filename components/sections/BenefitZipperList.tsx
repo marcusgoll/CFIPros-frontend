@@ -303,7 +303,7 @@ export const BenefitZipperList: React.FC<BenefitZipperListProps> = memo(({
         <div className={BENEFIT_CLASSES.container}>
           {/* Section Header */}
           <motion.div
-            ref={headerRef}
+            ref={headerRef as React.RefObject<HTMLDivElement>}
             initial={reducedMotion ? { opacity: 0 } : BENEFIT_ANIMATION_VARIANTS.desktop.hidden}
             animate={headerInView ? (reducedMotion ? { opacity: 1 } : BENEFIT_ANIMATION_VARIANTS.desktop.visible) : {}}
             transition={{ duration: mergedConfig.ANIMATION_DURATION }}
@@ -373,7 +373,7 @@ const FeatureSectionComponent = memo<{
 
   return (
     <motion.div
-      ref={sectionRef}
+      ref={sectionRef as React.RefObject<HTMLDivElement>}
       initial={reducedMotion ? { opacity: 0 } : variants.hidden}
       animate={isInView ? (reducedMotion ? { opacity: 1 } : variants.visible) : {}}
       transition={{ 

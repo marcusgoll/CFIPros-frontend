@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, Search, BookOpen, BarChart3, Target, Award, Calendar, Layers, Building } from "lucide-react";
+import { Upload, Search, BookOpen, BarChart3, Target, Award, Calendar, Layers, Building, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // TypeScript interfaces as specified in tasks.md
 export interface FeatureItem {
   id: string;
   label: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: LucideIcon;
 }
 
 export interface FeatureSpotlightMenuProps {
@@ -153,6 +153,7 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
   }, []);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
+    if (!features.length) return;
     if (e.key === "ArrowRight") {
       e.preventDefault();
       const next = (idx + 1) % features.length;

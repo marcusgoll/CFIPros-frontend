@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play } from "lucide-react";
-import Image from "next/image";
+// import Image from "next/image";
 import { cn, prefersReducedMotion } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics/telemetry";
 

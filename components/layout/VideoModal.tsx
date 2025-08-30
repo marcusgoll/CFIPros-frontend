@@ -2,17 +2,17 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Play, Pause } from "lucide-react";
+import { X } from "lucide-react";
 import { cn, prefersReducedMotion } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics/telemetry";
 
 // Video path from environment configuration with validation
 const getValidatedVideoPath = (): string => {
-  const envPath = process.env.NEXT_PUBLIC_DEMO_VIDEO_PATH;
+  const envPath = process.env['NEXT_PUBLIC_DEMO_VIDEO_PATH'];
   const defaultPath = "/videos/6739601-hd_1920_1080_24fps.mp4";
   
   if (!envPath) {
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env['NODE_ENV'] === 'development') {
       console.warn('NEXT_PUBLIC_DEMO_VIDEO_PATH not configured, using default path');
     }
     return defaultPath;
