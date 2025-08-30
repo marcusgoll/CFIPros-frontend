@@ -404,7 +404,7 @@ function FeatureComparisonTable({ tiers }: { tiers: PricingTier[] }) {
           Hover over feature names for detailed descriptions
         </p>
       </div>
-      <div className="w-full overflow-x-auto">
+      <div className="w-full">
         <table className={cn(styles["comparisonTable"], "w-full border-collapse")}>
         <thead>
           <tr>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider } from '@clerk/nextjs';
 import { SimplePerformanceMonitor } from '@/components/SimplePerformanceMonitor';
 import { PostHogProvider } from '@/components/providers/PostHogProvider';
 import { ThemeProvider } from '@/components/providers/ThemeProvider';
@@ -90,7 +91,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -100,19 +101,21 @@ export default function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <PostHogProvider>
-            <div id="root" className="relative">
-              {children}
-            </div>
-            <SimplePerformanceMonitor />
-          </PostHogProvider>
-        </ThemeProvider>
+        <ClerkProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <PostHogProvider>
+              <div id="root" className="relative">
+                {children}
+              </div>
+              <SimplePerformanceMonitor />
+            </PostHogProvider>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

@@ -297,8 +297,8 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
                   className={cn(
                     "group relative flex h-full min-w-[92px] sm:min-w-[108px] flex-col items-center justify-center gap-1 rounded-xl bg-transparent px-2.5 py-3 text-sm sm:text-base cursor-pointer transition-colors",
                     isActive 
-                      ? 'text-[#1e9df1]' 
-                      : 'text-foreground hover:text-[#1e9df1]'
+                      ? 'text-primary' 
+                      : 'text-foreground hover:text-primary'
                   )}
                 >
                   <span className="inline-flex h-8 w-8 items-center justify-center">

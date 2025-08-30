@@ -21,10 +21,14 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
-    # Ignore major updates for all dependencies by default
+    # Ignore major updates and restrict to patch/minor only
     ignore:
-      - dependency-name: "*"
+      # Ignore major updates for all dependencies by default
+      - dependency-type: "all"
         update-types: ["version-update:semver-major"]
+      # Ignore minor updates for indirect dependencies (security patches only)
+      - dependency-type: "indirect"
+        update-types: ["version-update:semver-minor"]
     
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"

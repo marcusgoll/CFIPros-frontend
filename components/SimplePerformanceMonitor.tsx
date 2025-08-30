@@ -42,7 +42,7 @@ export function SimplePerformanceMonitor({
   }
 
   return (
-    <div className="fixed bottom-4 right-4 bg-gray-800 text-white p-3 rounded-lg text-xs font-mono max-w-xs shadow-lg z-50">
+    <div className="fixed bottom-4 right-4 bg-popover border border-border text-popover-foreground p-3 rounded-lg text-xs font-mono max-w-xs shadow-lg z-50">
       <h3 className="font-bold mb-2">Web Vitals</h3>
       {vitals.map(vital => (
         <div key={vital.name} className="flex justify-between items-center mb-1">
