@@ -12,13 +12,21 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format a date to a human-readable string
  */
-export function formatDate(date: Date | string): string {
+export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  return new Intl.DateTimeFormat("en-US", {
+  
+  // Check for invalid dates
+  if (isNaN(dateObj.getTime())) {
+    return "Invalid Date";
+  }
+  
+  const defaultOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
-  }).format(dateObj);
+  };
+  
+  return new Intl.DateTimeFormat("en-US", options || defaultOptions).format(dateObj);
 }
 
 /**
@@ -49,9 +57,11 @@ export function formatRelativeTime(date: Date | string): string {
 /**
  * Truncate text to a specified length
  */
-export function truncate(text: string, length: number): string {
+export function truncate(text: string, length: number, suffix: string = "..."): string {
+  if (!text) return text;
+  if (length <= 0) return suffix;
   if (text.length <= length) return text;
-  return text.slice(0, length).trim() + "...";
+  return text.slice(0, length).trim() + suffix;
 }
 
 /**
@@ -79,6 +89,21 @@ export function generateRandomString(length: number): string {
 }
 
 /**
+ * Generate a unique ID with specified length (default 8)
+ */
+export function generateId(length: number = 8): string {
+  return generateRandomString(length);
+}
+
+/**
+ * Capitalize the first letter of a string
+ */
+export function capitalizeFirst(text: string): string {
+  if (!text) return text;
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
  * Check if a string is a valid email address
  */
 export function isValidEmail(email: string): boolean {
@@ -90,13 +115,20 @@ export function isValidEmail(email: string): boolean {
  * Format file size in bytes to human-readable format
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes";
+  if (bytes <= 0) return "0 B";
   
   const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  // For bytes, don't show decimals
+  if (i === 0) {
+    return bytes + " B";
+  }
+  
+  // For larger units, always show one decimal place
+  const value = (bytes / Math.pow(k, i)).toFixed(1);
+  return value + " " + sizes[i];
 }
 
 /**

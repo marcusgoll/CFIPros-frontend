@@ -1,0 +1,88 @@
+/* PricingSection CSS Module */
+
+.comparisonTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.comparisonTable thead tr {
+  border-bottom: 2px solid hsl(var(--border));
+}
+
+.comparisonTable th {
+  text-align: left;
+  padding: 1rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.comparisonTable th:not(:first-child) {
+  text-align: center;
+}
+
+.comparisonTable tbody tr {
+  border-bottom: 1px solid hsl(var(--border) / 0.5);
+  transition: background-color 0.15s ease-in-out;
+}
+
+.comparisonTable tbody tr:hover {
+  background-color: hsl(var(--muted) / 0.3);
+}
+
+.comparisonTable td {
+  padding: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.comparisonTable td:not(:first-child) {
+  text-align: center;
+}
+
+.categoryHeader {
+  background-color: hsl(var(--muted) / 0.4);
+  font-weight: 600;
+  font-size: 1rem;
+  color: hsl(var(--foreground));
+  border-top: 1px solid hsl(var(--border));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.featureTooltip {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  width: 16rem;
+  padding: 0.5rem;
+  background-color: hsl(var(--popover));
+  color: hsl(var(--popover-foreground));
+  font-size: 0.75rem;
+  border-radius: calc(var(--radius) - 2px);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  border: 1px solid hsl(var(--border));
+  opacity: 0;
+  visibility: hidden;
+  transition: all 100ms ease-in-out;
+  z-index: 50;
+}
+
+.featureTooltip.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.featureCell {
+  position: relative;
+  cursor: help;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.featureCell:hover .featureTooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Animation durations are handled via JavaScript constants in pricingData.ts */

@@ -18,12 +18,7 @@ const nextConfig: NextConfig = {
   },
 
   // Experimental features
-  experimental: {
-    // Enable turbo mode for faster builds
-    turbo: {
-      rules: {},
-    },
-  },
+  experimental: {},
 
   // Server external packages
   serverExternalPackages: [],
@@ -117,6 +112,13 @@ const nextConfig: NextConfig = {
         "@": __dirname,
       };
     }
+
+    // Fix webpack optimization conflict between usedExports and cacheUnaffected
+    if (config.experiments?.cacheUnaffected && config.optimization?.usedExports) {
+      // Disable cacheUnaffected when usedExports is enabled to avoid conflict
+      config.experiments.cacheUnaffected = false;
+    }
+
     return config;
   },
 

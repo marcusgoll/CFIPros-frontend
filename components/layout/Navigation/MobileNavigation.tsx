@@ -8,11 +8,13 @@ import { featuresMenu, instructorsMenu } from '@/lib/config/navigation';
 
 interface MobileNavigationProps {
   isSignedIn: boolean;
+  isLoaded: boolean;
   SignInButton: React.ComponentType<{ mode?: string; children: React.ReactNode }>;
   SignUpButton: React.ComponentType<{ mode?: string; children: React.ReactNode }>;
+  UserButton: React.ComponentType<{ afterSignOutUrl?: string }>;
 }
 
-export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: MobileNavigationProps) {
+export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpButton, UserButton }: MobileNavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -110,7 +112,7 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
       <div className="lg:hidden">
         <button
           type="button"
-          className="text-gray-700 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md p-2"
+          className="text-foreground/80 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary rounded-md p-2"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-menu"
@@ -129,7 +131,7 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
         <div 
           ref={mobileMenuRef}
           id="mobile-menu"
-          className="lg:hidden border-t border-gray-200 bg-white animate-slide-down absolute top-full left-0 right-0 z-40"
+          className="lg:hidden border-t border-border bg-background animate-slide-down absolute top-full left-0 right-0 z-40"
           data-testid="mobile-menu"
         >
           <div className="space-y-1 pb-4 pt-2 px-4">
@@ -137,7 +139,7 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
             <div>
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                className="flex w-full items-center justify-between px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md"
                 onClick={() => toggleMobileAccordion('features')}
                 aria-expanded={mobileAccordion === 'features'}
               >
@@ -153,11 +155,11 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
                     <Link
                       key={index}
                       href={item.href}
-                      className="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                      className="block px-3 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-accent/50 rounded-md"
                       onClick={handleMobileMenuItemClick}
                     >
                       <div className="font-medium">{item.title}</div>
-                      <div className="text-xs text-gray-500">{item.description}</div>
+                      <div className="text-xs text-muted-foreground">{item.description}</div>
                     </Link>
                   ))}
                 </div>
@@ -167,7 +169,7 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
             {/* Research Menu */}
             <Link
               href="/research"
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+              className="block px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md"
               onClick={handleMobileMenuItemClick}
             >
               Research
@@ -177,7 +179,7 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
             <div>
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                className="flex w-full items-center justify-between px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md"
                 onClick={() => toggleMobileAccordion('instructors')}
                 aria-expanded={mobileAccordion === 'instructors'}
               >
@@ -193,11 +195,11 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
                     <Link
                       key={index}
                       href={item.href}
-                      className="block px-3 py-2 text-sm text-gray-600 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+                      className="block px-3 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-accent/50 rounded-md"
                       onClick={handleMobileMenuItemClick}
                     >
                       <div className="font-medium">{item.title}</div>
-                      <div className="text-xs text-gray-500">{item.description}</div>
+                      <div className="text-xs text-muted-foreground">{item.description}</div>
                     </Link>
                   ))}
                 </div>
@@ -207,22 +209,27 @@ export function MobileNavigation({ isSignedIn, SignInButton, SignUpButton }: Mob
             {/* Flight Schools Menu */}
             <Link
               href="/schools"
-              className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md"
+              className="block px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md"
               onClick={handleMobileMenuItemClick}
             >
               For Flight Schools
             </Link>
 
             {/* Mobile Authentication */}
-            <div className="border-t border-gray-200 pt-4 mt-4 space-y-2">
-              {isSignedIn ? (
+            <div className="border-t border-border pt-4 mt-4 space-y-2">
+              {!isLoaded ? (
+                <div className="px-3 py-2 space-y-2">
+                  <div className="h-10 bg-muted animate-pulse rounded-md"></div>
+                  <div className="h-10 bg-muted animate-pulse rounded-md"></div>
+                </div>
+              ) : isSignedIn ? (
                 <div className="px-3 py-2">
-                  <div>User Button</div>
+                  <UserButton afterSignOutUrl="/" />
                 </div>
               ) : (
                 <>
                   <SignInButton mode="modal">
-                    <button className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md">
+                    <button className="block w-full text-left px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md">
                       Login
                     </button>
                   </SignInButton>

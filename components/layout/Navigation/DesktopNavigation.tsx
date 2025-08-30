@@ -20,7 +20,7 @@ export function DesktopNavigation() {
         <NavigationMenuList>
           {/* Our Features */}
           <NavigationMenuItem>
-            <NavigationMenuTrigger className="text-gray-700 hover:text-primary-600">
+            <NavigationMenuTrigger className="text-foreground/80 hover:text-primary">
               {featuresMenu.title}
             </NavigationMenuTrigger>
             <NavigationMenuContent>
@@ -32,18 +32,18 @@ export function DesktopNavigation() {
                         const IconComponent = item.icon ? Icons[item.icon] as React.ComponentType<{ className: string }> : null;
                         return (
                           <NavigationMenuLink key={itemIndex} asChild>
-                            <Link href={item.href} className="flex items-start space-x-3 p-3 rounded-md hover:bg-gray-50 transition-colors group block">
+                            <Link href={item.href} className="flex items-start space-x-3 p-3 rounded-md hover:bg-accent/50 transition-colors group block">
                               {IconComponent && (
                                 <div className="flex-shrink-0 mt-1 text-primary-600">
                                   <IconComponent className="h-5 w-5" />
                                 </div>
                               )}
                               <div>
-                                <div className="font-medium text-gray-900 group-hover:text-primary-600">
+                                <div className="font-medium text-foreground group-hover:text-primary">
                                   {item.title}
                                 </div>
                                 {item.description && (
-                                  <div className="text-sm text-gray-500 mt-1">
+                                  <div className="text-sm text-muted-foreground mt-1">
                                     {item.description}
                                   </div>
                                 )}
@@ -62,7 +62,7 @@ export function DesktopNavigation() {
           {/* Research */}
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
-              <Link href="/research" className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-gray-700 hover:bg-accent hover:text-accent-foreground transition-colors">
+              <Link href="/research" className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors">
                 Research
               </Link>
             </NavigationMenuLink>
