@@ -1,12 +1,5 @@
 import '@testing-library/jest-dom';
 
-// Set up test environment variables
-process.env.BACKEND_API_URL = 'https://test-api.cfipros.com/v1';
-process.env.NODE_ENV = 'test';
-process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000';
-process.env.NEXT_PUBLIC_POSTHOG_KEY = 'test-posthog-key';
-process.env.NEXT_PUBLIC_POSTHOG_HOST = 'https://app.posthog.com';
-
 // Mock next/router
 jest.mock('next/router', () => ({
   useRouter() {

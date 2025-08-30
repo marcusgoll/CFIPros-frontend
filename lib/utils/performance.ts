@@ -40,7 +40,7 @@ export class PerformanceTracker {
       const clsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'layout-shift') {
-            const layoutShift = entry as PerformanceEntry & { hadRecentInput: boolean; value: number }; // Cast to access layout-shift specific properties
+            const layoutShift = entry as PerformanceEntry & { value: number; hadRecentInput?: boolean };
             if (!layoutShift.hadRecentInput) {
               this.recordMetric({
                 name: 'CLS',
@@ -77,7 +77,7 @@ export class PerformanceTracker {
       const fidObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.entryType === 'first-input') {
-            const firstInput = entry as PerformanceEntry & { processingStart: number }; // Cast to access first-input specific properties
+            const firstInput = entry as PerformanceEntry & { processingStart: number };
             this.recordMetric({
               name: 'FID',
               value: firstInput.processingStart - entry.startTime,
@@ -92,6 +92,7 @@ export class PerformanceTracker {
       this.observers.push(fidObserver);
 
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn('Failed to initialize performance observers:', error);
     }
   }
@@ -101,6 +102,7 @@ export class PerformanceTracker {
     
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
       console.log(`Performance: ${metric.name} = ${metric.value}${metric.unit}`);
     }
   }
@@ -181,6 +183,7 @@ export function measureWebVitals(): void {
     try {
       fcpObserver.observe({ entryTypes: ['paint'] });
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.warn('Failed to observe paint entries:', error);
     }
 
@@ -202,22 +205,17 @@ export function measureWebVitals(): void {
 // Memory usage monitoring
 export function measureMemoryUsage(): void {
   if (typeof window !== 'undefined' && 'memory' in performance) {
-    const memory = (performance as Performance & { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
+    const memory = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
     const tracker = PerformanceTracker.getInstance();
     
     tracker.recordMetric({
       name: 'Memory Used',
-      value: Math.round(memory.usedJSHeapSize / 1024 / 1024),
+      value: Math.round(((memory?.usedJSHeapSize ?? 0) / 1024) / 1024),
       unit: 'MB',
       timestamp: Date.now(),
     });
 
-    tracker.recordMetric({
-      name: 'Memory Limit',
-      value: Math.round(memory.jsHeapSizeLimit / 1024 / 1024),
-      unit: 'MB',
-      timestamp: Date.now(),
-    });
+    // jsHeapSizeLimit not in our narrowed type; skip if not present
   }
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import { logError } from '@/lib/utils/logger';
 import Link from 'next/link';
 
 interface ErrorBoundaryState {
@@ -23,7 +24,7 @@ export class NavigationErrorBoundary extends React.Component<Props, ErrorBoundar
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Navigation error:', error, errorInfo);
+    logError('Navigation error:', error, errorInfo);
   }
 
   override render() {

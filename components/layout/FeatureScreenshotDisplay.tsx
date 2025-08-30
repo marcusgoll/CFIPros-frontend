@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play } from "lucide-react";
-import Image from "next/image";
+// import Image from "next/image";
 import { cn, prefersReducedMotion } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics/telemetry";
 
@@ -24,7 +24,11 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const reducedMotion = prefersReducedMotion();
+
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 1000; // 1 second base delay
 
   const handleImageLoad = () => {
     setImageLoaded(true);
@@ -32,17 +36,32 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
   };
 
   const handleImageError = () => {
-    // Max retries reached - show error state
-    setImageError(true);
-    setImageLoaded(false);
-    
-    // Track image load failure for monitoring
-    trackEvent('image_load_failed', {
-      featureId,
-      featureName,
-      screenshotUrl,
-      component: 'FeatureScreenshotDisplay',
-    });
+    if (retryCount < MAX_RETRIES) {
+      // Exponential backoff retry
+      const delay = RETRY_DELAY * Math.pow(2, retryCount);
+      setTimeout(() => {
+        setRetryCount(prev => prev + 1);
+        // Force reload by updating img src with timestamp
+        const img = document.querySelector(`[data-feature="${featureId}"] img`) as HTMLImageElement;
+        if (img) {
+          const separator = screenshotUrl.includes('?') ? '&' : '?';
+          img.src = `${screenshotUrl}${separator}retry=${retryCount + 1}&t=${Date.now()}`;
+        }
+      }, delay);
+    } else {
+      // Max retries reached - show error state
+      setImageError(true);
+      setImageLoaded(false);
+      
+      // Track image load failure for monitoring
+      trackEvent('image_load_failed', {
+        featureId,
+        featureName,
+        screenshotUrl,
+        retryCount,
+        component: 'FeatureScreenshotDisplay',
+      });
+    }
   };
 
   return (
@@ -111,19 +130,16 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 
         {/* Screenshot image */}
         <div className="relative aspect-[16/9] w-full">
-          <Image
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={screenshotUrl}
             alt={`${featureName} feature screenshot`}
-            fill
             className={cn(
-              "object-cover transition-opacity duration-500",
+              "w-full h-full object-cover transition-opacity duration-500",
               imageLoaded ? "opacity-100" : "opacity-0"
             )}
-            priority={false}
-            placeholder="blur"
-            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyByQUzBGhPgj3sHSIhN7EWr31pV+u8jFr/AIUADh5NYlgB2qvwD8qAq6zzg2hS9T8x5kUh8qvG8MjFfD8fLy2n1xgMhmgBwmqFKE1jFVlZJm/NxoATBmeFB4YM8kxJGF5qVCzJHd31j4+E26r5rDTvDvBdHGEMJhPFgz7v5cjxhP4rSa5PVMHiqZOJrCLQo6qrD8F5qHBKNGDmkrjQ6MhYrNlvvlRF9vl3lcb3qV9cvdXrhO5O/R82b/C6BpEGU4EE0PZ5dW1iJBQEfL9BXnqxBmYCQ2xZ+cxYm4x+3Q81qB3ZU2wCpH2VIbAWWNhMLqnOBdgv1wJLCXmkgQA7pNbLOB/NL4qmFhUKNKI8/OmBvJZXyxkVAjdFP+pME41Xdtj8V9Z0K4VQJYDnT85Tl7NLyJnBqQe3iXk5HKSY36p7Ov8A3T97OtQTF2Pga2k1NfnRZl4TQd5xkq7+kJ6g8cVtb8r9KD//2Q=="
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            quality={90}
+            loading="lazy"
+            decoding="async"
             onLoad={handleImageLoad}
             onError={handleImageError}
           />

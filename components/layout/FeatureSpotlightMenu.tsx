@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, Search, BookOpen, BarChart3, Target, Award, Calendar, Layers, Building } from "lucide-react";
+import { Upload, Search, BookOpen, BarChart3, Target, Award, Calendar, Layers, Building, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // TypeScript interfaces as specified in tasks.md
 export interface FeatureItem {
   id: string;
   label: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: LucideIcon;
 }
 
 export interface FeatureSpotlightMenuProps {
@@ -118,9 +118,11 @@ export function useOverflow(ref: React.RefObject<HTMLElement>) {
     return () => {
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
-      if (ro) {ro.disconnect();}
+      if (ro) {
+        ro.disconnect();
+      }
     };
-  }, [update]);
+  }, [update, ref]);
   
   return state;
 }
@@ -135,13 +137,34 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
   const [active, setActive] = useState<string>(features[defaultIndex]?.id || "");
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const { canLeft, canRight } = useOverflow(listRef);
+ 
+  // Center a tab within the scroll container
+  const centerItem = useCallback((index: number, smooth = false) => {
+    const el = listRef.current;
+    if (!el) {
+      return;
+    }
+    const child = el.children[index] as HTMLElement;
+    if (!child) {
+      return;
+    }
+    const childRect = child.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
+    const childCenter = childRect.left - elRect.left + childRect.width / 2;
+    const target = childCenter - el.clientWidth / 2;
+    el.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
+  }, []);
 
   const select = useCallback((id: string) => {
     setActive(id);
-    if (onSelect) {onSelect(id);}
+    if (onSelect) {
+      onSelect(id);
+    }
     const idx = features.findIndex(f => f.id === id);
-    if (idx >= 0) {centerItem(idx, true);}
-  }, [features, onSelect]);
+    if (idx >= 0) {
+      centerItem(idx, true);
+    }
+  }, [features, onSelect, centerItem]);
 
   const scrollByAmount = useCallback((dir: number) => {
     const el = listRef.current;
@@ -152,43 +175,42 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
     el.scrollBy({ left: dir * amount, behavior: "smooth" });
   }, []);
 
-  const onKeyDown = useCallback((e: React.KeyboardEvent, idx: number) => {
-    if (e.key === "ArrowRight") {
+  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+    if (!features.length) {
+      return;
+    }
+    if (e.key === 'ArrowRight') {
       e.preventDefault();
       const next = (idx + 1) % features.length;
-      select(features[next]?.id || '');
-      requestAnimationFrame(() => {
-        const nextElement = listRef.current?.children[next] as HTMLElement;
-        nextElement?.focus();
-      });
-    } else if (e.key === "ArrowLeft") {
+      select(features[next]!.id);
+      // Move focus to next tab button
+      const nextBtn = (e.currentTarget.parentElement?.nextElementSibling as HTMLElement | null)?.querySelector('button') as HTMLButtonElement | null;
+      nextBtn?.focus();
+    } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       const prev = (idx - 1 + features.length) % features.length;
-      select(features[prev]?.id || '');
-      requestAnimationFrame(() => {
-        const prevElement = listRef.current?.children[prev] as HTMLElement;
-        prevElement?.focus();
-      });
-    } else if (e.key === "Enter" || e.key === " ") {
+      select(features[prev]!.id);
+      // Move focus to previous tab button
+      const prevBtn = (e.currentTarget.parentElement?.previousElementSibling as HTMLElement | null)?.querySelector('button') as HTMLButtonElement | null;
+      prevBtn?.focus();
+    } else if (e.key === 'Home') {
       e.preventDefault();
-      select(features[idx]?.id || '');
+      select(features[0]!.id);
+      const firstBtn = listRef.current?.querySelector('li:first-child button') as HTMLButtonElement | null;
+      firstBtn?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      select(features[features.length - 1]!.id);
+      const lastBtn = listRef.current?.querySelector('li:last-child button') as HTMLButtonElement | null;
+      lastBtn?.focus();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      select(features[idx]!.id);
     }
   }, [features, select]);
 
   // Center a tab within the scroll container
-  const centerItem = useCallback((index: number, smooth = false) => {
-    const el = listRef.current;
-    if (!el) {
-      return;
-    }
-    const child = el.children[index] as HTMLElement;
-    if (!child) {return;}
-    const childRect = child.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    const childCenter = childRect.left - elRect.left + childRect.width / 2;
-    const target = childCenter - el.clientWidth / 2;
-    el.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
-  }, []);
+  
 
   // On mount, center the default (middle) feature
   useEffect(() => {
@@ -288,21 +310,22 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
           {features.map(({ id, label, Icon }, idx) => {
             const isActive = id === active;
             return (
-              <li key={id} className="snap-start first:ml-10 last:mr-10 sm:first:ml-12 sm:last:mr-12">
+              <li key={id} role="presentation" className="snap-start first:ml-10 last:mr-10 sm:first:ml-12 sm:last:mr-12">
                 <button
                   role="tab"
                   aria-selected={isActive}
+                  tabIndex={isActive ? 0 : -1}
                   onClick={() => select(id)}
                   onKeyDown={(e) => onKeyDown(e, idx)}
                   className={cn(
                     "group relative flex h-full min-w-[92px] sm:min-w-[108px] flex-col items-center justify-center gap-1 rounded-xl bg-transparent px-2.5 py-3 text-sm sm:text-base cursor-pointer transition-colors",
                     isActive 
-                      ? 'text-[#1e9df1]' 
-                      : 'text-foreground hover:text-[#1e9df1]'
+                      ? 'text-primary' 
+                      : 'text-foreground hover:text-primary'
                   )}
                 >
-                  <span className="inline-flex h-8 w-8 items-center justify-center">
-                    <Icon className="w-6 h-6" />
+                  <span className="inline-flex h-8 w-8 items-center justify-center" aria-hidden="true">
+                    <Icon className="w-6 h-6" aria-hidden="true" focusable="false" />
                   </span>
                   <span className="font-medium">{label}</span>
                   

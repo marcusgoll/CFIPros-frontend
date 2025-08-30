@@ -3,8 +3,9 @@
  * Manages variant assignment and tracking
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { telemetry, ABTest, ABTestVariant } from '@/lib/analytics/telemetry';
+import { logWarn } from '@/lib/utils/logger';
 
 export interface UseABTestResult {
   variant: ABTestVariant | null;
@@ -19,8 +20,10 @@ export interface UseABTestResult {
  */
 export function useABTest(test: ABTest): UseABTestResult {
   // Use fallback variant (control) to prevent hydration mismatch
-  const fallbackVariant = test.variants[0];
-  const [variant, setVariant] = useState<ABTestVariant | null>(fallbackVariant || null);
+  const fallbackVariant: ABTestVariant = useMemo(() => (
+    test.variants[0] ?? { id: 'control', name: 'Control', weight: 1 }
+  ), [test.variants]);
+  const [variant, setVariant] = useState<ABTestVariant | null>(fallbackVariant);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -30,14 +33,14 @@ export function useABTest(test: ABTest): UseABTestResult {
     
     // Only run on client side after hydration
     if (typeof window === 'undefined') {
-      setVariant(fallbackVariant || null);
+      setVariant(fallbackVariant);
       setIsLoading(false);
       return;
     }
 
     // Check if test is active
     if (!test.isActive) {
-      setVariant(fallbackVariant || null);
+      setVariant(fallbackVariant);
       setIsLoading(false);
       return;
     }
@@ -45,12 +48,12 @@ export function useABTest(test: ABTest): UseABTestResult {
     // Check date range if specified
     const now = new Date();
     if (test.startDate && now < test.startDate) {
-      setVariant(fallbackVariant || null);
+      setVariant(fallbackVariant);
       setIsLoading(false);
       return;
     }
     if (test.endDate && now > test.endDate) {
-      setVariant(fallbackVariant || null);
+      setVariant(fallbackVariant);
       setIsLoading(false);
       return;
     }
@@ -58,10 +61,10 @@ export function useABTest(test: ABTest): UseABTestResult {
     // Get assigned variant only after hydration
     try {
       const assignedVariant = telemetry.getABTestVariant(test);
-      setVariant(assignedVariant || null);
+      setVariant(assignedVariant);
     } catch (error) {
-      console.warn('A/B test variant assignment failed:', error);
-      setVariant(fallbackVariant || null);
+      logWarn('A/B test variant assignment failed:', error);
+      setVariant(fallbackVariant);
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +77,7 @@ export function useABTest(test: ABTest): UseABTestResult {
   };
 
   return {
-    variant: isHydrated ? variant : (fallbackVariant || null),
+    variant: isHydrated ? variant : fallbackVariant,
     isLoading,
     trackConversion
   };

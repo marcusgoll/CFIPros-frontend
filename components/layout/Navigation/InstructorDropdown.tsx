@@ -53,8 +53,12 @@ export function InstructorDropdown() {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return () => {
+      if (isOpen) {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
+    };
   }, [isOpen]);
 
   // Cleanup timeout on unmount
@@ -74,7 +78,7 @@ export function InstructorDropdown() {
       onMouseLeave={handleMouseLeave}
     >
       <button 
-        className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground transition-colors group"
+        className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-accent transition-colors group"
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         aria-expanded={isOpen}
@@ -106,7 +110,7 @@ export function InstructorDropdown() {
       </button>
       
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-background rounded-md shadow-lg border border-border z-50">
+        <div className="absolute right-0 mt-2 w-80 bg-popover rounded-md shadow-lg border border-border z-50">
           <div className="p-4">
             <div className="space-y-2">
               {instructorsMenu.items?.map((item, itemIndex) => {
@@ -119,12 +123,12 @@ export function InstructorDropdown() {
                     onClick={() => setIsOpen(false)}
                   >
                     {IconComponent && (
-                      <div className="flex-shrink-0 mt-1 text-primary">
+                      <div className="flex-shrink-0 mt-1 text-primary-600">
                         <IconComponent className="h-5 w-5" />
                       </div>
                     )}
                     <div>
-                      <div className="font-medium text-foreground group-hover:text-primary">
+                      <div className="font-medium text-popover-foreground group-hover:text-primary">
                         {item.title}
                       </div>
                       {item.description && (

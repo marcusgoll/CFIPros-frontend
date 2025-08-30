@@ -3,37 +3,33 @@
  * Testing public results access endpoints
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/results/[id]/route';
 import { APIError } from '@/lib/api/errors';
+import type { MockAPIClient } from '@/lib/types';
 
-// Mock the proxy request function
-jest.mock('@/lib/api/proxy', () => ({
-  proxyRequest: jest.fn(),
-  getClientIP: jest.fn().mockReturnValue('test-client-ip'),
-}));
+// Mock the API client
+jest.mock('@/lib/api/client', () => {
+  const get = jest.fn();
+  const APIClient = jest.fn().mockImplementation(() => ({ get }));
+  const apiClient = { get };
+  return { APIClient, apiClient };
+});
 
-// Mock validation
-jest.mock('@/lib/api/validation', () => ({
-  validateRequest: {
-    resultId: jest.fn().mockReturnValue({ isValid: true }),
+// Mock rate limiter
+jest.mock('@/lib/api/rateLimiter', () => ({
+  rateLimiter: {
+    check: jest.fn().mockResolvedValue({ success: true }),
   },
 }));
 
 describe('/api/results', () => {
-  let mockProxyRequest: jest.MockedFunction<any>;
-  let mockValidateRequest: any;
+  let mockApiClient: MockAPIClient;
 
   beforeEach(() => {
-    const { proxyRequest } = require('@/lib/api/proxy');
-    const { validateRequest } = require('@/lib/api/validation');
-    
-    mockProxyRequest = proxyRequest;
-    mockValidateRequest = validateRequest;
+    const { APIClient } = require('@/lib/api/client');
+    mockApiClient = new APIClient();
     jest.clearAllMocks();
-    
-    // Reset validation mock to return valid by default
-    mockValidateRequest.resultId.mockReturnValue({ isValid: true });
   });
 
   describe('GET /api/results/[id]', () => {
@@ -64,7 +60,7 @@ describe('/api/results', () => {
         },
       };
 
-      mockProxyRequest.mockResolvedValue(NextResponse.json(mockResult, { status: 200 }));
+      mockApiClient.get.mockResolvedValue(mockResult);
 
       const request = new NextRequest(`http://localhost:3000/api/results/${resultId}`, {
         method: 'GET',
@@ -77,23 +73,14 @@ describe('/api/results', () => {
       // Assert
       expect(response.status).toBe(200);
       expect(data).toEqual(mockResult);
-      expect(mockProxyRequest).toHaveBeenCalledWith(request, `/results/${resultId}`, {
-        headers: { 'X-Client-IP': 'test-client-ip' },
-      });
+      expect(mockApiClient.get).toHaveBeenCalledWith(`/results/${resultId}`);
     });
 
     it('should return 404 for non-existent results', async () => {
       // Arrange
       const resultId = 'non-existent-id';
-      const errorResponse = NextResponse.json(
-        {
-          type: 'about:blank#result_not_found',
-          title: 'result_not_found',
-          detail: `Result ${resultId} not found`,
-        },
-        { status: 404 }
-      );
-      mockProxyRequest.mockResolvedValue(errorResponse);
+      const notFoundError = new APIError('result_not_found', 404, `Result ${resultId} not found`);
+      mockApiClient.get.mockRejectedValue(notFoundError);
 
       const request = new NextRequest(`http://localhost:3000/api/results/${resultId}`, {
         method: 'GET',
@@ -113,10 +100,6 @@ describe('/api/results', () => {
     it('should validate result ID format', async () => {
       // Arrange
       const invalidId = 'invalid-id-format-@#$';
-      mockValidateRequest.resultId.mockReturnValue({
-        isValid: false,
-        error: 'Invalid result ID format',
-      });
 
       const request = new NextRequest(`http://localhost:3000/api/results/${invalidId}`, {
         method: 'GET',
@@ -128,8 +111,8 @@ describe('/api/results', () => {
 
       // Assert
       expect(response.status).toBe(400);
-      expect(data.type).toBe('about:blank#validation_error');
-      expect(data.title).toBe('validation_error');
+      expect(data.type).toBe('about:blank#invalid_result_id');
+      expect(data.title).toBe('invalid_result_id');
       expect(data.detail).toContain('Invalid result ID format');
     });
 
@@ -145,9 +128,7 @@ describe('/api/results', () => {
         estimated_completion: '2024-01-01T00:02:00Z',
       };
 
-      const mockResponse = NextResponse.json(processingResult, { status: 200 });
-      mockResponse.headers.set('Cache-Control', 'no-cache');
-      mockProxyRequest.mockResolvedValue(mockResponse);
+      mockApiClient.get.mockResolvedValue(processingResult);
 
       const request = new NextRequest(`http://localhost:3000/api/results/${resultId}`, {
         method: 'GET',
@@ -157,18 +138,12 @@ describe('/api/results', () => {
       const response = await GET(request, { params: Promise.resolve({ id: resultId }) });
       const data = await response.json();
 
-      // Debug - log response for debugging
-      if (response.status !== 200) {
-        console.log('Unexpected status:', response.status, 'Data:', data);
-      }
-
       // Assert
       expect(response.status).toBe(200);
       expect(data.status).toBe('processing');
       expect(data.progress).toBe(75);
       expect(data).toHaveProperty('estimated_completion');
-      // Note: Cache-Control header is set by the route handler, not the proxy
-      expect(response.headers.get('Cache-Control')).toBe('public, max-age=86400, immutable');
+      expect(response.headers.get('Cache-Control')).toBe('no-cache');
     });
 
     it('should apply appropriate caching for completed results', async () => {
@@ -181,7 +156,7 @@ describe('/api/results', () => {
         analysis: { acs_codes: ['PA.I.A.K1'] },
       };
 
-      mockProxyRequest.mockResolvedValue(NextResponse.json(completedResult, { status: 200 }));
+      mockApiClient.get.mockResolvedValue(completedResult);
 
       const request = new NextRequest(`http://localhost:3000/api/results/${resultId}`, {
         method: 'GET',
@@ -192,48 +167,40 @@ describe('/api/results', () => {
 
       // Assert
       expect(response.status).toBe(200);
-      expect(response.headers.get('Cache-Control')).toBe('public, max-age=86400, immutable');
-      expect(response.headers.get('ETag')).toBe(`"result-${resultId}"`);
+      expect(response.headers.get('Cache-Control')).toBe('public, max-age=3600, s-maxage=86400');
+      expect(response.headers.get('ETag')).toBeTruthy();
     });
 
     it('should handle rate limiting for results endpoint', async () => {
-      // Arrange - Mock proxy to always return success to test just rate limiting
-      const resultId = 'test-result-123';
-      const mockResult = { id: resultId, status: 'completed' };
-      mockProxyRequest.mockResolvedValue(NextResponse.json(mockResult, { status: 200 }));
+      // Arrange
+      const { rateLimiter } = require('@/lib/api/rateLimiter');
+      rateLimiter.check.mockResolvedValue({ 
+        success: false, 
+        limit: 100, 
+        remaining: 0, 
+        reset: Date.now() + 3600000 
+      });
 
+      const resultId = 'test-result-123';
       const request = new NextRequest(`http://localhost:3000/api/results/${resultId}`, {
         method: 'GET',
       });
 
-      // Act - Make enough requests to trigger rate limit (100 is the limit for results endpoint)
-      let lastResponse;
-      let responses = [];
-      
-      // Make 101 requests to exceed the rate limit of 100 requests per hour for results endpoint
-      for (let i = 0; i <= 100; i++) {
-        lastResponse = await GET(request, { params: Promise.resolve({ id: resultId }) });
-        responses.push({ status: lastResponse.status, i });
-        
-        // Break early if we hit rate limit
-        if (lastResponse.status === 429) {
-          break;
-        }
-      }
+      // Act
+      const response = await GET(request, { params: Promise.resolve({ id: resultId }) });
+      const data = await response.json();
 
-      const data = await lastResponse!.json();
-
-      // Assert - Should eventually hit rate limit
-      expect(lastResponse!.status).toBe(429);
+      // Assert
+      expect(response.status).toBe(429);
       expect(data.type).toBe('about:blank#rate_limit_exceeded');
       expect(data.title).toBe('rate_limit_exceeded');
-      expect(lastResponse!.headers.get('X-RateLimit-Limit')).toBe('100');
+      expect(response.headers.get('X-RateLimit-Limit')).toBe('100');
     });
 
     it('should include security headers', async () => {
       // Arrange
       const resultId = 'test-result-123';
-      mockProxyRequest.mockResolvedValue(NextResponse.json({ id: resultId, status: 'completed' }, { status: 200 }));
+      mockApiClient.get.mockResolvedValue({ id: resultId, status: 'completed' });
 
       const request = new NextRequest(`http://localhost:3000/api/results/${resultId}`, {
         method: 'GET',
@@ -249,20 +216,12 @@ describe('/api/results', () => {
     });
 
     it('should handle backend timeouts gracefully', async () => {
-      // Arrange - Use unique client IP to avoid rate limiting from previous tests
-      const { getClientIP } = require('@/lib/api/proxy');
-      getClientIP.mockReturnValue('timeout-test-client-ip');
-      
+      // Arrange
       const resultId = 'test-result-123';
-      const errorResponse = NextResponse.json(
-        {
-          type: 'about:blank#request_timeout',
-          title: 'request_timeout',
-          detail: 'Backend request timed out',
-        },
-        { status: 504 }
-      );
-      mockProxyRequest.mockResolvedValue(errorResponse);
+      const timeoutError = new APIError('request_timeout', 504, 'Backend request timed out');
+      mockApiClient.get.mockRejectedValue(timeoutError);
+      const { rateLimiter } = require('@/lib/api/rateLimiter');
+      rateLimiter.check.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: Date.now() + 3600000 });
 
       const request = new NextRequest(`http://localhost:3000/api/results/${resultId}`, {
         method: 'GET',

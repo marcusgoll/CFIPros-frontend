@@ -2,9 +2,9 @@ name: 🧪 CI/CD Pipeline
 
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ main, develop ]
   pull_request:
-    branches: [ master, develop ]
+    branches: [ main, develop ]
 
 # Cancel previous runs when a new commit is pushed
 concurrency:
@@ -72,7 +72,7 @@ jobs:
         if: matrix.node-version == '18.x'
         uses: codecov/codecov-action@v5
         with:
-          files: ./coverage/lcov.info
+          file: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
@@ -109,7 +109,7 @@ jobs:
 
       - name: 🏗️ Build storybook (if exists)
         run: |
-          if [ -f ".storybook/master.js" ] || [ -f ".storybook/master.ts" ]; then
+          if [ -f ".storybook/main.js" ] || [ -f ".storybook/main.ts" ]; then
             npm run build-storybook
           else
             echo "No Storybook configuration found, skipping..."

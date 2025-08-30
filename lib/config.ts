@@ -74,10 +74,10 @@ const validateEnvironmentVariables = (): EnvironmentVariables => {
 
   return {
     BACKEND_API_URL: backendUrl,
-    NODE_ENV: nodeEnv,
-    REDIS_URL: redisUrl,
-    ALLOWED_ORIGINS: allowedOrigins,
-    NEXT_PUBLIC_DEMO_VIDEO_PATH: demoVideoPath,
+    ...(nodeEnv ? { NODE_ENV: nodeEnv } : {}),
+    ...(redisUrl ? { REDIS_URL: redisUrl } : {}),
+    ...(allowedOrigins ? { ALLOWED_ORIGINS: allowedOrigins } : {}),
+    ...(demoVideoPath ? { NEXT_PUBLIC_DEMO_VIDEO_PATH: demoVideoPath } : {}),
   };
 };
 

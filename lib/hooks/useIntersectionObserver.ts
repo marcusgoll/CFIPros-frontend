@@ -7,7 +7,7 @@ interface UseIntersectionObserverOptions {
   fallbackInView?: boolean;
 }
 
-export function useIntersectionObserver<T extends HTMLElement = HTMLDivElement>(
+export function useIntersectionObserver(
   options: UseIntersectionObserverOptions = {}
 ) {
   const {
@@ -19,11 +19,13 @@ export function useIntersectionObserver<T extends HTMLElement = HTMLDivElement>(
 
   const [isInView, setIsInView] = useState(fallbackInView);
   const [hasTriggered, setHasTriggered] = useState(false);
-  const elementRef = useRef<T>(null);
+  const elementRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!element) {return;}
+    if (!element) {
+      return;
+    }
 
     // Fallback for environments without IntersectionObserver (SSR, older browsers)
     if (typeof IntersectionObserver === 'undefined') {
@@ -34,7 +36,9 @@ export function useIntersectionObserver<T extends HTMLElement = HTMLDivElement>(
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (!entry) {return;}
+        if (!entry) {
+          return;
+        }
         const inView = entry.isIntersecting;
 
         if (inView && (!triggerOnce || !hasTriggered)) {

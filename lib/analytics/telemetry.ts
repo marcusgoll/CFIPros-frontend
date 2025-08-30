@@ -4,6 +4,7 @@
  */
 
 import posthog from 'posthog-js';
+import { logError, logInfo, logWarn } from '@/lib/utils/logger';
 
 export type EventName = 
   | 'hero_view'
@@ -19,13 +20,34 @@ export type EventName =
   | 'benefit_section_view'
   | 'benefit_feature_interaction'
   | 'pricing_plan_select'
-  | 'pricing_toggle_billing';
-
-export type TelemetryValue = string | number | boolean | null | undefined;
+  | 'pricing_toggle_billing'
+  | 'image_load_failed'
+  | 'video_preload_failed'
+  | 'video_load_failed'
+  | 'upload_started'
+  | 'upload_completed'
+  | 'upload_failed'
+  | 'upload_file_added'
+  | 'upload_file_removed'
+  | 'upload_validation_error'
+  | 'extractor_validation_error'
+  | 'extractor_upload_started'
+  | 'extractor_upload_success'
+  | 'extractor_upload_failed'
+  | 'extractor_results_viewed'
+  | 'extractor_results_error'
+  | 'result_claim_attempted'
+  | 'result_claimed'
+  | 'result_claim_failed'
+  | 'results_viewed'
+  | 'results_shared'
+  | 'email_captured'
+  | 'email_capture_success'
+  | 'email_capture_failed';
 
 export interface TelemetryEvent {
   name: EventName;
-  properties?: Record<string, TelemetryValue>;
+  properties?: Record<string, unknown>;
   timestamp?: number;
   sessionId?: string;
   userId?: string;
@@ -51,7 +73,7 @@ class TelemetryService {
   private events: TelemetryEvent[] = [];
   private sessionId: string;
   private isInitialized = false;
-  private debugMode = process.env.NODE_ENV === 'development';
+  private debugMode = process.env['NODE_ENV'] === 'development';
 
   private constructor() {
     this.sessionId = this.generateSessionId();
@@ -72,14 +94,16 @@ class TelemetryService {
     apiKey?: string;
     apiHost?: string;
   }) {
-    if (this.isInitialized) {return;}
+    if (this.isInitialized) {
+      return;
+    }
     
     this.debugMode = config?.debugMode ?? this.debugMode;
     
     // Initialize PostHog
     if (typeof window !== 'undefined') {
-      const apiKey = config?.apiKey || process.env.NEXT_PUBLIC_POSTHOG_KEY;
-      const apiHost = config?.apiHost || process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com';
+      const apiKey = config?.apiKey || process.env['NEXT_PUBLIC_POSTHOG_KEY'];
+      const apiHost = config?.apiHost || process.env['NEXT_PUBLIC_POSTHOG_HOST'] || 'https://app.posthog.com';
       
       if (apiKey && apiKey !== 'your_posthog_api_key_here') {
         try {
@@ -88,13 +112,10 @@ class TelemetryService {
             capture_pageview: true,
             capture_pageleave: true,
             autocapture: false, // We'll manually track specific events
-            session_recording: {
-              enabled: false, // Enable when needed
-            },
             persistence: 'localStorage',
             loaded: (posthog) => {
               if (this.debugMode) {
-                console.log('🔍 PostHog initialized successfully', {
+                logInfo('🔍 PostHog initialized successfully', {
                   sessionId: posthog.get_session_id(),
                   distinctId: posthog.get_distinct_id()
                 });
@@ -106,13 +127,13 @@ class TelemetryService {
           this.sessionId = posthog.get_session_id() || this.sessionId;
         } catch (error) {
           if (this.debugMode) {
-            console.error('❌ PostHog initialization failed:', error);
+            logError('❌ PostHog initialization failed:', error);
           }
         }
       } else {
         if (this.debugMode) {
-          console.warn('⚠️ PostHog API key not configured. Add NEXT_PUBLIC_POSTHOG_KEY to .env.local');
-          console.log('📝 Instructions: Replace "your_posthog_api_key_here" with your actual PostHog API key');
+          logWarn('⚠️ PostHog API key not configured. Add NEXT_PUBLIC_POSTHOG_KEY to .env.local');
+          logInfo('📝 Instructions: Replace "your_posthog_api_key_here" with your actual PostHog API key');
         }
       }
     }
@@ -126,7 +147,7 @@ class TelemetryService {
     this.setupScrollTracking();
     
     if (this.debugMode) {
-      console.log('🔍 Telemetry initialized', {
+      logInfo('🔍 Telemetry initialized', {
         sessionId: this.sessionId,
         timestamp: new Date().toISOString()
       });
@@ -136,14 +157,19 @@ class TelemetryService {
   /**
    * Track a telemetry event with PostHog
    */
-  track(name: EventName, properties?: Record<string, TelemetryValue>) {
+  track(name: EventName, properties?: Record<string, unknown>) {
     const event: TelemetryEvent = {
       name,
-      properties,
       timestamp: Date.now(),
       sessionId: this.sessionId,
-      userId: this.getUserId()
     };
+    const uid = this.getUserId();
+    if (uid) {
+      event.userId = uid;
+    }
+    if (properties) {
+      event.properties = properties;
+    }
 
     this.events.push(event);
     
@@ -157,13 +183,13 @@ class TelemetryService {
         });
       } catch (error) {
         if (this.debugMode) {
-          console.warn('Failed to send event to PostHog:', error);
+          logWarn('Failed to send event to PostHog:', error);
         }
       }
     }
     
     if (this.debugMode) {
-      console.log('📊 Event tracked:', event);
+      logInfo('📊 Event tracked:', event);
     }
   }
 
@@ -178,6 +204,61 @@ class TelemetryService {
       referrer: document.referrer,
       timeOnPage: this.getTimeOnPage(),
       scrollDepth: this.getScrollDepth()
+    });
+  }
+
+  /**
+   * Track file upload events
+   */
+  trackUploadStarted(files: File[]) {
+    const fileTypes = [...new Set(files.map(f => f.type))];
+    const totalSize = files.reduce((sum, f) => sum + f.size, 0);
+    
+    this.track('upload_started', {
+      fileCount: files.length,
+      totalSize,
+      fileTypes,
+      averageFileSize: totalSize / files.length,
+    });
+  }
+
+  trackUploadCompleted(files: File[], processingTime: number) {
+    this.track('upload_completed', {
+      fileCount: files.length,
+      processingTime,
+      success: true,
+    });
+  }
+
+  trackUploadFailed(files: File[], error: string) {
+    this.track('upload_failed', {
+      fileCount: files.length,
+      error,
+      success: false,
+    });
+  }
+
+  trackFileAdded(file: File) {
+    this.track('upload_file_added', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+  }
+
+  trackFileRemoved(file: File) {
+    this.track('upload_file_removed', {
+      fileName: file.name,
+      fileSize: file.size,
+      fileType: file.type,
+    });
+  }
+
+  trackValidationError(error: string, files?: File[]) {
+    this.track('upload_validation_error', {
+      error,
+      fileCount: files?.length || 0,
+      fileTypes: files ? [...new Set(files.map(f => f.type))] : [],
     });
   }
 
@@ -247,7 +328,11 @@ class TelemetryService {
     }
 
     // Fallback to first variant
-    const fallback = test.variants[0];
+    const fallback: ABTestVariant = test.variants[0] ?? {
+      id: 'control',
+      name: 'Control',
+      weight: 1,
+    };
     this.storeVariant(test.id, fallback);
     return fallback;
   }
@@ -333,7 +418,7 @@ class TelemetryService {
   /**
    * Set user identity for tracking
    */
-  identify(userId: string, traits?: Record<string, TelemetryValue>) {
+  identify(userId: string, traits?: Record<string, unknown>) {
     if (typeof window !== 'undefined' && posthog) {
       posthog.identify(userId, traits);
     }
@@ -350,7 +435,9 @@ class TelemetryService {
   }
 
   private getStoredVariant(testId: string): ABTestVariant | null {
-    if (typeof window === 'undefined') {return null;}
+    if (typeof window === 'undefined') {
+      return null;
+    }
     
     const stored = localStorage.getItem(`ab_test_${testId}`);
     return stored ? JSON.parse(stored) : null;
@@ -384,12 +471,36 @@ class TelemetryService {
 export const telemetry = TelemetryService.getInstance();
 
 // Export convenience functions
-export const trackEvent = (name: EventName, properties?: Record<string, TelemetryValue>) => {
+export const trackEvent = (name: EventName, properties?: Record<string, unknown>) => {
   telemetry.track(name, properties);
 };
 
 export const trackHeroCTA = (ctaText: string, variant?: string) => {
   telemetry.trackHeroCTAClick(ctaText, variant);
+};
+
+export const trackUploadStarted = (files: File[]) => {
+  telemetry.trackUploadStarted(files);
+};
+
+export const trackUploadCompleted = (files: File[], processingTime: number) => {
+  telemetry.trackUploadCompleted(files, processingTime);
+};
+
+export const trackUploadFailed = (files: File[], error: string) => {
+  telemetry.trackUploadFailed(files, error);
+};
+
+export const trackFileAdded = (file: File) => {
+  telemetry.trackFileAdded(file);
+};
+
+export const trackFileRemoved = (file: File) => {
+  telemetry.trackFileRemoved(file);
+};
+
+export const trackValidationError = (error: string, files?: File[]) => {
+  telemetry.trackValidationError(error, files);
 };
 
 export const initTelemetry = (config?: { debugMode?: boolean }) => {

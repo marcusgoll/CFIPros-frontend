@@ -4,6 +4,7 @@
  */
 
 import { useCallback, useState } from 'react';
+import { logError } from '@/lib/utils/logger';
 import type { APIError } from '@/lib/types';
 
 interface ErrorState {
@@ -59,7 +60,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
   }, []);
 
   const handleAPIError = useCallback((error: unknown) => {
-    console.error('API Error:', error);
+    logError('API Error:', error);
 
     // Handle different error types
     if (error instanceof Error) {
@@ -94,7 +95,7 @@ export function useErrorHandler(): UseErrorHandlerReturn {
 export function setupGlobalErrorHandler() {
   if (typeof window !== 'undefined') {
     window.addEventListener('unhandledrejection', (event) => {
-      console.error('Unhandled promise rejection:', event.reason);
+      logError('Unhandled promise rejection:', event.reason);
       
       // In a real app, send to monitoring service
       // Sentry.captureException(event.reason);
@@ -104,7 +105,7 @@ export function setupGlobalErrorHandler() {
     });
 
     window.addEventListener('error', (event) => {
-      console.error('Unhandled error:', event.error);
+      logError('Unhandled error:', event.error);
       
       // In a real app, send to monitoring service
       // Sentry.captureException(event.error);

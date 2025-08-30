@@ -94,6 +94,8 @@ junit.xml
 *.sqlite
 
 # Business-sensitive files and directories
+# IMPORTANT: These should be git-ignored but NEVER deleted from local filesystem
+# They contain critical Agent OS configuration needed for development
 .agent-os/
 .claude/
 .internal/
@@ -102,7 +104,8 @@ business/
 internal/
 proprietary/
 
-# Claude AI assistant files
+# Claude AI assistant files  
+# CRITICAL: Do NOT delete these files - only exclude from git tracking
 **/claude.md
 **/CLAUDE.md
 **/*claude*.md
@@ -227,5 +230,3 @@ billing/
 revenue/
 subscriptions/business/
 payments/proprietary/
-# clerk configuration (can include secrets)
-/.clerk/

@@ -12,27 +12,21 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format a date to a human-readable string
  */
-export function formatDate(date: Date | string, format?: { year?: string; month?: string; day?: string }): string {
-  let dateObj: Date;
-  if (typeof date === "string") {
-    // Handle string dates with timezone consideration
-    dateObj = date.includes('T') ? new Date(date) : new Date(date + 'T00:00:00');
-  } else {
-    dateObj = date;
-  }
+export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
   
-  // Handle invalid dates
+  // Check for invalid dates
   if (isNaN(dateObj.getTime())) {
     return "Invalid Date";
   }
   
-  const formatOptions = format || {
+  const defaultOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
-    month: "short", 
+    month: "short",
     day: "numeric",
   };
   
-  return new Intl.DateTimeFormat("en-US", formatOptions as Intl.DateTimeFormatOptions).format(dateObj);
+  return new Intl.DateTimeFormat("en-US", options || defaultOptions).format(dateObj);
 }
 
 /**
@@ -47,23 +41,29 @@ export function formatRelativeTime(date: Date | string): string {
 
   if (diffInSeconds < 60) {
     return rtf.format(-diffInSeconds, "second");
-  } else if (diffInSeconds < 3600) {
-    return rtf.format(-Math.floor(diffInSeconds / 60), "minute");
-  } else if (diffInSeconds < 86400) {
-    return rtf.format(-Math.floor(diffInSeconds / 3600), "hour");
-  } else if (diffInSeconds < 2592000) {
-    return rtf.format(-Math.floor(diffInSeconds / 86400), "day");
-  } else if (diffInSeconds < 31536000) {
-    return rtf.format(-Math.floor(diffInSeconds / 2592000), "month");
-  } else {
-    return rtf.format(-Math.floor(diffInSeconds / 31536000), "year");
   }
+  if (diffInSeconds < 3600) {
+    return rtf.format(-Math.floor(diffInSeconds / 60), "minute");
+  }
+  if (diffInSeconds < 86400) {
+    return rtf.format(-Math.floor(diffInSeconds / 3600), "hour");
+  }
+  if (diffInSeconds < 2592000) {
+    return rtf.format(-Math.floor(diffInSeconds / 86400), "day");
+  }
+  if (diffInSeconds < 31536000) {
+    return rtf.format(-Math.floor(diffInSeconds / 2592000), "month");
+  }
+  return rtf.format(-Math.floor(diffInSeconds / 31536000), "year");
 }
 
 /**
  * Truncate text to a specified length
  */
-export function truncate(text: string, length: number, suffix = "..."): string {
+export function truncate(text: string, length: number, suffix: string = "..."): string {
+  if (!text) {
+    return text;
+  }
   if (length <= 0) {
     return suffix;
   }
@@ -77,20 +77,12 @@ export function truncate(text: string, length: number, suffix = "..."): string {
  * Convert a string to a URL-friendly slug
  */
 export function slugify(text: string): string {
-  if (!text || !text.trim()) {
-    return "";
-  }
-  
   return text
-    .trim()
-    // Normalize Unicode characters (converts café to cafe)
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^\w\s.-]/g, "") // Remove non-word characters except spaces, dots, and hyphens
+    .replace(/[^\w\s-]/g, "") // Remove non-word characters except spaces and hyphens
     .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/[.-]+/g, "-") // Replace dots and multiple hyphens with single hyphen
-    .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
+    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .trim();
 }
 
 /**
@@ -106,26 +98,27 @@ export function generateRandomString(length: number): string {
 }
 
 /**
+ * Generate a unique ID with specified length (default 8)
+ */
+export function generateId(length: number = 8): string {
+  return generateRandomString(length);
+}
+
+/**
+ * Capitalize the first letter of a string
+ */
+export function capitalizeFirst(text: string): string {
+  if (!text) {
+    return text;
+  }
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/**
  * Check if a string is a valid email address
  */
 export function isValidEmail(email: string): boolean {
-  if (!email || typeof email !== 'string') {
-    return false;
-  }
-  
-  // More strict email regex that rejects edge cases
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  
-  // Additional checks for edge cases
-  if (email.includes('..') || // No consecutive dots
-      email.startsWith('.') || email.endsWith('.') || // No leading/trailing dots
-      email.startsWith('@') || email.endsWith('@') || // No leading/trailing @
-      email.indexOf('@') !== email.lastIndexOf('@') || // Only one @
-      email.split('@')[1]?.startsWith('.') || // Domain can't start with dot
-      email.split('@')[1]?.endsWith('.')) { // Domain can't end with dot
-    return false;
-  }
-  
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 }
 
@@ -140,11 +133,15 @@ export function formatFileSize(bytes: number): string {
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const value = bytes / Math.pow(k, i);
   
-  // Format with appropriate decimal places
-  const formatted = i === 0 ? value.toString() : value.toFixed(1);
-  return `${formatted} ${sizes[i]}`;
+  // For bytes, don't show decimals
+  if (i === 0) {
+    return bytes + " B";
+  }
+  
+  // For larger units, always show one decimal place
+  const value = (bytes / Math.pow(k, i)).toFixed(1);
+  return value + " " + sizes[i];
 }
 
 /**
@@ -165,9 +162,15 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  * Deep clone an object
  */
 export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== "object") {return obj;}
-  if (obj instanceof Date) {return new Date(obj.getTime()) as T;}
-  if (obj instanceof Array) {return obj.map(item => deepClone(item)) as T;}
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+  if (obj instanceof Date) {
+    return new Date(obj.getTime()) as T;
+  }
+  if (obj instanceof Array) {
+    return obj.map(item => deepClone(item)) as T;
+  }
   if (typeof obj === "object") {
     const clonedObj = {} as T;
     for (const key in obj) {
@@ -178,28 +181,6 @@ export function deepClone<T>(obj: T): T {
     return clonedObj;
   }
   return obj;
-}
-
-/**
- * Generate a unique ID string
- */
-export function generateId(length = 8): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
-
-/**
- * Capitalize the first letter of a string
- */
-export function capitalizeFirst(text: string): string {
-  if (!text) {
-    return text;
-  }
-  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /**
@@ -219,7 +200,9 @@ export function getMotionVariants<T extends Record<string, unknown>>(
   normalVariants: T,
   reducedVariants?: Partial<T>
 ): T {
-  if (!prefersReducedMotion()) {return normalVariants;}
+  if (!prefersReducedMotion()) {
+    return normalVariants;
+  }
   
   return {
     ...normalVariants,

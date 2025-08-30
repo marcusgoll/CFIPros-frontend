@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Bell, User, Settings, LogOut } from "lucide-react";
+import { Bell } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 export function AuthNavigation() {
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, isLoaded } = useUser();
 
   return (
@@ -16,7 +14,7 @@ export function AuthNavigation() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/dashboard" className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">CF</span>
               </div>
               <span className="text-xl font-bold text-gray-900">CFIPros</span>

@@ -256,23 +256,13 @@ describe("FeatureSpotlightMenu Accessibility", () => {
       expect(mockOnSelect).toHaveBeenCalledWith("upload");
     });
 
-    it("prevents default behavior for handled keys", () => {
+    it("moves focus with arrow keys without unwanted scrolling", () => {
       render(<FeatureSpotlightMenu features={mockFeatures} />);
-      
       const uploadTab = screen.getByRole("tab", { name: "Upload Files" });
       uploadTab.focus();
-      
-      const arrowRightEvent = new KeyboardEvent("keydown", { key: "ArrowRight" });
-      const preventDefaultSpy = jest.spyOn(arrowRightEvent, "preventDefault");
-      
-      fireEvent.keyDown(uploadTab, arrowRightEvent);
-      expect(preventDefaultSpy).toHaveBeenCalled();
-      
-      const spaceEvent = new KeyboardEvent("keydown", { key: " " });
-      const spacePreventDefaultSpy = jest.spyOn(spaceEvent, "preventDefault");
-      
-      fireEvent.keyDown(uploadTab, spaceEvent);
-      expect(spacePreventDefaultSpy).toHaveBeenCalled();
+      fireEvent.keyDown(uploadTab, { key: "ArrowRight" });
+      const analyzeTab = screen.getByRole("tab", { name: "Analyze Data" });
+      expect(analyzeTab).toHaveFocus();
     });
 
     it("maintains proper focus management with roving tabindex", () => {

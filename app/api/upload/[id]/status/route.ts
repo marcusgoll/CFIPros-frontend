@@ -9,12 +9,17 @@ import { validateRequest } from '@/lib/api/validation';
 import { proxyRequest, getClientIP } from '@/lib/api/proxy';
 import { CommonErrors, handleAPIError } from '@/lib/api/errors';
 
-async function statusHandler(request: NextRequest, context?: { params?: Promise<{ id: string }> }) {
-  if (!context?.params) {
-    const error = CommonErrors.VALIDATION_ERROR('Missing route parameters');
-    return handleAPIError(error);
-  }
-  const { id } = await context.params;
+async function statusHandler(
+  request: NextRequest,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string | string[] | undefined }> }
+) {
+  const rawParams = (ctx as { params?: { id: string } | Promise<{ id: string | string[] | undefined }> })?.params;
+  const maybePromise = rawParams as unknown as { then?: unknown };
+  const isPromise = typeof maybePromise?.then === 'function';
+  const resolvedParams = isPromise
+    ? await (rawParams as Promise<{ id: string | string[] | undefined }>)
+    : (rawParams as { id: string } | undefined);
+  const { id } = (resolvedParams || {}) as { id: string };
   const clientIP = getClientIP(request);
   
   // Validate upload ID format
@@ -41,11 +46,17 @@ async function statusHandler(request: NextRequest, context?: { params?: Promise<
   return response;
 }
 
-// Apply middleware wrapper  
-export const GET = withAPIMiddleware(statusHandler, {
-  endpoint: 'results',
-  cors: true,
-  methods: ['GET', 'OPTIONS']
-});
+// Apply middleware wrapper with Next.js RouteContext typing
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string | string[] | undefined }> }
+) {
+  const wrapped = withAPIMiddleware(statusHandler, {
+    endpoint: 'results',
+    cors: true,
+    methods: ['GET', 'OPTIONS']
+  });
+  return wrapped(request, context);
+}
 
 export const OPTIONS = createOptionsHandler(['GET', 'OPTIONS']);

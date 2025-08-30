@@ -33,10 +33,7 @@ const mockUseResponsive = useResponsive as jest.MockedFunction<typeof useRespons
 describe('BenefitZipperList', () => {
   beforeEach(() => {
     // Default mocks
-    mockUseIntersectionObserver.mockReturnValue({
-      ref: { current: null },
-      isInView: true,
-    });
+    mockUseIntersectionObserver.mockReturnValue(true);
     mockUseResponsive.mockReturnValue({
       isMobile: false,
       isTablet: false,
@@ -139,10 +136,7 @@ describe('BenefitZipperList', () => {
   describe('Analytics Callbacks', () => {
     it('calls onSectionView when section becomes visible', async () => {
       const onSectionView = jest.fn();
-      mockUseIntersectionObserver.mockReturnValue({
-      ref: { current: null },
-      isInView: true,
-    });
+      mockUseIntersectionObserver.mockReturnValue(true);
       
       render(<BenefitZipperList onSectionView={onSectionView} />);
       
@@ -195,10 +189,7 @@ describe('BenefitZipperList', () => {
     });
 
     it('handles intersection observer returning false', () => {
-      mockUseIntersectionObserver.mockReturnValue({
-      ref: { current: null },
-      isInView: false,
-    });
+      mockUseIntersectionObserver.mockReturnValue(false);
       
       expect(() => {
         render(<BenefitZipperList />);
@@ -244,8 +235,8 @@ describe('BenefitZipperList', () => {
   describe('Configuration Override', () => {
     it('accepts configuration overrides', () => {
       const customConfig = {
-        ANIMATION_DURATION: 0.6 as const,
-        STAGGER_DELAY: 0.1 as const,
+        ANIMATION_DURATION: 1.0,
+        MOBILE_ANIMATION_DURATION: 0.5,
       };
 
       expect(() => {

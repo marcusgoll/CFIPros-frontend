@@ -3,13 +3,13 @@
  * Handle user authentication and token generation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { withAPIMiddleware } from '@/lib/api/middleware';
+import { NextRequest } from 'next/server';
+import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
 import { validateRequest } from '@/lib/api/validation';
 import { proxyRequest, getClientIP } from '@/lib/api/proxy';
 import { CommonErrors, handleAPIError } from '@/lib/api/errors';
 
-async function loginHandler(request: NextRequest, context: { params: Promise<Record<string, string>> }) {
+async function loginHandler(request: NextRequest) {
   const clientIP = getClientIP(request);
 
   // Validate authentication request
@@ -39,10 +39,4 @@ export const POST = withAPIMiddleware(loginHandler, {
   methods: ['POST', 'OPTIONS']
 });
 
-export async function OPTIONS(request: NextRequest) {
-  const response = new NextResponse(null, { status: 200 });
-  response.headers.set('Access-Control-Allow-Origin', '*');
-  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Client-IP');
-  return response;
-}
+export const OPTIONS = createOptionsHandler(['POST', 'OPTIONS']);

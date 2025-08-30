@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn, prefersReducedMotion } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics/telemetry";
+import { logError, logWarn } from "@/lib/utils/logger";
 
 // Video path from environment configuration with validation
 const getValidatedVideoPath = (): string => {
@@ -12,15 +13,15 @@ const getValidatedVideoPath = (): string => {
   const defaultPath = "/videos/6739601-hd_1920_1080_24fps.mp4";
   
   if (!envPath) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('NEXT_PUBLIC_DEMO_VIDEO_PATH not configured, using default path');
+    if (process.env['NODE_ENV'] === 'development') {
+      logWarn('NEXT_PUBLIC_DEMO_VIDEO_PATH not configured, using default path');
     }
     return defaultPath;
   }
   
   // Basic validation - ensure it's a video file path
   if (!envPath.match(/\.(mp4|webm|mov|avi)$/i)) {
-    console.error('Invalid video file extension in NEXT_PUBLIC_DEMO_VIDEO_PATH');
+    logError('Invalid video file extension in NEXT_PUBLIC_DEMO_VIDEO_PATH');
     return defaultPath;
   }
   
@@ -48,7 +49,6 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // Removed isPlaying state as it's not used
   const [videoError, setVideoError] = useState(false);
   const [videoPreloaded, setVideoPreloaded] = useState(false);
   const reducedMotion = prefersReducedMotion();
@@ -58,20 +58,16 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     const shouldPreloadVideo = () => {
       // Don't preload on slow connections to save bandwidth
       if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-        const connection = (navigator as Navigator & { 
-          connection?: { 
-            effectiveType?: string;
-            saveData?: boolean;
-            downlink?: number;
-            rtt?: number;
-          }
-        }).connection;
+        const nav = navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean; downlink?: number; rtt?: number } };
+        const connection = nav.connection;
         
-        if (!connection) {return true;} // Default to preload if no connection info
+        if (!connection) {
+          return true; // Default to preload if no connection info
+        }
         
         // Check for slow connection types
         const slowTypes = ['slow-2g', '2g'];
-        if (slowTypes.includes(connection.effectiveType)) {
+        if (slowTypes.includes(connection.effectiveType || '')) {
           return false;
         }
         
@@ -100,7 +96,9 @@ export const VideoModal: React.FC<VideoModalProps> = ({
     };
 
     const preloadVideo = () => {
-      if (!shouldPreloadVideo()) {return;}
+      if (!shouldPreloadVideo()) {
+        return;
+      }
       
       const video = document.createElement('video');
       video.preload = 'metadata';
@@ -112,7 +110,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       
       video.addEventListener('error', () => {
         setVideoError(true);
-        trackEvent('feature_preview_video', {
+        trackEvent('video_preload_failed', {
           videoPath: DEMO_VIDEO_PATH,
           component: 'VideoModal_preload',
         });
@@ -143,7 +141,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         document.body.style.overflow = "unset";
       };
     }
-    return () => {}; // Always return a function
+    return;
   }, [isOpen, onClose]);
 
   // Focus management
@@ -155,13 +153,19 @@ export const VideoModal: React.FC<VideoModalProps> = ({
 
   // Focus trap
   useEffect(() => {
-    if (!isOpen) {return;}
+    if (!isOpen) {
+      return;
+    }
 
     const handleTab = (e: KeyboardEvent) => {
-      if (e.key !== "Tab") {return;}
+      if (e.key !== "Tab") {
+        return;
+      }
 
       const dialog = dialogRef.current;
-      if (!dialog) {return;}
+      if (!dialog) {
+        return;
+      }
 
       const focusableElements = dialog.querySelectorAll(
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), iframe'
@@ -266,14 +270,11 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 preload="metadata"
                 onLoadedData={() => {
                   setIsLoading(false);
-                  setIsPlaying(true);
                 }}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
                 onError={() => {
                   setIsLoading(false);
                   setVideoError(true);
-                  trackEvent('feature_preview_video', {
+                  trackEvent('video_load_failed', {
                     featureId,
                     featureName,
                     videoPath: DEMO_VIDEO_PATH,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HeaderNavigation } from '@/components/layout/HeaderNavigation';
 
@@ -26,10 +26,10 @@ describe('HeaderNavigation', () => {
 
   it('renders all navigation menus', () => {
     render(<HeaderNavigation />);
-    expect(screen.getByText('Our Features')).toBeInTheDocument();
-    expect(screen.getByText('Research')).toBeInTheDocument();
-    expect(screen.getByText('For Instructors')).toBeInTheDocument();
-    expect(screen.getByText('For Flight Schools')).toBeInTheDocument();
+    expect(screen.getAllByText('Our Features')).toHaveLength(2); // Desktop and mobile
+    expect(screen.getAllByText('Research')).toHaveLength(2); // Desktop and mobile
+    expect(screen.getAllByText('For Instructors')).toHaveLength(2); // Desktop and mobile
+    expect(screen.getAllByText('For Flight Schools')).toHaveLength(2); // Desktop and mobile
   });
 
   it('renders login and sign up buttons when not authenticated', () => {
@@ -101,9 +101,10 @@ describe('HeaderNavigation', () => {
 
   it('renders mega menu for features dropdown', async () => {
     render(<HeaderNavigation />);
-    const featuresButton = screen.getByText('Our Features');
+    const featuresButtons = screen.getAllByText('Our Features');
+    const desktopFeaturesButton = featuresButtons[0]; // First one is desktop (hidden lg:flex)
     
-    fireEvent.mouseEnter(featuresButton);
+    fireEvent.mouseEnter(desktopFeaturesButton);
     
     await waitFor(() => {
       expect(screen.getByText('Upload Reports')).toBeInTheDocument();
@@ -115,9 +116,10 @@ describe('HeaderNavigation', () => {
 
   it('renders dropdown for instructors menu', async () => {
     render(<HeaderNavigation />);
-    const instructorsButton = screen.getByText('For Instructors');
+    const instructorsButtons = screen.getAllByText('For Instructors');
+    const desktopInstructorsButton = instructorsButtons[0]; // First one is desktop
     
-    fireEvent.mouseEnter(instructorsButton);
+    fireEvent.mouseEnter(desktopInstructorsButton);
     
     await waitFor(() => {
       expect(screen.getByText('For CFI/CFII')).toBeInTheDocument();
@@ -130,10 +132,12 @@ describe('HeaderNavigation', () => {
     const user = userEvent.setup();
     render(<HeaderNavigation />);
     
-    // Tab to first menu item
-    await user.tab();
-    const featuresButton = screen.getByText('Our Features');
-    expect(featuresButton).toHaveFocus();
+    // Tab to first menu item (skip logo)
+    await user.tab(); // Logo link
+    await user.tab(); // Features button
+    const featuresButtons = screen.getAllByText('Our Features');
+    const desktopFeaturesButton = featuresButtons[0];
+    expect(desktopFeaturesButton).toHaveFocus();
     
     // Open menu with Enter
     await user.keyboard('{Enter}');
@@ -154,9 +158,10 @@ describe('HeaderNavigation', () => {
     const nav = screen.getByRole('navigation');
     expect(nav).toHaveAttribute('aria-label', 'Main navigation');
     
-    const featuresButton = screen.getByText('Our Features');
-    expect(featuresButton).toHaveAttribute('aria-haspopup', 'true');
-    expect(featuresButton).toHaveAttribute('aria-expanded', 'false');
+    const featuresButtons = screen.getAllByText('Our Features');
+    const desktopFeaturesButton = featuresButtons[0];
+    expect(desktopFeaturesButton).toHaveAttribute('aria-haspopup', 'true');
+    expect(desktopFeaturesButton).toHaveAttribute('aria-expanded', 'false');
   });
 
   it('handles mobile menu item clicks', async () => {
@@ -191,9 +196,10 @@ describe('HeaderNavigation', () => {
       expect(screen.getByTestId('mobile-menu')).toBeInTheDocument();
     });
     
-    // Click on Features to expand accordion
-    const featuresAccordion = screen.getByText('Our Features');
-    fireEvent.click(featuresAccordion);
+    // Click on Features to expand accordion (get the mobile version)
+    const mobileMenu = screen.getByTestId('mobile-menu');
+    const mobileFeaturesAccordion = within(mobileMenu).getByText('Our Features');
+    fireEvent.click(mobileFeaturesAccordion);
     
     await waitFor(() => {
       expect(screen.getByText('Upload Reports')).toBeInTheDocument();

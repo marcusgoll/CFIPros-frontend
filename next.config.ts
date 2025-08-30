@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
   experimental: {},
 
   // Server external packages
-  serverExternalPackages: [],
+  serverExternalPackages: ['redis'],
 
   // Image optimization configuration
   images: {
@@ -49,11 +49,8 @@ const nextConfig: NextConfig = {
       },
     ],
     formats: ["image/webp", "image/avif"],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
   // Environment variables that should be available on the client side
@@ -79,6 +76,20 @@ const nextConfig: NextConfig = {
           {
             key: "Referrer-Policy",
             value: "origin-when-cross-origin",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.dev https://safe-rooster-9.clerk.accounts.dev https://js.stripe.com",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev https://*.clerk.dev",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: https:",
+              "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://safe-rooster-9.clerk.accounts.dev https://api.cfipros.com https://us.i.posthog.com wss:",
+              "frame-src https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://safe-rooster-9.clerk.accounts.dev",
+              "object-src 'none'",
+              "base-uri 'self'"
+            ].join("; ")
           },
         ],
       },
@@ -117,53 +128,13 @@ const nextConfig: NextConfig = {
         ...config.resolve.alias,
         "@": __dirname,
       };
-
-      // Optimize bundle splitting for better performance
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          ...config.optimization.splitChunks,
-          cacheGroups: {
-            ...config.optimization.splitChunks.cacheGroups,
-            // Separate Framer Motion into its own chunk
-            framerMotion: {
-              test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
-              name: 'framer-motion',
-              chunks: 'all',
-              priority: 20,
-            },
-            // Separate Lucide React into its own chunk
-            lucideReact: {
-              test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
-              name: 'lucide-react',
-              chunks: 'all',
-              priority: 20,
-            },
-            // Separate Clerk into its own chunk
-            clerk: {
-              test: /[\\/]node_modules[\\/]@clerk[\\/]/,
-              name: 'clerk',
-              chunks: 'all',
-              priority: 20,
-            },
-            // Group common vendor libraries
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-              priority: 10,
-            },
-          },
-        },
-      };
     }
 
-    // Enable tree shaking for better performance
-    config.optimization = {
-      ...config.optimization,
-      usedExports: true,
-      sideEffects: false,
-    };
+    // Fix webpack optimization conflict between usedExports and cacheUnaffected
+    if (config.experiments?.cacheUnaffected && config.optimization?.usedExports) {
+      // Disable cacheUnaffected when usedExports is enabled to avoid conflict
+      config.experiments.cacheUnaffected = false;
+    }
 
     return config;
   },

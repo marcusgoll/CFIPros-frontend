@@ -7,6 +7,7 @@ import { useForm as useReactHookForm, UseFormProps, FieldValues, Path } from 're
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useCallback, useMemo } from 'react';
+import { logError, logWarn } from '@/lib/utils/logger';
 
 interface UseFormOptions<T extends FieldValues> extends Omit<UseFormProps<T>, 'resolver'> {
   schema: z.ZodSchema<T>;
@@ -79,7 +80,7 @@ export function useForm<T extends FieldValues>({
             await onSubmit(data);
           }
         } catch (error) {
-          console.error('Form submission error:', error);
+          logError('Form submission error:', error);
           if (onError) {
             onError({
               _root: error instanceof Error ? error.message : 'An error occurred during submission'
@@ -88,7 +89,7 @@ export function useForm<T extends FieldValues>({
         }
       },
       (errors) => {
-        console.warn('Form validation errors:', errors);
+        logWarn('Form validation errors:', errors);
         if (onError) {
           const errorMessages: Record<string, string> = {};
           Object.entries(errors).forEach(([key, error]) => {
@@ -152,6 +153,9 @@ export function createFormSchema<T>(schema: z.ZodSchema<T>) {
     schema,
     validate: (data: unknown) => {
       try {
+        if (data === null || data === undefined) {
+          return { success: false, errors: { _root: 'An unexpected validation error occurred' } };
+        }
         return { success: true, data: schema.parse(data) };
       } catch (error) {
         if (error instanceof z.ZodError) {

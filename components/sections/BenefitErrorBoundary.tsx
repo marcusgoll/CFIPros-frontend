@@ -1,16 +1,17 @@
 "use client";
 
 import React from "react";
+import { logError } from "@/lib/utils/logger";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { sanitizeErrorMessage } from "@/lib/utils/errorSanitization";
 
-interface MockupErrorFallbackProps {
-  error: Error;
+interface BoundaryFallbackProps {
+  error: Error | undefined;
   retry: () => void;
 }
 
-const MockupErrorFallback: React.FC<MockupErrorFallbackProps> = ({ error, retry }) => (
+const MockupErrorFallback: React.FC<BoundaryFallbackProps> = ({ error, retry }) => (
   <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 h-80 flex flex-col items-center justify-center text-center">
     <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
     <h3 className="text-lg font-semibold text-red-800 mb-2">
@@ -30,19 +31,14 @@ const MockupErrorFallback: React.FC<MockupErrorFallbackProps> = ({ error, retry 
       <details className="mt-4 text-xs text-red-600">
         <summary className="cursor-pointer">Error Details</summary>
         <pre className="mt-2 p-2 bg-red-50 rounded text-left overflow-auto">
-          {error.message}
+          {error?.message}
         </pre>
       </details>
     )}
   </div>
 );
 
-interface SectionErrorFallbackProps {
-  error: Error;
-  retry: () => void;
-}
-
-const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({ error, retry }) => (
+const SectionErrorFallback: React.FC<BoundaryFallbackProps> = ({ error, retry }) => (
   <div className="py-20 bg-gradient-to-b from-background to-muted/20">
     <div className="mx-auto max-w-7xl px-4 md:px-6">
       <div className="text-center">
@@ -63,7 +59,7 @@ const SectionErrorFallback: React.FC<SectionErrorFallbackProps> = ({ error, retr
           <details className="mt-6 text-sm text-muted-foreground">
             <summary className="cursor-pointer">Technical Details</summary>
             <pre className="mt-3 p-3 bg-muted rounded text-left overflow-auto max-w-2xl mx-auto">
-              {error.stack}
+              {error?.stack}
             </pre>
           </details>
         )}
@@ -85,7 +81,7 @@ export const MockupErrorBoundary: React.FC<MockupWrapperProps> = ({
     <ErrorBoundary
       fallback={MockupErrorFallback}
       onError={(error, errorInfo) => {
-        console.error(`Mockup error in ${sectionTitle}:`, error, errorInfo);
+        logError(`Mockup error in ${sectionTitle}:`, error, errorInfo);
         // In production, send to monitoring service with sanitized data
         if (typeof window !== 'undefined' && window.gtag) {
           const sanitizedMessage = sanitizeErrorMessage(error.message);
@@ -114,7 +110,7 @@ export const BenefitErrorBoundary: React.FC<BenefitSectionWrapperProps> = ({ chi
     <ErrorBoundary
       fallback={SectionErrorFallback}
       onError={(error, errorInfo) => {
-        console.error('BenefitZipperList section error:', error, errorInfo);
+        logError('BenefitZipperList section error:', error, errorInfo);
         // In production, send to monitoring service with sanitized data
         if (typeof window !== 'undefined' && window.gtag) {
           const sanitizedMessage = sanitizeErrorMessage(error.message);

@@ -10,7 +10,7 @@ export interface HealthTestResult {
   test: string;
   status: 'pass' | 'fail' | 'warning';
   message: string;
-  data?: unknown;
+  data?: Record<string, unknown>;
 }
 
 export async function runPostHogHealthTests(): Promise<HealthTestResult[]> {
@@ -38,8 +38,8 @@ export async function runPostHogHealthTests(): Promise<HealthTestResult[]> {
 }
 
 function testEnvironmentVariables(): HealthTestResult {
-  const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST;
+  const apiKey = process.env['NEXT_PUBLIC_POSTHOG_KEY'];
+  const apiHost = process.env['NEXT_PUBLIC_POSTHOG_HOST'];
 
   if (!apiKey) {
     return {
@@ -246,17 +246,19 @@ async function testFeatureFlags(): Promise<HealthTestResult> {
 /**
  * Format health test results for console output
  */
+import { logInfo } from '@/lib/utils/logger';
+
 export function formatHealthTestResults(results: HealthTestResult[]): void {
-  console.log('\n🔍 PostHog Health Test Results\n');
+  logInfo('\n🔍 PostHog Health Test Results\n');
   
   results.forEach(result => {
     const icon = result.status === 'pass' ? '✅' : 
                  result.status === 'warning' ? '⚠️' : '❌';
     
-    console.log(`${icon} ${result.test}: ${result.message}`);
+    logInfo(`${icon} ${result.test}: ${result.message}`);
     
     if (result.data) {
-      console.log(`   Data:`, result.data);
+      logInfo(`   Data:`, result.data);
     }
   });
 
@@ -264,12 +266,12 @@ export function formatHealthTestResults(results: HealthTestResult[]): void {
   const failCount = results.filter(r => r.status === 'fail').length;
   const warningCount = results.filter(r => r.status === 'warning').length;
 
-  console.log(`\n📊 Summary: ${passCount} passed, ${warningCount} warnings, ${failCount} failed`);
+  logInfo(`\n📊 Summary: ${passCount} passed, ${warningCount} warnings, ${failCount} failed`);
   
   if (failCount === 0) {
-    console.log('🎉 All critical tests passed! PostHog is ready to use.');
+    logInfo('🎉 All critical tests passed! PostHog is ready to use.');
   } else {
-    console.log('⚠️  Some tests failed. Please check the configuration.');
+    logInfo('⚠️  Some tests failed. Please check the configuration.');
   }
 }
 

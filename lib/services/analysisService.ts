@@ -57,18 +57,18 @@ export class AnalysisService {
     }
     
     if (fileType.includes("wordprocessingml") || fileType.includes("msword")) {
-      return this.analyzeWordDocument(baseAnalysis, fileName);
+      return this.analyzeWordDocument(baseAnalysis);
     }
     
     if (fileType.includes("presentationml") || fileType.includes("ms-powerpoint")) {
-      return this.analyzePresentation(baseAnalysis, fileName);
+      return this.analyzePresentation(baseAnalysis);
     }
     
     if (fileType === "text/plain") {
-      return this.analyzeTextFile(baseAnalysis, fileName);
+      return this.analyzeTextFile(baseAnalysis);
     }
 
-    return this.analyzeGenericDocument(baseAnalysis, fileName);
+    return this.analyzeGenericDocument(baseAnalysis);
   }
 
   private static analyzePDF(base: DocumentAnalysis, fileName: string): DocumentAnalysis {
@@ -132,7 +132,7 @@ export class AnalysisService {
     };
   }
 
-  private static analyzeWordDocument(base: DocumentAnalysis, _fileName: string): DocumentAnalysis {
+  private static analyzeWordDocument(base: DocumentAnalysis): DocumentAnalysis {
     return {
       ...base,
       documentType: "Training Document",
@@ -155,7 +155,7 @@ export class AnalysisService {
     };
   }
 
-  private static analyzePresentation(base: DocumentAnalysis, _fileName: string): DocumentAnalysis {
+  private static analyzePresentation(base: DocumentAnalysis): DocumentAnalysis {
     return {
       ...base,
       documentType: "Training Presentation",
@@ -179,7 +179,7 @@ export class AnalysisService {
     };
   }
 
-  private static analyzeTextFile(base: DocumentAnalysis, _fileName: string): DocumentAnalysis {
+  private static analyzeTextFile(base: DocumentAnalysis): DocumentAnalysis {
     return {
       ...base,
       documentType: "Study Notes",
@@ -204,7 +204,7 @@ export class AnalysisService {
     };
   }
 
-  private static analyzeGenericDocument(base: DocumentAnalysis, _fileName: string): DocumentAnalysis {
+  private static analyzeGenericDocument(base: DocumentAnalysis): DocumentAnalysis {
     return {
       ...base,
       documentType: "Training Material",

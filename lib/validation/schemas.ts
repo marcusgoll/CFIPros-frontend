@@ -88,6 +88,21 @@ export const fileUploadSchema = z.object({
   tags: z.array(z.string()).max(10, 'Maximum 10 tags allowed').optional(),
 });
 
+// AKTR to ACS specific file upload schema
+export const aktrFileUploadSchema = z.object({
+  files: z.array(z.instanceof(File))
+    .min(1, 'At least one knowledge test report is required')
+    .max(5, 'Maximum 5 files allowed')
+    .refine(files => files.every(file => file.size <= 10 * 1024 * 1024), {
+      message: 'Each file must be less than 10MB',
+    })
+    .refine(files => files.every(file => 
+      ['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)
+    ), {
+      message: 'Only PDF, JPG, and PNG files are allowed',
+    }),
+});
+
 // Contact form schema
 export const contactSchema = z.object({
   name: requiredString('Name is required'),
@@ -171,6 +186,7 @@ export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 export type ProfileFormData = z.infer<typeof profileSchema>;
 export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
 export type FileUploadFormData = z.infer<typeof fileUploadSchema>;
+export type AktrFileUploadFormData = z.infer<typeof aktrFileUploadSchema>;
 export type ContactFormData = z.infer<typeof contactSchema>;
 export type SearchFormData = z.infer<typeof searchSchema>;
 export type NewsletterFormData = z.infer<typeof newsletterSchema>;

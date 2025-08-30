@@ -1,160 +1,168 @@
 "use client";
 
-import React, { useState, useEffect, Suspense, lazy } from "react";
+import React, { useState, useEffect } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
-import {
-  Check,
-  Star,
-} from "lucide-react";
 import { HeroVersionC } from "@/components/layout/HeroVersionC";
 import {
+  FeatureSpotlightMenu,
   FEATURE_SCREENSHOTS,
   DEFAULT_FEATURES,
 } from "@/components/layout/FeatureSpotlightMenu";
+import { FeatureScreenshotDisplay } from "@/components/layout/FeatureScreenshotDisplay";
+import { VideoModal } from "@/components/layout/VideoModal";
+import { BenefitZipperList } from "@/components/sections/BenefitZipperList";
+import { PricingSection } from "@/components/sections/PricingSection";
+import { PremiumCTA } from "@/components/sections/PremiumCTA";
 import { trackEvent } from "@/lib/analytics/telemetry";
 import { prefersReducedMotion } from "@/lib/utils";
 
-// Dynamic imports for heavy components
-const FeatureSpotlightMenu = lazy(() => import("@/components/layout/FeatureSpotlightMenu").then(m => ({ default: m.FeatureSpotlightMenu })));
-const FeatureScreenshotDisplay = lazy(() => import("@/components/layout/FeatureScreenshotDisplay").then(m => ({ default: m.FeatureScreenshotDisplay })));
-const VideoModal = lazy(() => import("@/components/layout/VideoModal").then(m => ({ default: m.VideoModal })));
-const BenefitZipperList = lazy(() => import("@/components/sections/BenefitZipperList").then(m => ({ default: m.BenefitZipperList })));
-const PricingSection = lazy(() => import("@/components/sections/PricingSection").then(m => ({ default: m.PricingSection })));
-const PremiumCTA = lazy(() => import("@/components/sections/PremiumCTA").then(m => ({ default: m.PremiumCTA })));
+export default function CFIProsHomePage() {
+  const [isMounted, setIsMounted] = useState(false);
+  const { scrollYProgress } = useScroll();
+  const opacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
 
-// Loading component
-const SectionLoading = ({ height = "h-64" }: { height?: string }) => (
-  <div className={`${height} w-full animate-pulse bg-muted rounded-lg flex items-center justify-center`}>
-    <div className="text-muted-foreground">Loading...</div>
-  </div>
-);
+  // Ensure component is mounted before using scroll-based animations
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
-export default function Home() {
-  // State for hero scroll effects
-  const { scrollY } = useScroll();
-  const heroY = useTransform(scrollY, [0, 500], [0, 150]);
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0.8]);
-
-  // State for feature selection
-  const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+  // Feature selection state - match FeatureSpotlightMenu default
+  const [selectedFeature, setSelectedFeature] = useState("upload");
   const [videoModalOpen, setVideoModalOpen] = useState(false);
-  
-  // Reduced motion preference
-  const reducedMotion = prefersReducedMotion();
+  const [reducedMotion, setReducedMotion] = useState(false);
 
-  // Helper to get feature name from ID
-  const getFeatureName = (featureId: string | null) => {
-    if (!featureId) {
-      return '';
+  // Initialize feature selection and reduced motion after component mounts
+  useEffect(() => {
+    if (DEFAULT_FEATURES && DEFAULT_FEATURES.length > 0) {
+      const defaultIndex = Math.floor(DEFAULT_FEATURES.length / 2);
+      const defaultFeature = DEFAULT_FEATURES[defaultIndex]?.id || "upload";
+      setSelectedFeature(defaultFeature);
     }
-    const feature = DEFAULT_FEATURES.find(f => f.id === featureId);
-    return feature?.name || featureId;
+    setReducedMotion(prefersReducedMotion());
+  }, []);
+
+  // Helper function to format feature names
+  const getFeatureName = (featureId: string) => {
+    const nameMap: Record<string, string> = {
+      upload: "Upload",
+      analyzer: "Analyzer",
+      planner: "Planner",
+      lessons: "Lessons",
+      quizzes: "Quizzes",
+      "acs-lib": "ACS Library",
+      dashboard: "Dashboard",
+      schools: "Schools",
+      reports: "Reports",
+    };
+    return (
+      nameMap[featureId] ||
+      featureId.charAt(0).toUpperCase() + featureId.slice(1)
+    );
   };
 
-  // Handle feature selection from spotlight menu
-  const handleFeatureSelect = (featureId: string) => {
-    setSelectedFeature(featureId);
-    
-    // Track feature selection event
-    trackEvent('feature_spotlight_click', {
-      feature_id: featureId,
-      feature_name: getFeatureName(featureId),
-      page: "landing_page",
-    });
-  };
-
-  // Handle play button click on screenshot
-  const handlePlayClick = (featureId: string) => {
-    setVideoModalOpen(true);
-    
-    // Track video modal open event
-    trackEvent('feature_preview_video', {
-      feature_id: featureId,
-      feature_name: getFeatureName(featureId),
-      action: 'open_modal',
-      page: "landing_page",
-    });
-  };
-
-  // Handle video modal close
-  const handleVideoModalClose = () => {
-    setVideoModalOpen(false);
-    
-    if (selectedFeature) {
-      trackEvent('feature_preview_video', {
-        feature_id: selectedFeature,
-        feature_name: getFeatureName(selectedFeature),
-        action: 'close_modal',
-        page: "landing_page",
+  // Track hero view on mount (client-side only)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      trackEvent("hero_view", {
+        variant: "version_C",
+        url: window.location.href,
+        referrer: document.referrer,
       });
     }
-  };
+  }, []);
+
+  // Show loading state briefly to prevent white screen flash
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
+        <main id="main" className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <main className="min-h-screen bg-background">
-        {/* Hero Section with Motion */}
-        <motion.div
-          style={reducedMotion ? {} : { y: heroY, opacity: heroOpacity }}
-          className="relative"
-        >
-          <HeroVersionC />
-        </motion.div>
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
+      <main id="main">
+        <HeroVersionC 
+          opacity={isMounted ? opacity : 1} 
+          scale={isMounted ? scale : 1} 
+        />
 
-        {/* Feature Spotlight Section */}
-        <Suspense fallback={<SectionLoading height="h-96" />}>
-          <FeatureSpotlightMenu
-            onFeatureSelect={handleFeatureSelect}
-            className="py-16 md:py-24"
-          />
-        </Suspense>
+        {/* Feature Spotlight Menu */}
+        <section className="to-muted/20 bg-gradient-to-b from-background pb-8 pt-12">
+          <div className="mx-auto max-w-7xl px-4 md:px-6">
+            <motion.div
+              initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+              whileInView={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: reducedMotion ? 0 : 0.2 }}
+            >
+              <FeatureSpotlightMenu
+                onSelect={(featureId) => {
+                  trackEvent("feature_spotlight_click", {
+                    feature: featureId,
+                    section: "landing_page",
+                  });
+                  setSelectedFeature(featureId);
+                }}
+              />
+            </motion.div>
+          </div>
+        </section>
 
-        {/* Feature Screenshot Display - Only show when feature is selected */}
-        {selectedFeature && (
-          <section className="py-8 md:py-12">
-            <div className="container px-4 md:px-6">
-              <Suspense fallback={<SectionLoading height="h-96" />}>
-                <FeatureScreenshotDisplay
-                  featureId={selectedFeature}
-                  featureName={getFeatureName(selectedFeature)}
-                  screenshotUrl={FEATURE_SCREENSHOTS[selectedFeature] || 'https://picsum.photos/800/450?random=1'}
-                  onPlayClick={handlePlayClick}
-                />
-              </Suspense>
-            </div>
-          </section>
-        )}
+        {/* Feature Screenshot Display */}
+        <section className="bg-muted/20 pb-6">
+          <div className="mx-auto max-w-7xl px-4 md:px-6">
+            <FeatureScreenshotDisplay
+              featureId={selectedFeature}
+              featureName={getFeatureName(selectedFeature)}
+              screenshotUrl={
+                FEATURE_SCREENSHOTS[selectedFeature] ??
+                FEATURE_SCREENSHOTS['upload'] ??
+                ""
+              }
+              onPlayClick={(featureId) => {
+                trackEvent("feature_preview_video", {
+                  feature: featureId,
+                  section: "landing_page",
+                });
+                setVideoModalOpen(true);
+              }}
+            />
+          </div>
+        </section>
 
-        {/* Benefits Section */}
-        <Suspense fallback={<SectionLoading height="h-screen" />}>
-          <BenefitZipperList 
-            onSectionView={(sectionId: string, featureIndex?: number) => {
-              trackEvent('benefit_section_view', {
-                section: sectionId,
-                feature_index: featureIndex,
-                page: "landing_page",
-              });
-            }}
-          />
-        </Suspense>
-        {/* <Testimonials /> */}
-        <Suspense fallback={<SectionLoading height="h-96" />}>
-          <PricingSection />
-        </Suspense>
-        <Suspense fallback={<SectionLoading height="h-64" />}>
-          <PremiumCTA />
-        </Suspense>
+        <BenefitZipperList 
+          onSectionView={(sectionId) => {
+            trackEvent("benefit_section_view", {
+              section: sectionId,
+              page: "landing_page",
+            });
+          }}
+          onFeatureInteraction={(sectionId, featureIndex) => {
+            trackEvent("benefit_feature_interaction", {
+              section: sectionId,
+              feature_index: featureIndex,
+              page: "landing_page",
+            });
+          }}
+        />
+        {/* Testimonials intentionally omitted for brevity */}
+        <PricingSection />
+        <PremiumCTA />
       </main>
 
       {/* Video Modal */}
-      <Suspense fallback={null}>
-        <VideoModal
-          featureId={selectedFeature}
-          featureName={getFeatureName(selectedFeature)}
-          isOpen={videoModalOpen}
-          onClose={handleVideoModalClose}
-        />
-      </Suspense>
-    </>
+      <VideoModal
+        featureId={selectedFeature}
+        featureName={getFeatureName(selectedFeature)}
+        isOpen={videoModalOpen}
+        onClose={() => setVideoModalOpen(false)}
+      />
+    </div>
   );
 }
+ 

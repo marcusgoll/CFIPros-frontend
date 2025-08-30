@@ -32,40 +32,37 @@ describe('APIClient', () => {
     it('should make successful GET request', async () => {
       const result = await client.get('/test');
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/v1/test', {
+      expect(mockFetch).toHaveBeenCalledWith('/test', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: expect.any(AbortSignal),
       });
       expect(result).toEqual(mockResponse);
     });
 
     it('should include query parameters', async () => {
-      await client.get('/test?page=1&limit=10');
+      await client.get('/test', { params: { page: 1, limit: 10 } });
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/v1/test?page=1&limit=10', {
+      expect(mockFetch).toHaveBeenCalledWith('/test?page=1&limit=10', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        signal: expect.any(AbortSignal),
       });
     });
 
     it('should include custom headers', async () => {
       await client.get('/test', { 
-        'Authorization': 'Bearer token' 
+        headers: { 'Authorization': 'Bearer token' } 
       });
 
-      expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/v1/test', {
+      expect(mockFetch).toHaveBeenCalledWith('/test', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer token',
         },
-        signal: expect.any(AbortSignal),
       });
     });
   });
@@ -148,9 +145,11 @@ describe('APIClient', () => {
 
     it('should include additional form fields in upload', async () => {
       const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
-      const additionalData = { description: 'Test file', category: 'documents' };
+      const options = {
+        fields: { description: 'Test file', category: 'documents' }
+      };
 
-      await client.uploadFile('/upload', mockFile, additionalData);
+      await client.uploadFile('/upload', mockFile, options);
 
       const formData = (mockFetch.mock.calls[0]![1] as any).body as FormData;
       expect(formData.get('file')).toBe(mockFile);
@@ -160,9 +159,11 @@ describe('APIClient', () => {
 
     it('should include custom headers in upload', async () => {
       const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
-      const headers = { 'X-Upload-Type': 'document' };
+      const options = {
+        headers: { 'X-Upload-Type': 'document' }
+      };
 
-      await client.uploadFile('/upload', mockFile, undefined, headers);
+      await client.uploadFile('/upload', mockFile, options);
 
       expect(mockFetch).toHaveBeenCalledWith('/upload', {
         method: 'POST',
@@ -256,14 +257,14 @@ describe('APIClient', () => {
 
   describe('Request configuration', () => {
     it('should use custom base URL', () => {
-      const customClient = new APIClient('https://api.example.com');
+      const customClient = new APIClient({ baseURL: 'https://api.example.com' });
       customClient.get('/test');
 
       expect(mockFetch).toHaveBeenCalledWith('https://api.example.com/test', expect.any(Object));
     });
 
     it('should use custom timeout', async () => {
-      const customClient = new APIClient(undefined, 5000);
+      const customClient = new APIClient({ timeout: 5000 });
       
       // Mock AbortSignal.timeout
       const mockAbortSignal = { aborted: false } as AbortSignal;
@@ -278,15 +279,28 @@ describe('APIClient', () => {
     });
 
     it('should include default headers', () => {
-      // APIClient constructor doesn't take headers, skip this test
-      expect(true).toBe(true);
+      const customClient = new APIClient({
+        headers: { 'X-API-Key': 'test-key' }
+      });
+
+      customClient.get('/test');
+
+      expect(mockFetch).toHaveBeenCalledWith('/test', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': 'test-key',
+        },
+      });
     });
 
     it('should merge request headers with default headers', () => {
-      const customClient = new APIClient();
+      const customClient = new APIClient({
+        headers: { 'X-API-Key': 'test-key' }
+      });
 
       customClient.get('/test', {
-        'Authorization': 'Bearer token'
+        headers: { 'Authorization': 'Bearer token' }
       });
 
       expect(mockFetch).toHaveBeenCalledWith('/test', {

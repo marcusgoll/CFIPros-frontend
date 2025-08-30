@@ -48,22 +48,8 @@ class RateLimiter {
   }
 
   private async initializeRedis() {
-    // Only initialize Redis in production
-    if (process.env.NODE_ENV === 'production' && process.env['REDIS_URL']) {
-      try {
-        // @ts-expect-error - Redis is dynamically imported only in production
-        const { createClient } = await import('redis');
-        this.redisClient = createClient({
-          url: process.env['REDIS_URL'],
-        });
-        
-        await this.redisClient?.connect();
-        console.log('Redis client connected for rate limiting');
-      } catch (error) {
-        console.warn('Failed to connect to Redis, using memory cache:', error);
-        this.redisClient = null;
-      }
-    }
+    // Redis integration disabled (use memory cache only)
+    this.redisClient = null;
   }
 
   /**
@@ -127,7 +113,8 @@ class RateLimiter {
         reset,
       };
     } catch (error) {
-      console.error('Redis rate limiting error:', error);
+      const { logError } = await import('@/lib/utils/logger');
+      logError('Redis rate limiting error:', error);
       // Fallback to memory cache
       return this.checkMemory(key, config);
     }
