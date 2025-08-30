@@ -302,8 +302,8 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
                       : 'text-foreground hover:text-primary'
                   )}
                 >
-                  <span className="inline-flex h-8 w-8 items-center justify-center">
-                    <Icon className="w-6 h-6" />
+                  <span className="inline-flex h-8 w-8 items-center justify-center" aria-hidden="true">
+                    <Icon className="w-6 h-6" aria-hidden="true" focusable="false" />
                   </span>
                   <span className="font-medium">{label}</span>
                   

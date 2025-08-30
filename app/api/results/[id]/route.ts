@@ -12,9 +12,12 @@ import { apiClient } from '@/lib/api/client';
 
 async function resultsHandler(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  ctx: { params: { id: string } } | { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  // Support both direct params and Promise-wrapped params (used in tests)
+  const rawParams = (ctx as any)?.params;
+  const resolvedParams = rawParams && typeof rawParams.then === 'function' ? await rawParams : rawParams;
+  const { id } = (resolvedParams || {}) as { id: string };
   const clientIP = getClientIP(request);
   
   // Validate result ID format
