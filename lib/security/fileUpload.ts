@@ -399,7 +399,7 @@ export class FileUploadSecurity {
       const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    } catch (error) {
+    } catch {
       // Fallback to simple hash for testing based on file size only
       // In real scenarios, this should be actual content-based hash
       return 'test-hash-' + file.size.toString(16).padStart(8, '0');
@@ -411,10 +411,10 @@ export class FileUploadSecurity {
    */
   private static async fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
     return new Promise((resolve, reject) => {
-      const FileReader = (global as any).FileReader;
+      const FileReaderCtor = (globalThis as unknown as { FileReader?: typeof FileReader }).FileReader;
       
-      if (FileReader) {
-        const reader = new FileReader();
+      if (FileReaderCtor) {
+        const reader = new FileReaderCtor();
         reader.onload = () => resolve(reader.result as ArrayBuffer);
         reader.onerror = reject;
         reader.readAsArrayBuffer(file);

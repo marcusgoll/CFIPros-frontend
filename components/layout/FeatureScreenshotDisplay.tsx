@@ -130,6 +130,7 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 
         {/* Screenshot image */}
         <div className="relative aspect-[16/9] w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={screenshotUrl}
             alt={`${featureName} feature screenshot`}

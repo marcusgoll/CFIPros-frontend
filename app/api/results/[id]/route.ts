@@ -3,55 +3,52 @@
  * Public access to completed analysis results
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
 import { validateRequest } from '@/lib/api/validation';
-import { getClientIP } from '@/lib/api/proxy';
-import { CommonErrors, handleAPIError } from '@/lib/api/errors';
+import { CommonErrors, handleAPIError, APIError } from '@/lib/api/errors';
 import { apiClient } from '@/lib/api/client';
 
 async function resultsHandler(
   request: NextRequest,
-  ctx: { params: { id: string } } | { params: Promise<{ id: string }> }
+  ctx: { params: { id: string } } | { params: Promise<{ id: string | string[] | undefined }> }
 ) {
   // Support both direct params and Promise-wrapped params (used in tests)
-  const rawParams = (ctx as any)?.params;
-  const resolvedParams = rawParams && typeof rawParams.then === 'function' ? await rawParams : rawParams;
+  const rawParams = (ctx as { params?: { id: string } | Promise<{ id: string | string[] | undefined }> })?.params;
+  const maybePromise = rawParams as unknown as { then?: unknown };
+  const isPromise = typeof maybePromise?.then === 'function';
+  const resolvedParams = isPromise
+    ? await (rawParams as Promise<{ id: string | string[] | undefined }>)
+    : (rawParams as { id: string } | undefined);
   const { id } = (resolvedParams || {}) as { id: string };
-  const clientIP = getClientIP(request);
   
+  void request;
   // Validate result ID format
   const idValidation = validateRequest.resultId(id);
   if (!idValidation.isValid) {
-    const error = CommonErrors.VALIDATION_ERROR(idValidation.error!);
+    const error = CommonErrors.INVALID_RESULT_ID('Invalid result ID format');
     return handleAPIError(error);
   }
 
   // Fetch from backend via API client (keeps tests compatible)
   try {
-    const data = await apiClient.get(`/results/${id}`, {
-      'X-Client-IP': clientIP,
-    });
+    const data = await apiClient.get<Record<string, unknown> | { status?: string }>(`/results/${id}`);
 
     // Determine caching headers based on status to match tests' expectations
-    const isProcessing = data?.status === 'processing';
-    const response = new Response(JSON.stringify(data), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    }) as unknown as import('next/server').NextResponse;
-
+    const isProcessing = (data as { status?: string } | undefined)?.status === 'processing';
+    const res = NextResponse.json(data, { status: 200 });
     if (isProcessing) {
-      response.headers.set('Cache-Control', 'no-cache');
+      res.headers.set('Cache-Control', 'no-cache');
     } else {
-      response.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=86400');
-      response.headers.set('ETag', `"result-${id}"`);
+      res.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+      res.headers.set('ETag', `"result-${id}"`);
     }
-
-    return response;
+    return res;
   } catch (error) {
     // Try to parse APIClient errors that may be stringified JSON
+    if (error instanceof APIError) {
+      return handleAPIError(error);
+    }
     if (error instanceof Error) {
       try {
         const parsed = JSON.parse(error.message) as { error?: string; message?: string; status?: number; details?: string };
@@ -69,10 +66,16 @@ async function resultsHandler(
   }
 }
 
-export const GET = withAPIMiddleware(resultsHandler, {
-  endpoint: 'results',
-  cors: true,
-  methods: ['GET', 'OPTIONS']
-});
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string | string[] | undefined }> }
+) {
+  const wrapped = withAPIMiddleware(resultsHandler, {
+    endpoint: 'results',
+    cors: true,
+    methods: ['GET', 'OPTIONS']
+  });
+  return wrapped(request, context);
+}
 
 export const OPTIONS = createOptionsHandler(['GET', 'OPTIONS']);

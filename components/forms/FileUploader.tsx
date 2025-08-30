@@ -40,7 +40,6 @@ export function FileUploader({
 }: FileUploaderProps) {
   const [validationError, setValidationError] = useState<string>('');
   const [isDragActive, setIsDragActive] = useState(false);
-  const uploadId = useId();
   const errorId = useId();
   const instructionsId = useId();
 
@@ -49,8 +48,9 @@ export function FileUploader({
       aktrFileUploadSchema.parse({ files: newFiles });
       setValidationError('');
       return true;
-    } catch (error: any) {
-      const errorMessage = error.errors?.[0]?.message || 'Invalid files selected';
+    } catch (error: unknown) {
+      const maybeZod = error as { errors?: Array<{ message?: string }> };
+      const errorMessage = maybeZod?.errors?.[0]?.message || 'Invalid files selected';
       setValidationError(errorMessage);
       trackValidationError(errorMessage, newFiles);
       return false;
@@ -110,7 +110,16 @@ export function FileUploader({
       'image/jpeg': 'JPG',
       'image/png': 'PNG',
     };
-    return acceptedTypes.map(type => typeMap[type] || type.split('/')[1].toUpperCase()).join(', ');
+    return acceptedTypes
+      .map(type => {
+        const alias = typeMap[type];
+        if (alias) {
+          return alias;
+        }
+        const subtype = type.split('/')[1] ?? type;
+        return subtype.toUpperCase();
+      })
+      .join(', ');
   };
 
   return (

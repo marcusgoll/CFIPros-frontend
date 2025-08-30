@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { APIError, handleAPIError } from './errors';
 import { config } from '@/lib/config';
 import type { BackendErrorResponse } from '@/lib/types';
+import { logError } from '@/lib/utils/logger';
 
 export interface ProxyConfig {
   timeout?: number;
@@ -135,7 +136,7 @@ export async function proxyRequest(
       }
     }
 
-    console.error('Proxy request error:', error);
+    logError('Proxy request error:', error);
     const internalError = new APIError(
       'internal_error',
       500,
@@ -264,7 +265,7 @@ export async function proxyApiRequest(
   request: NextRequest,
   method: string,
   path: string,
-  body?: any,
+  body?: unknown,
   options: ProxyConfig = {}
 ): Promise<NextResponse> {
   const {
@@ -300,8 +301,8 @@ export async function proxyApiRequest(
     };
 
     // Add body for non-GET requests
-    if (body && method !== 'GET' && method !== 'HEAD') {
-      fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
+    if (body !== null && body !== undefined && method !== 'GET' && method !== 'HEAD') {
+      fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body as Record<string, unknown>);
     }
 
     // Make request to backend
@@ -363,7 +364,7 @@ export async function proxyApiRequest(
       }
     }
 
-    console.error('Proxy API request error:', error);
+    logError('Proxy API request error:', error);
     const internalError = new APIError(
       'internal_error',
       500,

@@ -9,9 +9,9 @@ import { featuresMenu, instructorsMenu } from '@/lib/config/navigation';
 interface MobileNavigationProps {
   isSignedIn: boolean;
   isLoaded: boolean;
-  SignInButton: React.ComponentType<any>;
-  SignUpButton: React.ComponentType<any>;
-  UserButton: React.ComponentType<any>;
+  SignInButton: React.ComponentType<Record<string, unknown>>;
+  SignUpButton: React.ComponentType<Record<string, unknown>>;
+  UserButton: React.ComponentType<Record<string, unknown>>;
 }
 
 export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpButton, UserButton }: MobileNavigationProps) {
@@ -83,8 +83,12 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
     }
 
     return () => {
-      if (handleTabKey) document.removeEventListener('keydown', handleTabKey);
-      if (handleClickOutside) document.removeEventListener('mousedown', handleClickOutside);
+      if (handleTabKey) {
+        document.removeEventListener('keydown', handleTabKey);
+      }
+      if (handleClickOutside) {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
       document.body.style.overflow = 'unset';
     };
   }, [mobileMenuOpen, closeMobileMenu]);

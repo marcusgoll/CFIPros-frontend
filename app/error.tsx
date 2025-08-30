@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { AlertCircle, RefreshCw, Home } from "lucide-react";
 import { Button } from "@/components/ui";
+import { logError } from "@/lib/utils/logger";
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -11,8 +12,8 @@ interface ErrorProps {
 
 export default function Error({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // Log the error to monitoring service
-    console.error("Application error:", error);
+    // Log the error to monitoring service (dev only)
+    logError("Application error:", error);
   }, [error]);
 
   return (

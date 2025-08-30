@@ -55,7 +55,9 @@ export function InstructorDropdown() {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => {
-      if (isOpen) document.removeEventListener('mousedown', handleClickOutside);
+      if (isOpen) {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
     };
   }, [isOpen]);
 

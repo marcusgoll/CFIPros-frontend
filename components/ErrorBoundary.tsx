@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { logError } from "@/lib/utils/logger";
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -25,7 +26,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Error caught by ErrorBoundary:", error, errorInfo);
+    logError("Error caught by ErrorBoundary:", error, errorInfo);
     
     this.setState({ error, errorInfo });
     
@@ -103,7 +104,7 @@ export function UploadErrorBoundary({ children }: { children: React.ReactNode })
     <ErrorBoundary
       fallback={UploadErrorFallback}
       onError={(error, errorInfo) => {
-        console.error("Upload system error:", error, errorInfo);
+        logError("Upload system error:", error, errorInfo);
         // In production, send to monitoring service
       }}
     >

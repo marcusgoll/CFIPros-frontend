@@ -3,8 +3,9 @@
  * Manages variant assignment and tracking
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { telemetry, ABTest, ABTestVariant } from '@/lib/analytics/telemetry';
+import { logWarn } from '@/lib/utils/logger';
 
 export interface UseABTestResult {
   variant: ABTestVariant | null;
@@ -19,7 +20,9 @@ export interface UseABTestResult {
  */
 export function useABTest(test: ABTest): UseABTestResult {
   // Use fallback variant (control) to prevent hydration mismatch
-  const fallbackVariant = test.variants[0];
+  const fallbackVariant: ABTestVariant = useMemo(() => (
+    test.variants[0] ?? { id: 'control', name: 'Control', weight: 1 }
+  ), [test.variants]);
   const [variant, setVariant] = useState<ABTestVariant | null>(fallbackVariant);
   const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -60,7 +63,7 @@ export function useABTest(test: ABTest): UseABTestResult {
       const assignedVariant = telemetry.getABTestVariant(test);
       setVariant(assignedVariant);
     } catch (error) {
-      console.warn('A/B test variant assignment failed:', error);
+      logWarn('A/B test variant assignment failed:', error);
       setVariant(fallbackVariant);
     } finally {
       setIsLoading(false);

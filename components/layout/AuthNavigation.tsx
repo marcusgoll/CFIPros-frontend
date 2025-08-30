@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { Bell } from "lucide-react";
 import { UserButton, useUser } from "@clerk/nextjs";
 
 export function AuthNavigation() {
-  const [userMenuOpen] = useState(false);
   const { user, isLoaded } = useUser();
 
   return (

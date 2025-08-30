@@ -3,7 +3,7 @@
  * Maps to backend /v1/extract endpoint for AKTR → ACS processing
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
 import { validateRequest } from '@/lib/api/validation';
 import { proxyFileUpload, getClientIP, addCorrelationId } from '@/lib/api/proxy';
@@ -102,29 +102,24 @@ async function extractHandler(request: NextRequest) {
 
     return response;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Track extraction failure
+    const message = error instanceof Error ? error.message : 'unknown_error';
     trackEvent('extractor_upload_failed', {
       file_count: validation.files?.length || 0,
       correlation_id: correlationId,
-      error: error.message
+      error: message
     });
 
-    return handleAPIError(
-      CommonErrors.INTERNAL_SERVER_ERROR(
-        'Extraction service temporarily unavailable. Please try again.',
-        correlationId
-      )
-    );
+    return handleAPIError(CommonErrors.INTERNAL_ERROR('Extraction service temporarily unavailable. Please try again.'));
   }
 }
 
 // Apply middleware with extractor-specific configuration
 export const POST = withAPIMiddleware(extractHandler, {
-  endpoint: 'extractor/extract',
+  endpoint: 'upload',
   cors: true,
-  methods: ['POST', 'OPTIONS'],
-  publicEndpoint: true // Allow public access without authentication
+  methods: ['POST', 'OPTIONS']
 });
 
 // OPTIONS handler for CORS preflight

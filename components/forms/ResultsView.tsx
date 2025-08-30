@@ -10,10 +10,10 @@ import {
   BookOpen, 
   Clock, 
   Share2, 
-  Download,
   Mail,
   User
 } from 'lucide-react';
+import { logError } from '@/lib/utils/logger';
 
 interface ACSCode {
   code: string;
@@ -97,7 +97,9 @@ export function ResultsView({ reportId }: ResultsViewProps) {
   // Email capture handler
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailCapture.email || emailCapture.submitted) return;
+    if (!emailCapture.email || emailCapture.submitted) {
+      return;
+    }
 
     setEmailCapture(prev => ({ ...prev, submitting: true }));
 
@@ -124,13 +126,15 @@ export function ResultsView({ reportId }: ResultsViewProps) {
 
     } catch (err) {
       setEmailCapture(prev => ({ ...prev, submitting: false }));
-      console.error('Email capture failed:', err);
+      logError('Email capture failed:', err);
     }
   };
 
   // Claim results handler
   const handleClaim = async () => {
-    if (!isSignedIn) return;
+    if (!isSignedIn) {
+      return;
+    }
     
     setClaiming(true);
     
@@ -152,7 +156,7 @@ export function ResultsView({ reportId }: ResultsViewProps) {
       });
 
     } catch (err) {
-      console.error('Claim failed:', err);
+      logError('Claim failed:', err);
     } finally {
       setClaiming(false);
     }
@@ -162,13 +166,14 @@ export function ResultsView({ reportId }: ResultsViewProps) {
   const handleShare = async () => {
     const url = window.location.href;
     
-    if (navigator.share) {
+    const nav = navigator as Navigator & { share?: (data: { title?: string; url?: string }) => Promise<void> };
+    if (typeof nav.share === 'function') {
       try {
-        await navigator.share({
+        await nav.share({
           title: 'My ACS Analysis Results',
           url: url,
         });
-      } catch (err) {
+      } catch {
         // Fallback to clipboard
         navigator.clipboard.writeText(url);
       }
@@ -176,9 +181,10 @@ export function ResultsView({ reportId }: ResultsViewProps) {
       navigator.clipboard.writeText(url);
     }
     
+    const canShare = typeof (navigator as Navigator & { share?: (data: { title?: string; url?: string }) => Promise<void> }).share === 'function';
     trackEvent('results_shared', {
       report_id: reportId.substring(0, 8) + '...',
-      method: navigator.share ? 'native_share' : 'clipboard'
+      method: canShare ? 'native_share' : 'clipboard'
     });
   };
 

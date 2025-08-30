@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { logError } from '@/lib/utils/logger';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorBoundaryState {
@@ -32,7 +33,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log error to monitoring service
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    logError('ErrorBoundary caught an error:', error, errorInfo);
     
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
@@ -48,7 +49,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     this.setState({ hasError: false, error: undefined, errorInfo: undefined });
   };
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       // Custom fallback component
       if (this.props.fallback) {
@@ -95,14 +96,14 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 // Hook version for functional components
 export function useErrorHandler() {
   return React.useCallback((error: Error, errorInfo?: React.ErrorInfo) => {
-    console.error('Error caught by error handler:', error, errorInfo);
+    logError('Error caught by error handler:', error, errorInfo);
     // Could send to error tracking service here
   }, []);
 }
 
 // Specific fallback for feature comparison table
 export const FeatureTableErrorFallback: React.FC<{ 
-  error?: Error; 
+  error: Error | undefined; 
   resetError: () => void; 
 }> = ({ resetError }) => (
   <div className="flex flex-col items-center justify-center p-12 border border-border bg-muted/20 rounded-lg">

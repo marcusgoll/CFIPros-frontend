@@ -9,11 +9,12 @@ import { APIError } from '@/lib/api/errors';
 import type { MockAPIClient } from '@/lib/types';
 
 // Mock the API client
-jest.mock('@/lib/api/client', () => ({
-  APIClient: jest.fn().mockImplementation(() => ({
-    get: jest.fn(),
-  })),
-}));
+jest.mock('@/lib/api/client', () => {
+  const get = jest.fn();
+  const APIClient = jest.fn().mockImplementation(() => ({ get }));
+  const apiClient = { get };
+  return { APIClient, apiClient };
+});
 
 // Mock rate limiter
 jest.mock('@/lib/api/rateLimiter', () => ({
@@ -219,6 +220,8 @@ describe('/api/results', () => {
       const resultId = 'test-result-123';
       const timeoutError = new APIError('request_timeout', 504, 'Backend request timed out');
       mockApiClient.get.mockRejectedValue(timeoutError);
+      const { rateLimiter } = require('@/lib/api/rateLimiter');
+      rateLimiter.check.mockResolvedValue({ success: true, limit: 100, remaining: 99, reset: Date.now() + 3600000 });
 
       const request = new NextRequest(`http://localhost:3000/api/results/${resultId}`, {
         method: 'GET',

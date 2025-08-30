@@ -155,7 +155,7 @@ export const STORAGE_KEYS = {
   USER_PREFERENCES: "cfipros_user_preferences",
   THEME: "cfipros_theme",
   // Legacy keys (keep for backward compatibility)
-  authToken: "cfipros_auth_token",
+  authToken: "cfipros_auth_token_legacy",
   userPreferences: "cfipros_user_prefs",
   uploadProgress: "cfipros_upload_progress",
 } as const;

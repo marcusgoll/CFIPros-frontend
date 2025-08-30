@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { NextRequest } from 'next/server';
 import { config } from '@/lib/config';
 import { FileUploadSecurity } from '@/lib/security/fileUpload';
+import { logError, logWarn } from '@/lib/utils/logger';
 
 // Validation schemas
 const AuthLoginSchema = z.object({
@@ -37,23 +38,45 @@ const ResultIdSchema = z.string().regex(
   'Invalid result ID format'
 );
 
-export interface ValidationResult<T = any> {
+export interface ValidationResult<T = unknown> {
   isValid: boolean;
   data?: T;
   error?: string;
   file?: File;
+  files?: File[];
+}
+
+export interface FileUploadOptions {
+  maxFiles?: number;
+  maxSize?: number;
+  acceptedTypes?: string[];
+  requiredField?: 'file' | 'files';
 }
 
 export class RequestValidator {
   /**
    * Validate file upload request with comprehensive security checks
    */
-  static async fileUpload(request: NextRequest): Promise<ValidationResult<FormData>> {
+  static async fileUpload(request: NextRequest, options?: FileUploadOptions): Promise<ValidationResult<FormData>> {
     try {
       const formData = await request.formData();
-      const file = formData.get('file') as File | null;
+      const field = options?.requiredField === 'files' ? 'files' : 'file';
+      const files: File[] = [];
+      if (field === 'files') {
+        const entries = formData.getAll('files');
+        entries.forEach((e) => {
+          if (e instanceof File) {
+            files.push(e);
+          }
+        });
+      } else {
+        const single = formData.get('file');
+        if (single instanceof File) {
+          files.push(single);
+        }
+      }
 
-      if (!file) {
+      if (files.length === 0) {
         return {
           isValid: false,
           error: 'No file was provided for upload',
@@ -61,30 +84,40 @@ export class RequestValidator {
       }
 
       // Basic checks first (size, type, extension)
-      if (file.size > config.fileUpload.maxSize) {
-        return {
-          isValid: false,
-          error: `File size ${(file.size / 1024 / 1024).toFixed(2)}MB exceeds maximum size ${config.fileUpload.maxSize / 1024 / 1024}MB`,
-        };
+      const maxSize = options?.maxSize ?? config.fileUpload.maxSize;
+      const allowedTypes = options?.acceptedTypes ?? Array.from(config.fileUpload.allowedTypes as readonly string[]);
+      const allowedExts = Array.from(config.fileUpload.allowedExtensions as readonly string[]);
+      const maxFiles = options?.maxFiles ?? files.length;
+
+      if (options?.maxFiles && files.length > maxFiles) {
+        return { isValid: false, error: `Maximum ${maxFiles} files allowed` };
       }
 
-      if (!config.fileUpload.allowedTypes.includes(file.type as any)) {
-        return {
-          isValid: false,
-          error: `Unsupported file type: ${file.type}. Supported types: ${config.fileUpload.allowedTypes.join(', ')}`,
-        };
-      }
-
-      const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-      if (!config.fileUpload.allowedExtensions.includes(extension as any)) {
-        return {
-          isValid: false,
-          error: `Unsupported file extension: ${extension}. Supported extensions: ${config.fileUpload.allowedExtensions.join(', ')}`,
-        };
+      for (const file of files) {
+        if (file.size > maxSize) {
+          return {
+            isValid: false,
+            error: `File size ${(file.size / 1024 / 1024).toFixed(2)}MB exceeds maximum size ${maxSize / 1024 / 1024}MB`,
+          };
+        }
+        if (!allowedTypes.includes(file.type)) {
+          return {
+            isValid: false,
+            error: `Unsupported file type: ${file.type}. Supported types: ${allowedTypes.join(', ')}`,
+          };
+        }
+        const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+        if (!allowedExts.includes(extension)) {
+          return {
+            isValid: false,
+            error: `Unsupported file extension: ${extension}. Supported extensions: ${allowedExts.join(', ')}`,
+          };
+        }
       }
 
       // Perform comprehensive security validation
-      const securityCheck = await FileUploadSecurity.validateFile(file);
+      // Perform comprehensive security validation on first file (spot-check)
+      const securityCheck = await FileUploadSecurity.validateFile(files[0]!);
       if (!securityCheck.isSecure) {
         return {
           isValid: false,
@@ -93,23 +126,24 @@ export class RequestValidator {
       }
 
       // Generate secure metadata
-      const metadata = await FileUploadSecurity.generateFileMetadata(file);
+      const metadata = await FileUploadSecurity.generateFileMetadata(files[0]!);
       
       // Add metadata to form data for backend processing
       formData.set('fileMetadata', JSON.stringify(metadata));
 
       // Log security warnings if any (in development)
       if (securityCheck.warnings && config.isDevelopment) {
-        console.warn('File upload security warnings:', securityCheck.warnings);
+        logWarn('File upload security warnings:', securityCheck.warnings);
       }
 
       return {
         isValid: true,
         data: formData,
-        file,
+        file: files[0]!,
+        files,
       };
     } catch (error) {
-      console.error('File upload validation error:', error);
+      logError('File upload validation error:', error);
       return {
         isValid: false,
         error: 'Invalid file upload request',
@@ -189,7 +223,7 @@ export class RequestValidator {
         isValid: true,
         data: validatedId,
       };
-    } catch (error) {
+    } catch {
       return {
         isValid: false,
         error: 'Invalid result ID format. ID must be 8-64 characters and contain only letters, numbers, hyphens, and underscores.',

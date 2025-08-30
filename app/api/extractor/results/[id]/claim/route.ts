@@ -3,23 +3,26 @@
  * Maps to backend /v1/results/{id}/claim endpoint for authenticated users to claim results
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
 import { proxyApiRequest, getClientIP, addCorrelationId } from '@/lib/api/proxy';
-import { CommonErrors, handleAPIError } from '@/lib/api/errors';
+import { CommonErrors, handleAPIError, APIError } from '@/lib/api/errors';
 import { trackEvent } from '@/lib/analytics/telemetry';
 import { auth } from '@clerk/nextjs/server';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-async function claimResultsHandler(request: NextRequest, { params }: RouteParams) {
+async function claimResultsHandler(
+  request: NextRequest,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string | string[] | undefined }> }
+) {
   const correlationId = addCorrelationId(request);
   const clientIP = getClientIP(request);
-  const { id: reportId } = params;
+  const rawParams = (ctx as { params?: { id: string } | Promise<{ id: string | string[] | undefined }> })?.params;
+  const maybePromise = rawParams as unknown as { then?: unknown };
+  const isPromise = typeof maybePromise?.then === 'function';
+  const resolvedParams = isPromise
+    ? await (rawParams as Promise<{ id: string | string[] | undefined }>)
+    : (rawParams as { id: string } | undefined);
+  const { id: reportId } = (resolvedParams || {}) as { id: string };
 
   // Basic validation for report ID format
   if (!reportId || typeof reportId !== 'string' || reportId.length < 10) {
@@ -29,7 +32,7 @@ async function claimResultsHandler(request: NextRequest, { params }: RouteParams
   }
 
   // Get authenticated user from Clerk
-  const { userId, getToken } = auth();
+  const { userId, getToken } = await auth();
   
   if (!userId) {
     return handleAPIError(
@@ -91,50 +94,44 @@ async function claimResultsHandler(request: NextRequest, { params }: RouteParams
 
     return response;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Track claim failure
     trackEvent('result_claim_failed', {
       report_id: reportId.substring(0, 8) + '...',
       user_id: userId.substring(0, 8) + '...',
       correlation_id: correlationId,
-      error: error.message
+      error: error instanceof Error ? error.message : 'unknown_error'
     });
 
-    if (error.status === 404) {
-      return handleAPIError(
-        CommonErrors.NOT_FOUND('Report not found or has expired')
-      );
+    if (error instanceof APIError) {
+      if (error.status === 404) {
+        return handleAPIError(CommonErrors.RESULT_NOT_FOUND(reportId));
+      }
+      if (error.status === 409) {
+        return handleAPIError(CommonErrors.VALIDATION_ERROR('Report has already been claimed'));
+      }
+      if (error.status === 403) {
+        return handleAPIError(CommonErrors.FORBIDDEN('You do not have permission to claim this report'));
+      }
+      return handleAPIError(error);
     }
 
-    if (error.status === 409) {
-      return handleAPIError(
-        CommonErrors.VALIDATION_ERROR('Report has already been claimed')
-      );
-    }
-
-    if (error.status === 403) {
-      return handleAPIError(
-        CommonErrors.FORBIDDEN('You do not have permission to claim this report')
-      );
-    }
-
-    return handleAPIError(
-      CommonErrors.INTERNAL_SERVER_ERROR(
-        'Unable to claim results at this time. Please try again.',
-        correlationId
-      )
-    );
+    return handleAPIError(CommonErrors.INTERNAL_ERROR('Unable to claim results at this time. Please try again.'));
   }
 }
 
-// Apply middleware with authentication required
-export const POST = withAPIMiddleware(claimResultsHandler, {
-  endpoint: 'extractor/results/[id]/claim',
-  cors: true,
-  methods: ['POST', 'OPTIONS'],
-  publicEndpoint: false, // Requires authentication
-  requireAuth: true
-});
+// Apply middleware with authentication required and Next.js RouteContext typing
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string | string[] | undefined }> }
+) {
+  const wrapped = withAPIMiddleware(claimResultsHandler, {
+    endpoint: 'results',
+    cors: true,
+    methods: ['POST', 'OPTIONS']
+  });
+  return wrapped(request, context);
+}
 
 // OPTIONS handler for CORS preflight
 export const OPTIONS = createOptionsHandler(['POST', 'OPTIONS']);

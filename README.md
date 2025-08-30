@@ -23,6 +23,8 @@
 
 CFIPros provides every tool CFI candidates need to pass their checkride including:
 
+**📊 AKTR to ACS Mapper**: Upload your FAA Airman Knowledge Test Reports (AKTR) and automatically get personalized ACS study recommendations. Our secure processor identifies weak areas and generates targeted study plans based on your specific knowledge gaps.
+
 **📊 ACS Code Analysis**: Automatically extract and organize ACS codes from your training materials. Upload PDFs, lesson plans, or study guides and get structured content instantly.
 
 **📚 Smart Study Plans**: AI-powered study plan generation based on your training timeline, experience level, and specific CFI track (CFII, MEI, etc.).

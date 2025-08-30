@@ -29,7 +29,7 @@ import type {
 } from "@/lib/types/benefitZipper";
 
 // Memoized Mockup Components with Error Handling
-const LogbookMockup = memo<MockupComponentProps>(({ id, height = "h-80", className = "" }) => (
+const LogbookMockup = memo<MockupComponentProps>(({ height = "h-80", className = "" }) => (
   <MockupErrorBoundary sectionTitle="Logbook Analysis Demo">
     <div className={`bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 ${height} flex flex-col ${className}`}>
       <div className="flex items-center gap-3 mb-6">
@@ -68,7 +68,7 @@ const LogbookMockup = memo<MockupComponentProps>(({ id, height = "h-80", classNa
   </MockupErrorBoundary>
 ));
 
-const AnalyticsMockup = memo<MockupComponentProps>(({ id, height = "h-80", className = "" }) => (
+const AnalyticsMockup = memo<MockupComponentProps>(({ height = "h-80", className = "" }) => (
   <MockupErrorBoundary sectionTitle="Analytics Demo">
     <div className={`bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 ${height} flex flex-col ${className}`}>
       <div className="mb-6">
@@ -100,7 +100,7 @@ const AnalyticsMockup = memo<MockupComponentProps>(({ id, height = "h-80", class
   </MockupErrorBoundary>
 ));
 
-const TrainingMockup = memo<MockupComponentProps>(({ id, height = "h-80", className = "" }) => (
+const TrainingMockup = memo<MockupComponentProps>(({ height = "h-80", className = "" }) => (
   <MockupErrorBoundary sectionTitle="Training Management Demo">
     <div className={`bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 ${height} flex flex-col ${className}`}>
       <div className="mb-4">
@@ -266,8 +266,6 @@ export const BenefitZipperList: React.FC<BenefitZipperListProps> = memo(({
   className = "",
   onSectionView,
   onFeatureInteraction,
-  showCTA = true,
-  customCTA,
   forceReducedMotion = false
 }) => {
   const reducedMotion = forceReducedMotion || prefersReducedMotion();
@@ -281,13 +279,6 @@ export const BenefitZipperList: React.FC<BenefitZipperListProps> = memo(({
     fallbackInView: false
   });
 
-  // Intersection observer for CTA
-  const { ref: ctaRef, isInView: ctaInView } = useIntersectionObserver({
-    threshold: mergedConfig.INTERSECTION_THRESHOLD,
-    rootMargin: mergedConfig.INTERSECTION_ROOT_MARGIN,
-    triggerOnce: true,
-    fallbackInView: false
-  });
 
   const handleSectionView = useCallback((sectionId: string) => {
     onSectionView?.(sectionId);

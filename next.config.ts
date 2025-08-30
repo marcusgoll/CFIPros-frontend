@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
   experimental: {},
 
   // Server external packages
-  serverExternalPackages: [],
+  serverExternalPackages: ['redis'],
 
   // Image optimization configuration
   images: {

@@ -469,7 +469,7 @@ const FileItem = React.memo(function FileItem({ file, onRemove, onRetry }: FileI
 });
 
 function getComplianceColor(level: string): string {
-  return AnalysisService.getComplianceColor(level as any);
+  return AnalysisService.getComplianceColor(level as unknown as 'low' | 'medium' | 'high');
 }
 
 function StatusBadge({ status }: { status: UploadedFile["status"] }) {

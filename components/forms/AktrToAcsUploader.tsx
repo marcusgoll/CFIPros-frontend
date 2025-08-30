@@ -4,7 +4,7 @@ import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { FileUploader, FileUploadProgress } from './FileUploader';
 import { Button } from '@/components/ui/Button';
-import { trackUploadStarted, trackUploadCompleted, trackUploadFailed } from '@/lib/analytics/telemetry';
+// Telemetry for uploads is handled in API and uploader component
 import { AlertCircle, ArrowRight } from 'lucide-react';
 
 interface UploadState {
@@ -113,7 +113,9 @@ export function AktrToAcsUploader() {
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (state.files.length === 0) return;
+    if (state.files.length === 0) {
+      return;
+    }
 
     setState(prev => ({
       ...prev,
@@ -146,7 +148,6 @@ export function AktrToAcsUploader() {
   }, [handleSubmit]);
 
   const canSubmit = state.files.length > 0 && !state.isUploading;
-  const hasErrors = state.uploadProgress.some(p => p.status === 'error');
 
   return (
     <div className="space-y-6">

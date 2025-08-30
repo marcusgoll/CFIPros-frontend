@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
-import { Star } from "lucide-react";
 import { HeroVersionC } from "@/components/layout/HeroVersionC";
 import {
   FeatureSpotlightMenu,

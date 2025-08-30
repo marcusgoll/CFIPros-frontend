@@ -3,12 +3,12 @@ import { notFound } from 'next/navigation';
 import { ResultsView } from '@/components/forms/ResultsView';
 
 interface PageProps {
-  params: {
+  params: Promise<{
     reportId: string;
-  };
+  }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata(): Promise<Metadata> {
   return {
     title: 'ACS Analysis Results | CFI Pros',
     description: 'Your personalized ACS study plan based on knowledge test analysis',
@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function ResultsPage({ params }: PageProps) {
-  const { reportId } = params;
+  const { reportId } = await params;
 
   // Basic validation for report ID
   if (!reportId || reportId.length < 10) {

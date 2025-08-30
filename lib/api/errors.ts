@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { logError } from '@/lib/utils/logger';
 import type { ProblemDetails, BackendErrorResponse } from '@/lib/types';
 
 export class APIError extends Error {
@@ -90,7 +91,7 @@ export function handleAPIError(error: Error | APIError): NextResponse {
   }
 
   // Generic error handling
-  console.error('Unhandled API error:', error);
+  logError('Unhandled API error:', error);
   
   const problemDetails = {
     type: 'about:blank#internal_error',
@@ -125,6 +126,9 @@ export const CommonErrors = {
 
   INVALID_REQUEST: (detail: string) => 
     new APIError('invalid_request', 400, detail),
+
+  INVALID_RESULT_ID: (detail = 'Invalid result ID format') =>
+    new APIError('invalid_result_id', 400, detail),
 
   // Rate Limiting
   RATE_LIMIT_EXCEEDED: (detail = 'Rate limit exceeded') => 

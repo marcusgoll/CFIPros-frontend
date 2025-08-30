@@ -4,6 +4,7 @@
  */
 
 import posthog from 'posthog-js';
+import { logError, logInfo, logWarn } from '@/lib/utils/logger';
 
 export type EventName = 
   | 'hero_view'
@@ -28,11 +29,25 @@ export type EventName =
   | 'upload_failed'
   | 'upload_file_added'
   | 'upload_file_removed'
-  | 'upload_validation_error';
+  | 'upload_validation_error'
+  | 'extractor_validation_error'
+  | 'extractor_upload_started'
+  | 'extractor_upload_success'
+  | 'extractor_upload_failed'
+  | 'extractor_results_viewed'
+  | 'extractor_results_error'
+  | 'result_claim_attempted'
+  | 'result_claimed'
+  | 'result_claim_failed'
+  | 'results_viewed'
+  | 'results_shared'
+  | 'email_captured'
+  | 'email_capture_success'
+  | 'email_capture_failed';
 
 export interface TelemetryEvent {
   name: EventName;
-  properties?: Record<string, any>;
+  properties?: Record<string, unknown>;
   timestamp?: number;
   sessionId?: string;
   userId?: string;
@@ -79,7 +94,9 @@ class TelemetryService {
     apiKey?: string;
     apiHost?: string;
   }) {
-    if (this.isInitialized) return;
+    if (this.isInitialized) {
+      return;
+    }
     
     this.debugMode = config?.debugMode ?? this.debugMode;
     
@@ -98,7 +115,7 @@ class TelemetryService {
             persistence: 'localStorage',
             loaded: (posthog) => {
               if (this.debugMode) {
-                console.log('🔍 PostHog initialized successfully', {
+                logInfo('🔍 PostHog initialized successfully', {
                   sessionId: posthog.get_session_id(),
                   distinctId: posthog.get_distinct_id()
                 });
@@ -110,13 +127,13 @@ class TelemetryService {
           this.sessionId = posthog.get_session_id() || this.sessionId;
         } catch (error) {
           if (this.debugMode) {
-            console.error('❌ PostHog initialization failed:', error);
+            logError('❌ PostHog initialization failed:', error);
           }
         }
       } else {
         if (this.debugMode) {
-          console.warn('⚠️ PostHog API key not configured. Add NEXT_PUBLIC_POSTHOG_KEY to .env.local');
-          console.log('📝 Instructions: Replace "your_posthog_api_key_here" with your actual PostHog API key');
+          logWarn('⚠️ PostHog API key not configured. Add NEXT_PUBLIC_POSTHOG_KEY to .env.local');
+          logInfo('📝 Instructions: Replace "your_posthog_api_key_here" with your actual PostHog API key');
         }
       }
     }
@@ -130,7 +147,7 @@ class TelemetryService {
     this.setupScrollTracking();
     
     if (this.debugMode) {
-      console.log('🔍 Telemetry initialized', {
+      logInfo('🔍 Telemetry initialized', {
         sessionId: this.sessionId,
         timestamp: new Date().toISOString()
       });
@@ -140,7 +157,7 @@ class TelemetryService {
   /**
    * Track a telemetry event with PostHog
    */
-  track(name: EventName, properties?: Record<string, any>) {
+  track(name: EventName, properties?: Record<string, unknown>) {
     const event: TelemetryEvent = {
       name,
       timestamp: Date.now(),
@@ -166,13 +183,13 @@ class TelemetryService {
         });
       } catch (error) {
         if (this.debugMode) {
-          console.warn('Failed to send event to PostHog:', error);
+          logWarn('Failed to send event to PostHog:', error);
         }
       }
     }
     
     if (this.debugMode) {
-      console.log('📊 Event tracked:', event);
+      logInfo('📊 Event tracked:', event);
     }
   }
 
@@ -401,7 +418,7 @@ class TelemetryService {
   /**
    * Set user identity for tracking
    */
-  identify(userId: string, traits?: Record<string, any>) {
+  identify(userId: string, traits?: Record<string, unknown>) {
     if (typeof window !== 'undefined' && posthog) {
       posthog.identify(userId, traits);
     }
@@ -418,7 +435,9 @@ class TelemetryService {
   }
 
   private getStoredVariant(testId: string): ABTestVariant | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined') {
+      return null;
+    }
     
     const stored = localStorage.getItem(`ab_test_${testId}`);
     return stored ? JSON.parse(stored) : null;
@@ -452,7 +471,7 @@ class TelemetryService {
 export const telemetry = TelemetryService.getInstance();
 
 // Export convenience functions
-export const trackEvent = (name: EventName, properties?: Record<string, any>) => {
+export const trackEvent = (name: EventName, properties?: Record<string, unknown>) => {
   telemetry.track(name, properties);
 };
 

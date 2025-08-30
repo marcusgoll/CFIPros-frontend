@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { runPostHogHealthTests, formatHealthTestResults, HealthTestResult } from '@/lib/analytics/healthTest';
+import { logError, logInfo } from '@/lib/utils/logger';
 
 export default function HealthTestPage() {
   const [results, setResults] = useState<HealthTestResult[]>([]);
@@ -10,7 +11,7 @@ export default function HealthTestPage() {
 
   const runTests = async () => {
     setLoading(true);
-    console.log('🔍 Running PostHog Health Tests...');
+    logInfo('🔍 Running PostHog Health Tests...');
     
     try {
       const testResults = await runPostHogHealthTests();
@@ -20,7 +21,7 @@ export default function HealthTestPage() {
       // Format results for console
       formatHealthTestResults(testResults);
     } catch (error) {
-      console.error('Health test error:', error);
+      logError('Health test error:', error);
     } finally {
       setLoading(false);
     }

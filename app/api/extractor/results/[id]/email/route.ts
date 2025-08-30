@@ -3,18 +3,13 @@
  * Maps to backend /v1/results/{id}/email endpoint for email capture on public results
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
 import { proxyApiRequest, getClientIP, addCorrelationId } from '@/lib/api/proxy';
-import { CommonErrors, handleAPIError } from '@/lib/api/errors';
+import { CommonErrors, handleAPIError, APIError } from '@/lib/api/errors';
 import { trackEvent } from '@/lib/analytics/telemetry';
 import { z } from 'zod';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
 
 // Email capture validation schema
 const emailCaptureSchema = z.object({
@@ -23,10 +18,19 @@ const emailCaptureSchema = z.object({
   source: z.string().optional().default('extractor_results')
 });
 
-async function emailCaptureHandler(request: NextRequest, { params }: RouteParams) {
+async function emailCaptureHandler(
+  request: NextRequest,
+  ctx: { params: { id: string } } | { params: Promise<{ id: string | string[] | undefined }> }
+) {
   const correlationId = addCorrelationId(request);
   const clientIP = getClientIP(request);
-  const { id: reportId } = params;
+  const rawParams = (ctx as { params?: { id: string } | Promise<{ id: string | string[] | undefined }> })?.params;
+  const maybePromise = rawParams as unknown as { then?: unknown };
+  const isPromise = typeof maybePromise?.then === 'function';
+  const resolvedParams = isPromise
+    ? await (rawParams as Promise<{ id: string | string[] | undefined }>)
+    : (rawParams as { id: string } | undefined);
+  const { id: reportId } = (resolvedParams || {}) as { id: string };
 
   // Basic validation for report ID format
   if (!reportId || typeof reportId !== 'string' || reportId.length < 10) {
@@ -41,14 +45,7 @@ async function emailCaptureHandler(request: NextRequest, { params }: RouteParams
     const validation = emailCaptureSchema.safeParse(body);
 
     if (!validation.success) {
-      const errors = validation.error.errors.map(err => ({
-        field: err.path.join('.'),
-        message: err.message
-      }));
-
-      return handleAPIError(
-        CommonErrors.VALIDATION_ERROR('Invalid email capture data', { errors })
-      );
+      return handleAPIError(CommonErrors.VALIDATION_ERROR('Invalid email capture data'));
     }
 
     const { email, consent_marketing, source } = validation.data;
@@ -100,42 +97,40 @@ async function emailCaptureHandler(request: NextRequest, { params }: RouteParams
 
     return response;
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Track email capture failure
     trackEvent('email_capture_failed', {
       report_id: reportId.substring(0, 8) + '...',
       correlation_id: correlationId,
-      error: error.message
+      error: error instanceof Error ? error.message : 'unknown_error'
     });
 
-    if (error.status === 404) {
-      return handleAPIError(
-        CommonErrors.NOT_FOUND('Report not found or has expired')
-      );
+    if (error instanceof APIError) {
+      if (error.status === 404) {
+        return handleAPIError(CommonErrors.RESULT_NOT_FOUND(reportId));
+      }
+      if (error.status === 409) {
+        return handleAPIError(CommonErrors.VALIDATION_ERROR('Email already registered for this report'));
+      }
+      return handleAPIError(error);
     }
 
-    if (error.status === 409) {
-      return handleAPIError(
-        CommonErrors.VALIDATION_ERROR('Email already registered for this report')
-      );
-    }
-
-    return handleAPIError(
-      CommonErrors.INTERNAL_SERVER_ERROR(
-        'Unable to save email at this time. Please try again.',
-        correlationId
-      )
-    );
+    return handleAPIError(CommonErrors.INTERNAL_ERROR('Unable to save email at this time. Please try again.'));
   }
 }
 
-// Apply middleware with public access
-export const POST = withAPIMiddleware(emailCaptureHandler, {
-  endpoint: 'extractor/results/[id]/email',
-  cors: true,
-  methods: ['POST', 'OPTIONS'],
-  publicEndpoint: true // Allow public access without authentication
-});
+// Apply middleware with public access and Next.js RouteContext typing
+export async function POST(
+  request: NextRequest,
+  context: { params: Promise<{ id: string | string[] | undefined }> }
+) {
+  const wrapped = withAPIMiddleware(emailCaptureHandler, {
+    endpoint: 'results',
+    cors: true,
+    methods: ['POST', 'OPTIONS']
+  });
+  return wrapped(request, context);
+}
 
 // OPTIONS handler for CORS preflight
 export const OPTIONS = createOptionsHandler(['POST', 'OPTIONS']);
