@@ -17,6 +17,9 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
 
+  // Turbopack configuration (moved from experimental)
+  turbopack: {},
+
   // Experimental features
   experimental: {},
 
