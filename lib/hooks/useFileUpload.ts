@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { validateFileList, validateFileSignature, DEFAULT_UPLOAD_CONFIG, type FileUploadConfig } from "@/lib/utils/fileValidation";
 import { AnalysisService, type DocumentAnalysis } from "@/lib/services/analysisService";
 
@@ -23,7 +23,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
 
-  const config = { ...DEFAULT_UPLOAD_CONFIG, ...options.config };
+  const config = useMemo(() => ({ ...DEFAULT_UPLOAD_CONFIG, ...options.config }), [options.config]);
 
   const addFiles = useCallback(async (newFiles: FileList | File[]) => {
     const { validFiles, invalidFiles: basicInvalidFiles } = validateFileList(newFiles, config);
@@ -135,11 +135,13 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
         options.onUploadError?.(fileToUpload, errorMessage);
       }
     }
-  }, [options]);
+  }, [options, files]);
 
   const uploadAll = useCallback(async () => {
     const pendingFiles = files.filter(f => f.status === "pending");
-    if (pendingFiles.length === 0) return;
+    if (pendingFiles.length === 0) {
+      return;
+    }
 
     setIsUploading(true);
     
@@ -164,11 +166,12 @@ export function useFileUpload(options: UseFileUploadOptions = {}) {
 
   const retryUpload = useCallback((fileId: string) => {
     setFiles(prev => prev.map(f => {
-      if (f.id === fileId) {
-        const { error, ...fileWithoutError } = f;
-        return { ...fileWithoutError, status: "pending" as const, progress: 0 };
+      if (f.id !== fileId) {
+        return f;
       }
-      return f;
+      const { error: _e, ...fileWithoutError } = f;
+      void _e;
+      return { ...fileWithoutError, status: "pending" as const, progress: 0 } as UploadedFile;
     }));
     simulateUpload(fileId);
   }, [simulateUpload]);

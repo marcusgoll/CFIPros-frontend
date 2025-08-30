@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { APIError, handleAPIError } from './errors';
 import { config } from '@/lib/config';
 import type { BackendErrorResponse } from '@/lib/types';
+import { logError } from '@/lib/utils/logger';
 
 export interface ProxyConfig {
   timeout?: number;
@@ -135,7 +136,7 @@ export async function proxyRequest(
       }
     }
 
-    console.error('Proxy request error:', error);
+    logError('Proxy request error:', error);
     const internalError = new APIError(
       'internal_error',
       500,
@@ -255,6 +256,122 @@ export function addCorrelationId(request: NextRequest): string {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 8);
   return `${timestamp}-${random}`;
+}
+
+/**
+ * Proxy API request with flexible method and body support
+ */
+export async function proxyApiRequest(
+  request: NextRequest,
+  method: string,
+  path: string,
+  body?: unknown,
+  options: ProxyConfig = {}
+): Promise<NextResponse> {
+  const {
+    timeout = 30000, // Default 30 seconds
+    headers: additionalHeaders = {},
+    preserveHeaders = ['authorization', 'content-type', 'accept']
+  } = options;
+
+  try {
+    // Build backend URL (use centralized config)
+    const backendUrl = `${config.backendUrl}${path}`;
+    
+    // Extract and forward relevant headers
+    const forwardedHeaders: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'CFIPros-BFF/1.0',
+      ...additionalHeaders
+    };
+
+    // Preserve specific headers from client request
+    preserveHeaders.forEach(headerName => {
+      const value = request.headers.get(headerName);
+      if (value) {
+        forwardedHeaders[headerName] = value;
+      }
+    });
+
+    // Create fetch options
+    const fetchOptions: RequestInit = {
+      method,
+      headers: forwardedHeaders,
+      signal: AbortSignal.timeout(timeout),
+    };
+
+    // Add body for non-GET requests
+    if (body !== null && body !== undefined && method !== 'GET' && method !== 'HEAD') {
+      fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body as Record<string, unknown>);
+    }
+
+    // Make request to backend
+    const backendResponse = await fetch(backendUrl, fetchOptions);
+
+    // Handle backend response
+    if (!backendResponse.ok) {
+      await handleBackendError(backendResponse);
+    }
+
+    // Forward successful response
+    const responseData = await backendResponse.json();
+    const response = NextResponse.json(responseData, {
+      status: backendResponse.status,
+    });
+
+    // Copy relevant response headers
+    const headersToForward = [
+      'content-type',
+      'cache-control',
+      'etag',
+      'last-modified',
+      'x-ratelimit-limit',
+      'x-ratelimit-remaining',
+      'x-ratelimit-reset'
+    ];
+
+    headersToForward.forEach(headerName => {
+      const value = backendResponse.headers.get(headerName);
+      if (value) {
+        response.headers.set(headerName, value);
+      }
+    });
+
+    return response;
+
+  } catch (error) {
+    if (error instanceof APIError) {
+      return handleAPIError(error);
+    }
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        const timeoutError = new APIError(
+          'request_timeout',
+          504,
+          'Backend request timed out'
+        );
+        return handleAPIError(timeoutError);
+      }
+
+      if (error.message.includes('fetch')) {
+        const networkError = new APIError(
+          'backend_error',
+          502,
+          'Failed to connect to backend service'
+        );
+        return handleAPIError(networkError);
+      }
+    }
+
+    logError('Proxy API request error:', error);
+    const internalError = new APIError(
+      'internal_error',
+      500,
+      'Proxy API request failed'
+    );
+    return handleAPIError(internalError);
+  }
 }
 
 /**

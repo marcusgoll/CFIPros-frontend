@@ -104,6 +104,7 @@ export async function validateFileSignature(file: File): Promise<FileValidationR
 
       default:
         // Unknown file type - allow but log warning
+        // eslint-disable-next-line no-console
         console.warn(`Unknown file type for signature validation: ${file.type}`);
         return { isValid: true };
     }
@@ -149,7 +150,9 @@ export function validateFileList(files: FileList | File[], config: FileUploadCon
 
 export function formatFileSize(bytes: number): string {
   const sizes = ["Bytes", "KB", "MB", "GB"];
-  if (bytes === 0) return "0 Bytes";
+  if (bytes === 0) {
+    return "0 Bytes";
+  }
   
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   const size = bytes / Math.pow(1024, i);

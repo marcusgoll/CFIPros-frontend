@@ -1,15 +1,15 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, type MotionValue } from "framer-motion";
 import { Zap, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { BackgroundShapes } from "@/components/ui/BackgroundShapes";
 import { trackHeroCTA } from "@/lib/analytics/telemetry";
 
 interface HeroVersionCProps {
-  opacity: any;
-  scale: any;
+  opacity: number | MotionValue<number>;
+  scale: number | MotionValue<number>;
 }
 
 export function HeroVersionC({ opacity, scale }: HeroVersionCProps) {

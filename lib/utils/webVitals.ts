@@ -22,13 +22,19 @@ const THRESHOLDS = {
 
 function getRating(name: WebVital['name'], value: number): WebVital['rating'] {
   const [good, poor] = THRESHOLDS[name];
-  if (value <= good) return 'good';
-  if (value <= poor) return 'needs-improvement';
+  if (value <= good) {
+    return 'good';
+  }
+  if (value <= poor) {
+    return 'needs-improvement';
+  }
   return 'poor';
 }
 
 export function trackWebVitals(callback: WebVitalsCallback): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {
+    return;
+  }
 
   // Track Core Web Vitals using the standard API
   try {
@@ -65,6 +71,7 @@ export function trackWebVitals(callback: WebVitalsCallback): void {
     });
   } catch (error) {
     // Silently fail if web-vitals package is not available
+    // eslint-disable-next-line no-console
     console.warn('Web Vitals tracking unavailable:', error);
   }
 }
@@ -76,6 +83,7 @@ export function logWebVital(vital: WebVital): void {
     // Example: Send to your analytics service
     // gtag('event', vital.name, { value: vital.value, rating: vital.rating });
   } else {
+    // eslint-disable-next-line no-console
     console.log(`${vital.name}: ${vital.value} (${vital.rating})`);
   }
 }

@@ -29,7 +29,9 @@ export function ErrorMessage({
   className,
   showIcon = true,
 }: ErrorMessageProps) {
-  if (!error) return null;
+  if (!error) {
+    return null;
+  }
 
   const baseClasses = 'rounded-md border p-4 flex items-start space-x-3';
   
@@ -186,7 +188,9 @@ interface InlineErrorProps {
 }
 
 export function InlineError({ error, className }: InlineErrorProps) {
-  if (!error) return null;
+  if (!error) {
+    return null;
+  }
   
   return (
     <ErrorMessage

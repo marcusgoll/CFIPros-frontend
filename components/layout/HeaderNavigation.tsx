@@ -88,7 +88,7 @@ export function HeaderNavigation() {
 
           {/* Mobile Navigation */}
           <MobileNavigation 
-            isSignedIn={isSignedIn}
+            isSignedIn={!!isSignedIn}
             isLoaded={isLoaded}
             SignInButton={authComponents.SignInButton}
             SignUpButton={authComponents.SignUpButton}

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play } from "lucide-react";
-import Image from "next/image";
+// import Image from "next/image";
 import { cn, prefersReducedMotion } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics/telemetry";
 
@@ -130,6 +130,7 @@ export const FeatureScreenshotDisplay: React.FC<FeatureScreenshotDisplayProps> =
 
         {/* Screenshot image */}
         <div className="relative aspect-[16/9] w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={screenshotUrl}
             alt={`${featureName} feature screenshot`}

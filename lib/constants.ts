@@ -22,7 +22,7 @@ export const API_CONFIG = {
 } as const;
 
 // File upload constants (for tests)
-export const MAX_FILE_SIZE = 10 * 1024 * 1024 as const; // 10MB
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const ALLOWED_FILE_TYPES = [
   'application/pdf',
@@ -155,7 +155,7 @@ export const STORAGE_KEYS = {
   USER_PREFERENCES: "cfipros_user_preferences",
   THEME: "cfipros_theme",
   // Legacy keys (keep for backward compatibility)
-  authToken: "cfipros_auth_token",
+  authToken: "cfipros_auth_token_legacy",
   userPreferences: "cfipros_user_prefs",
   uploadProgress: "cfipros_upload_progress",
 } as const;

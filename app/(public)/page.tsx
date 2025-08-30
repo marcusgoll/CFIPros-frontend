@@ -2,13 +2,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useScroll, useTransform, motion } from "framer-motion";
-import {
-  Check,
-  Star,
-  ArrowRightCircle,
-} from "lucide-react";
-import Link from "next/link";
-import { PremiumButton } from "@/components/ui/PremiumButton";
 import { HeroVersionC } from "@/components/layout/HeroVersionC";
 import {
   FeatureSpotlightMenu,
@@ -127,8 +120,9 @@ export default function CFIProsHomePage() {
               featureId={selectedFeature}
               featureName={getFeatureName(selectedFeature)}
               screenshotUrl={
-                FEATURE_SCREENSHOTS[selectedFeature] ||
-                FEATURE_SCREENSHOTS.upload
+                FEATURE_SCREENSHOTS[selectedFeature] ??
+                FEATURE_SCREENSHOTS['upload'] ??
+                ""
               }
               onPlayClick={(featureId) => {
                 trackEvent("feature_preview_video", {
@@ -156,7 +150,7 @@ export default function CFIProsHomePage() {
             });
           }}
         />
-        {/* <Testimonials /> */}
+        {/* Testimonials intentionally omitted for brevity */}
         <PricingSection />
         <PremiumCTA />
       </main>
@@ -171,82 +165,4 @@ export default function CFIProsHomePage() {
     </div>
   );
 }
-
-
-
-
-
-
-// Testimonials Section
-function Testimonials() {
-  const testimonials = [
-    {
-      name: "Sarah Chen",
-      role: "ATP, CFII",
-      content:
-        "CFIPros cut my checkride prep time in half. The ACS analysis is incredibly accurate.",
-      rating: 5,
-    },
-    {
-      name: "Mike Johnson",
-      role: "Part 141 Chief Instructor",
-      content:
-        "We've integrated CFIPros into our entire program. Student pass rates are up 23%.",
-      rating: 5,
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Commercial Pilot",
-      content:
-        "The logbook auditor found issues I never knew existed. Saved me from a checkride bust!",
-      rating: 5,
-    },
-  ];
-
-  return (
-    <section className="bg-muted/30 py-20">
-      <div className="mx-auto max-w-7xl px-4 md:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-12 text-center"
-        >
-          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
-            Loved by pilots everywhere
-          </h2>
-        </motion.div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          {testimonials.map((testimonial, i) => (
-            <motion.div
-              key={testimonial.name}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
-              viewport={{ once: true }}
-              className="card-premium p-6"
-            >
-              <div className="mb-4 flex gap-1">
-                {[...Array(testimonial.rating)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-primary text-primary" />
-                ))}
-              </div>
-              <p className="mb-4 text-sm text-muted-foreground">
-                "{testimonial.content}"
-              </p>
-              <div>
-                <p className="text-sm font-semibold">{testimonial.name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {testimonial.role}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
+ 

@@ -41,26 +41,35 @@ export function formatRelativeTime(date: Date | string): string {
 
   if (diffInSeconds < 60) {
     return rtf.format(-diffInSeconds, "second");
-  } else if (diffInSeconds < 3600) {
-    return rtf.format(-Math.floor(diffInSeconds / 60), "minute");
-  } else if (diffInSeconds < 86400) {
-    return rtf.format(-Math.floor(diffInSeconds / 3600), "hour");
-  } else if (diffInSeconds < 2592000) {
-    return rtf.format(-Math.floor(diffInSeconds / 86400), "day");
-  } else if (diffInSeconds < 31536000) {
-    return rtf.format(-Math.floor(diffInSeconds / 2592000), "month");
-  } else {
-    return rtf.format(-Math.floor(diffInSeconds / 31536000), "year");
   }
+  if (diffInSeconds < 3600) {
+    return rtf.format(-Math.floor(diffInSeconds / 60), "minute");
+  }
+  if (diffInSeconds < 86400) {
+    return rtf.format(-Math.floor(diffInSeconds / 3600), "hour");
+  }
+  if (diffInSeconds < 2592000) {
+    return rtf.format(-Math.floor(diffInSeconds / 86400), "day");
+  }
+  if (diffInSeconds < 31536000) {
+    return rtf.format(-Math.floor(diffInSeconds / 2592000), "month");
+  }
+  return rtf.format(-Math.floor(diffInSeconds / 31536000), "year");
 }
 
 /**
  * Truncate text to a specified length
  */
 export function truncate(text: string, length: number, suffix: string = "..."): string {
-  if (!text) return text;
-  if (length <= 0) return suffix;
-  if (text.length <= length) return text;
+  if (!text) {
+    return text;
+  }
+  if (length <= 0) {
+    return suffix;
+  }
+  if (text.length <= length) {
+    return text;
+  }
   return text.slice(0, length).trim() + suffix;
 }
 
@@ -99,7 +108,9 @@ export function generateId(length: number = 8): string {
  * Capitalize the first letter of a string
  */
 export function capitalizeFirst(text: string): string {
-  if (!text) return text;
+  if (!text) {
+    return text;
+  }
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
@@ -115,7 +126,9 @@ export function isValidEmail(email: string): boolean {
  * Format file size in bytes to human-readable format
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes <= 0) return "0 B";
+  if (bytes <= 0) {
+    return "0 B";
+  }
   
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
@@ -149,9 +162,15 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  * Deep clone an object
  */
 export function deepClone<T>(obj: T): T {
-  if (obj === null || typeof obj !== "object") return obj;
-  if (obj instanceof Date) return new Date(obj.getTime()) as T;
-  if (obj instanceof Array) return obj.map(item => deepClone(item)) as T;
+  if (obj === null || typeof obj !== "object") {
+    return obj;
+  }
+  if (obj instanceof Date) {
+    return new Date(obj.getTime()) as T;
+  }
+  if (obj instanceof Array) {
+    return obj.map(item => deepClone(item)) as T;
+  }
   if (typeof obj === "object") {
     const clonedObj = {} as T;
     for (const key in obj) {
@@ -168,18 +187,22 @@ export function deepClone<T>(obj: T): T {
  * Check if user prefers reduced motion
  */
 export function prefersReducedMotion(): boolean {
-  if (typeof window === "undefined") return false;
+  if (typeof window === "undefined") {
+    return false;
+  }
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 /**
  * Get reduced motion variants for framer-motion
  */
-export function getMotionVariants<T extends Record<string, any>>(
+export function getMotionVariants<T extends Record<string, unknown>>(
   normalVariants: T,
   reducedVariants?: Partial<T>
 ): T {
-  if (!prefersReducedMotion()) return normalVariants;
+  if (!prefersReducedMotion()) {
+    return normalVariants;
+  }
   
   return {
     ...normalVariants,

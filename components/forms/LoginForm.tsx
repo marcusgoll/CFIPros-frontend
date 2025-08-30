@@ -12,6 +12,7 @@ import { FormError } from '@/components/ui/ErrorMessage';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { logInfo } from '@/lib/utils/logger';
 import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginFormProps {
@@ -50,7 +51,7 @@ export function LoginForm({
         } else {
           // Default behavior - simulate API call
           await new Promise(resolve => setTimeout(resolve, 1000));
-          console.log('Login data:', data);
+          logInfo('Login data:', data);
         }
       } catch (error) {
         setSubmitError(

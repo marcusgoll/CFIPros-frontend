@@ -53,8 +53,12 @@ export function InstructorDropdown() {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
     }
+    return () => {
+      if (isOpen) {
+        document.removeEventListener('mousedown', handleClickOutside);
+      }
+    };
   }, [isOpen]);
 
   // Cleanup timeout on unmount

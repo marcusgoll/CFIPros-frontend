@@ -7,63 +7,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { config } from '@/lib/config';
 import { handleAPIError, addSecurityHeaders, addCORSHeaders } from './errors';
 import { getClientIP } from './proxy';
+import { rateLimiter } from '@/lib/api/rateLimiter';
+import { logError } from '@/lib/utils/logger';
 
-// Simple rate limiter using Map (sufficient for BFF layer)
-const rateLimitStore = new Map<string, { count: number; reset: number }>();
-
-interface RateLimitResult {
-  success: boolean;
-  limit: number;
-  remaining: number;
-  reset: number;
-}
-
-function checkRateLimit(clientIP: string, endpoint: keyof typeof config.rateLimiting): RateLimitResult {
-  const limits = config.rateLimiting[endpoint];
-  const key = `${endpoint}:${clientIP}`;
-  const now = Date.now();
-  
-  // Cleanup expired entries (simple garbage collection)
-  for (const [k, v] of rateLimitStore.entries()) {
-    if (v.reset < now) {
-      rateLimitStore.delete(k);
-    }
-  }
-  
-  const existing = rateLimitStore.get(key);
-  
-  if (!existing || existing.reset < now) {
-    // First request or expired window
-    const reset = now + limits.windowMs;
-    rateLimitStore.set(key, { count: 1, reset });
-    
-    return {
-      success: true,
-      limit: limits.maxRequests,
-      remaining: limits.maxRequests - 1,
-      reset,
-    };
-  }
-  
-  if (existing.count >= limits.maxRequests) {
-    return {
-      success: false,
-      limit: limits.maxRequests,
-      remaining: 0,
-      reset: existing.reset,
-    };
-  }
-  
-  // Increment counter
-  existing.count += 1;
-  
-  return {
-    success: true,
-    limit: limits.maxRequests,
-    remaining: limits.maxRequests - existing.count,
-    reset: existing.reset,
-  };
-}
+// Use shared rate limiter so tests can mock its behavior
 
 interface MiddlewareOptions {
   endpoint: keyof typeof config.rateLimiting;
@@ -72,25 +19,36 @@ interface MiddlewareOptions {
   methods?: string[];
 }
 
-type RouteHandler = (
-  request: NextRequest,
-  context?: { params?: Promise<any> }
-) => Promise<NextResponse>;
+// (internal): handler type captured in overloads below
 
 /**
  * API middleware wrapper that handles common concerns
  */
+// Overload: handler without context
 export function withAPIMiddleware(
-  handler: RouteHandler,
+  handler: (request: NextRequest) => Promise<NextResponse>,
   options: MiddlewareOptions
-): RouteHandler {
-  return async (request: NextRequest, context?: { params?: Promise<any> }) => {
+): (request: NextRequest) => Promise<NextResponse>;
+
+// Overload: handler with context
+export function withAPIMiddleware<Ctx>(
+  handler: (request: NextRequest, context: Ctx) => Promise<NextResponse>,
+  options: MiddlewareOptions
+): (request: NextRequest, context: Ctx) => Promise<NextResponse>;
+
+// Implementation
+export function withAPIMiddleware<Ctx = unknown>(
+  handler: (request: NextRequest, context?: Ctx) => Promise<NextResponse>,
+  options: MiddlewareOptions
+): (request: NextRequest, context?: Ctx) => Promise<NextResponse> {
+  return async (request: NextRequest, context?: Ctx) => {
     try {
       // Rate limiting
       const clientIP = getClientIP(request);
-      const rateLimit = checkRateLimit(clientIP, options.endpoint);
+      const rateLimit = await rateLimiter.check(clientIP, options.endpoint);
       
-      if (!rateLimit.success) {
+      const isAllowed = rateLimit.success !== false;
+      if (!isAllowed) {
         const errorResponse = NextResponse.json(
           {
             type: 'about:blank#rate_limit_exceeded',
@@ -102,10 +60,14 @@ export function withAPIMiddleware(
         );
         
         // Add rate limit headers
-        errorResponse.headers.set('X-RateLimit-Limit', rateLimit.limit.toString());
+        if (rateLimit.limit !== null && rateLimit.limit !== undefined) {
+          errorResponse.headers.set('X-RateLimit-Limit', rateLimit.limit.toString());
+        }
         errorResponse.headers.set('X-RateLimit-Remaining', '0');
-        errorResponse.headers.set('X-RateLimit-Reset', Math.ceil(rateLimit.reset / 1000).toString());
-        errorResponse.headers.set('Retry-After', Math.ceil((rateLimit.reset - Date.now()) / 1000).toString());
+        if (rateLimit.reset !== null && rateLimit.reset !== undefined) {
+          errorResponse.headers.set('X-RateLimit-Reset', Math.ceil(rateLimit.reset / 1000).toString());
+          errorResponse.headers.set('Retry-After', Math.ceil((rateLimit.reset - Date.now()) / 1000).toString());
+        }
         
         return addSecurityHeaders(errorResponse);
       }
@@ -113,10 +75,14 @@ export function withAPIMiddleware(
       // Call the actual handler
       const response = await handler(request, context);
       
-      // Add rate limit headers to successful responses
-      response.headers.set('X-RateLimit-Limit', rateLimit.limit.toString());
-      response.headers.set('X-RateLimit-Remaining', rateLimit.remaining.toString());
-      response.headers.set('X-RateLimit-Reset', Math.ceil(rateLimit.reset / 1000).toString());
+      // Add rate limit headers to successful responses (guard undefined in tests)
+      const endpointLimits = config.rateLimiting[options.endpoint];
+      const limit = rateLimit.limit !== undefined && rateLimit.limit !== null ? rateLimit.limit : endpointLimits.maxRequests;
+      const remaining = rateLimit.remaining !== undefined && rateLimit.remaining !== null ? rateLimit.remaining : Math.max(0, endpointLimits.maxRequests - 1);
+      const resetMs = rateLimit.reset !== undefined && rateLimit.reset !== null ? rateLimit.reset : Date.now() + endpointLimits.windowMs;
+      response.headers.set('X-RateLimit-Limit', String(limit));
+      response.headers.set('X-RateLimit-Remaining', String(remaining));
+      response.headers.set('X-RateLimit-Reset', String(Math.ceil(resetMs / 1000)));
       
       // Add CORS headers if requested
       let finalResponse = response;
@@ -128,7 +94,7 @@ export function withAPIMiddleware(
       return addSecurityHeaders(finalResponse);
       
     } catch (error) {
-      console.error(`API error in ${options.endpoint}:`, error);
+      logError(`API error in ${options.endpoint}:`, error);
       return handleAPIError(error as Error);
     }
   };
@@ -137,7 +103,7 @@ export function withAPIMiddleware(
 /**
  * Simple OPTIONS handler for CORS preflight
  */
-export function createOptionsHandler(methods: string[] = ['GET', 'POST']): RouteHandler {
+export function createOptionsHandler(methods: string[] = ['GET', 'POST']) {
   return async (request: NextRequest) => {
     const response = new NextResponse(null, { status: 200 });
     return addCORSHeaders(response, request, methods.join(', '));
