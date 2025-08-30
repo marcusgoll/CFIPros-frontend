@@ -145,8 +145,11 @@ class TelemetryService {
       name,
       timestamp: Date.now(),
       sessionId: this.sessionId,
-      userId: this.getUserId()
     };
+    const uid = this.getUserId();
+    if (uid) {
+      event.userId = uid;
+    }
     if (properties) {
       event.properties = properties;
     }
@@ -308,7 +311,11 @@ class TelemetryService {
     }
 
     // Fallback to first variant
-    const fallback = test.variants[0];
+    const fallback: ABTestVariant = test.variants[0] ?? {
+      id: 'control',
+      name: 'Control',
+      weight: 1,
+    };
     this.storeVariant(test.id, fallback);
     return fallback;
   }

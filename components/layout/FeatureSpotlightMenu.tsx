@@ -289,7 +289,7 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
           {features.map(({ id, label, Icon }, idx) => {
             const isActive = id === active;
             return (
-              <li key={id} className="snap-start first:ml-10 last:mr-10 sm:first:ml-12 sm:last:mr-12">
+              <li key={id} role="presentation" className="snap-start first:ml-10 last:mr-10 sm:first:ml-12 sm:last:mr-12">
                 <button
                   role="tab"
                   aria-selected={isActive}

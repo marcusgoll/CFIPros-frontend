@@ -265,17 +265,17 @@ export async function proxyApiRequest(
   method: string,
   path: string,
   body?: any,
-  config: ProxyConfig = {}
+  options: ProxyConfig = {}
 ): Promise<NextResponse> {
   const {
     timeout = 30000, // Default 30 seconds
     headers: additionalHeaders = {},
     preserveHeaders = ['authorization', 'content-type', 'accept']
-  } = config;
+  } = options;
 
   try {
-    // Build backend URL
-    const backendUrl = `${process.env.BACKEND_URL || 'https://api.cfipros.com'}${path}`;
+    // Build backend URL (use centralized config)
+    const backendUrl = `${config.backendUrl}${path}`;
     
     // Extract and forward relevant headers
     const forwardedHeaders: Record<string, string> = {
