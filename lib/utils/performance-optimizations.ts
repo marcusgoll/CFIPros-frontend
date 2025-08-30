@@ -13,7 +13,7 @@ export function createLazyComponent<T extends ComponentType<Record<string, unkno
   name?: string
 ) {
   const LazyComponent = lazy(importFunction);
-  LazyComponent.displayName = `Lazy(${name || 'Component'})`;
+  (LazyComponent as unknown as { displayName?: string }).displayName = `Lazy(${name || 'Component'})`;
   return LazyComponent;
 }
 
@@ -30,7 +30,7 @@ export function createLazyNamedComponent<T extends ComponentType<Record<string, 
       default: module[exportName] as T 
     }))
   );
-  LazyComponent.displayName = `Lazy(${displayName || exportName})`;
+  (LazyComponent as unknown as { displayName?: string }).displayName = `Lazy(${displayName || exportName})`;
   return LazyComponent;
 }
 

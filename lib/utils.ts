@@ -77,11 +77,14 @@ export function truncate(text: string, length: number, suffix: string = "..."): 
  * Convert a string to a URL-friendly slug
  */
 export function slugify(text: string): string {
-  return text
+  const normalized = text
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+  return normalized
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "") // Remove non-word characters except spaces and hyphens
-    .replace(/\s+/g, "-") // Replace spaces with hyphens
-    .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
     .trim();
 }
 
@@ -118,8 +121,16 @@ export function capitalizeFirst(text: string): string {
  * Check if a string is a valid email address
  */
 export function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  if (!email || !email.includes('@')) return false;
+  const [local, domain] = email.split('@');
+  if (!local || !domain) return false;
+  if (/\.\./.test(local) || /\.\./.test(domain)) return false;
+  if (local.startsWith('.') || local.endsWith('.')) return false;
+  if (domain.startsWith('.') || domain.endsWith('.')) return false;
+  if (!domain.includes('.')) return false;
+  if (!/^[A-Za-z0-9.-]+$/.test(domain)) return false;
+  if (!/^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$/.test(local)) return false;
+  return true;
 }
 
 /**
