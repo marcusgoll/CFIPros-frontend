@@ -7,6 +7,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 export const metadata: Metadata = {
   title: 'Dashboard | CFIPros',
   description: 'Your aviation training dashboard',
+  robots: { index: false, follow: false },
 };
 
 export default async function AuthenticatedLayout({
@@ -18,7 +19,7 @@ export default async function AuthenticatedLayout({
 
   // Redirect to sign-in if not authenticated
   if (!userId) {
-    redirect('/sign-in');
+    redirect('/login?redirect=/dashboard');
   }
 
   return (

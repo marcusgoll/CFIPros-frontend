@@ -1,50 +1,64 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
+import { OnboardingActions } from "@/components/dashboard/OnboardingActions";
+import { QuickTools } from "@/components/dashboard/QuickTools";
+import { PanelSkeleton } from "@/components/dashboard/Skeletons";
+import TodayPanel from "./panels/TodayPanel";
+import ResultsPanel from "./panels/ResultsPanel";
+import PlanPanel from "./panels/PlanPanel";
+import ActivityPanel from "./panels/ActivityPanel";
+import PlanStripPanel from "./panels/PlanStripPanel";
+import StudentsPanel from "./panels/StudentsPanel";
+import { DashboardAnalyticsClient } from "./DashboardAnalyticsClient";
 
 export default async function DashboardPage() {
   const user = await currentUser();
 
   if (!user) {
-    redirect('/sign-in');
+    redirect(`/login?redirect=/dashboard`);
   }
 
   return (
     <div className="space-y-6">
       <div className="border-b border-gray-200 pb-4">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Welcome back, {user.firstName || user.emailAddresses[0]?.emailAddress}!
-        </p>
+        <p className="mt-2 text-sm text-gray-600">Welcome back!</p>
       </div>
-      
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Training Progress</h3>
-          <p className="mt-2 text-sm text-gray-600">
-            Track your aviation training milestones and achievements.
-          </p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Study Materials</h3>
-          <p className="mt-2 text-sm text-gray-600">
-            Access your personalized study plans and resources.
-          </p>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-medium text-gray-900">Flight Logs</h3>
-          <p className="mt-2 text-sm text-gray-600">
-            Manage your flight hours and training records.
-          </p>
-        </div>
-      </div>
+      <DashboardAnalyticsClient />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-6">
+          <Suspense fallback={<PanelSkeleton />}>
+            {/* @ts-expect-error Async Server Component */}
+            <TodayPanel />
+          </Suspense>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-blue-900">Getting Started</h3>
-        <p className="mt-2 text-sm text-blue-700">
-          This is your authenticated dashboard. You're successfully signed in with Clerk!
-        </p>
+          <OnboardingActions />
+          <Suspense fallback={<PanelSkeleton />}>
+            {/* @ts-expect-error Async Server Component */}
+            <ResultsPanel />
+          </Suspense>
+
+          <Suspense fallback={<PanelSkeleton />}>
+            {/* @ts-expect-error Async Server Component */}
+            <PlanPanel />
+          </Suspense>
+        </div>
+        <div className="space-y-6">
+          <QuickTools />
+          <Suspense fallback={<PanelSkeleton />}>
+            {/* @ts-expect-error Async Server Component */}
+            <ActivityPanel />
+          </Suspense>
+          <Suspense fallback={<PanelSkeleton />}>
+            {/* @ts-expect-error Async Server Component */}
+            <PlanStripPanel />
+          </Suspense>
+          <Suspense fallback={null}>
+            {/* @ts-expect-error Async Server Component */}
+            <StudentsPanel />
+          </Suspense>
+        </div>
       </div>
     </div>
   );

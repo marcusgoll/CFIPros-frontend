@@ -37,8 +37,8 @@ export function middleware(request: NextRequest) {
 
   // Redirect unauthenticated users from protected routes
   if (isProtectedRoute && !isAuthenticated) {
-    url.pathname = "/auth/login";
-    url.searchParams.set("callbackUrl", pathname);
+    url.pathname = "/login";
+    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 

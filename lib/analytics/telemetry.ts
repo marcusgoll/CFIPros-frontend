@@ -44,6 +44,15 @@ export type EventName =
   | 'email_captured'
   | 'email_capture_success'
   | 'email_capture_failed';
+  // Dashboard events
+  | 'dashboard_viewed'
+  | 'click_quick_tool'
+  | 'open_report'
+  | 'start_flashcards'
+  | 'start_lesson'
+  | 'upgrade_click'
+  | 'buy_credits_click'
+  | 'open_student_folder';
 
 export interface TelemetryEvent {
   name: EventName;
