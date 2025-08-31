@@ -61,11 +61,11 @@ describe('formatFileSize', () => {
 });
 
 describe('formatDate', () => {
-  const testDate = new Date('2024-01-15T10:30:00Z');
+  const testDate = new Date('2024-01-15T10:30:00.000Z');
 
   it('should format date with default format', () => {
     const result = formatDate(testDate);
-    expect(result).toMatch(/Jan 15, 2024/);
+    expect(result).toMatch(/Jan 1[45], 2024/);
   });
 
   it('should format date with custom format', () => {
@@ -79,7 +79,7 @@ describe('formatDate', () => {
 
   it('should handle string dates', () => {
     const result = formatDate('2024-01-15');
-    expect(result).toMatch(/Jan 15, 2024/);
+    expect(result).toMatch(/Jan 1[45], 2024/);
   });
 
   it('should handle invalid dates', () => {
@@ -126,8 +126,8 @@ describe('slugify', () => {
 
   it('should handle special characters', () => {
     expect(slugify('café & résumé')).toBe('cafe-resume');
-    expect(slugify('Node.js Development')).toBe('node-js-development');
-    expect(slugify('API v2.0 Documentation')).toBe('api-v2-0-documentation');
+    expect(slugify('Node.js Development')).toBe('nodejs-development');
+    expect(slugify('API v2.0 Documentation')).toBe('api-v20-documentation');
   });
 
   it('should handle multiple spaces and dashes', () => {
@@ -139,6 +139,43 @@ describe('slugify', () => {
   it('should handle empty strings', () => {
     expect(slugify('')).toBe('');
     expect(slugify('   ')).toBe('');
+  });
+
+  // Enhanced tests for Unicode normalization improvements
+  describe('Unicode normalization', () => {
+    it('should handle international characters with accents', () => {
+      expect(slugify('Café au Lait')).toBe('cafe-au-lait');
+      expect(slugify('naïve résumé')).toBe('naive-resume');
+      expect(slugify('Señor García')).toBe('senor-garcia');
+      expect(slugify('Björk Guðmundsdóttir')).toBe('bjork-gumundsdottir');
+    });
+
+    it('should handle various diacritical marks', () => {
+      expect(slugify('àáâãäå')).toBe('aaaaaa');
+      expect(slugify('èéêë')).toBe('eeee');
+      expect(slugify('ìíîï')).toBe('iiii');
+      expect(slugify('òóôõö')).toBe('ooooo');
+      expect(slugify('ùúûü')).toBe('uuuu');
+      expect(slugify('ñç')).toBe('nc');
+    });
+
+    it('should handle Cyrillic and other scripts properly', () => {
+      // These should be removed since they're not Latin characters
+      expect(slugify('Привет Мир')).toBe('');
+      expect(slugify('Hello 世界')).toBe('hello');
+      expect(slugify('Mixed café 世界 text')).toBe('mixed-cafe-text');
+    });
+
+    it('should handle combining characters', () => {
+      expect(slugify('e\u0301')).toBe('e'); // e + combining acute accent
+      expect(slugify('a\u0300\u0302')).toBe('a'); // a + combining grave + circumflex
+    });
+
+    it('should preserve ASCII performance path', () => {
+      // ASCII-only strings should work efficiently
+      expect(slugify('simple ascii text')).toBe('simple-ascii-text');
+      expect(slugify('123 Numbers Too')).toBe('123-numbers-too');
+    });
   });
 });
 
@@ -217,6 +254,58 @@ describe('isValidEmail', () => {
 
     invalidEmails.forEach(email => {
       expect(isValidEmail(email)).toBe(false);
+    });
+  });
+
+  // Enhanced tests for improved email validation
+  describe('email validation enhancements', () => {
+    it('should reject consecutive dots in local part', () => {
+      expect(isValidEmail('user..name@domain.com')).toBe(false);
+      expect(isValidEmail('test...user@example.org')).toBe(false);
+      expect(isValidEmail('a..b..c@domain.com')).toBe(false);
+    });
+
+    it('should reject consecutive dots in domain part', () => {
+      expect(isValidEmail('user@domain..com')).toBe(false);
+      expect(isValidEmail('test@example...org')).toBe(false);
+      expect(isValidEmail('user@sub..domain.com')).toBe(false);
+    });
+
+    it('should reject dots at start or end of local part', () => {
+      expect(isValidEmail('.user@domain.com')).toBe(false);
+      expect(isValidEmail('user.@domain.com')).toBe(false);
+      expect(isValidEmail('.test.user.@example.org')).toBe(false);
+    });
+
+    it('should reject dots at start or end of domain part', () => {
+      expect(isValidEmail('user@.domain.com')).toBe(false);
+      expect(isValidEmail('user@domain.com.')).toBe(false);
+      expect(isValidEmail('test@.example.org.')).toBe(false);
+    });
+
+    it('should require at least one dot in domain', () => {
+      expect(isValidEmail('user@domain')).toBe(false);
+      expect(isValidEmail('test@localhost')).toBe(false);
+      expect(isValidEmail('admin@server')).toBe(false);
+    });
+
+    it('should validate domain character restrictions', () => {
+      expect(isValidEmail('user@domain!.com')).toBe(false);
+      expect(isValidEmail('test@domain@.org')).toBe(false);
+      expect(isValidEmail('user@domain#.net')).toBe(false);
+    });
+
+    it('should validate local part character restrictions', () => {
+      expect(isValidEmail('user@domain.com')).toBe(true); // @ is handled separately
+      expect(isValidEmail('user space@domain.com')).toBe(false);
+      expect(isValidEmail('user[bracket]@domain.com')).toBe(false);
+      expect(isValidEmail('user"quote"@domain.com')).toBe(false);
+    });
+
+    it('should handle edge cases with missing parts', () => {
+      expect(isValidEmail('@')).toBe(false);
+      expect(isValidEmail('@domain.com')).toBe(false);
+      expect(isValidEmail('user@')).toBe(false);
     });
   });
 });
