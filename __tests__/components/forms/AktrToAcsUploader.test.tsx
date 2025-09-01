@@ -107,7 +107,7 @@ describe('AktrToAcsUploader Component', () => {
     expect(mockedTrackUploadStarted).toHaveBeenCalledWith([validPdfFile]);
   });
 
-  it('navigates to results page on successful upload', async () => {
+  it('navigates to batch status page on successful upload', async () => {
     const user = userEvent.setup();
     render(<AktrToAcsUploader />);
     
@@ -118,9 +118,9 @@ describe('AktrToAcsUploader Component', () => {
     await user.upload(fileInput, validPdfFile);
     await user.click(submitButton);
     
-    // Wait for upload completion and navigation
+    // Wait for upload completion and navigation to batch status page
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/tools/aktr-to-acs/results/demo');
+      expect(mockPush).toHaveBeenCalledWith('/batches/demo-batch-id');
     }, { timeout: 5000 });
     
     expect(mockedTrackUploadCompleted).toHaveBeenCalled();

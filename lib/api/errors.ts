@@ -130,6 +130,9 @@ export const CommonErrors = {
   INVALID_RESULT_ID: (detail = 'Invalid result ID format') =>
     new APIError('invalid_result_id', 400, detail),
 
+  METHOD_NOT_ALLOWED: (detail = 'Method not allowed') => 
+    new APIError('method_not_allowed', 405, detail),
+
   // Rate Limiting
   RATE_LIMIT_EXCEEDED: (detail = 'Rate limit exceeded') => 
     new APIError('rate_limit_exceeded', 429, detail),

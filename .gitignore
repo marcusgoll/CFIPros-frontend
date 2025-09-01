@@ -103,6 +103,7 @@ junit.xml
 business/
 internal/
 proprietary/
+test-data/
 
 # Claude AI assistant files  
 # CRITICAL: Do NOT delete these files - only exclude from git tracking

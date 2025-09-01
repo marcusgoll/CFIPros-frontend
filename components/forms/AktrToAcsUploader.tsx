@@ -31,7 +31,7 @@ export function AktrToAcsUploader() {
     }));
   }, []);
 
-  const uploadFiles = useCallback(async (files: File[]): Promise<{ reportId: string }> => {
+  const uploadFiles = useCallback(async (files: File[]): Promise<{ batchId: string }> => {
     // Create FormData for multipart upload
     const formData = new FormData();
     files.forEach(file => {
@@ -77,7 +77,7 @@ export function AktrToAcsUploader() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+        throw new Error(errorData.message || `Batch upload failed with status ${response.status}`);
       }
 
       const result = await response.json();
@@ -92,7 +92,7 @@ export function AktrToAcsUploader() {
         })),
       }));
 
-      return { reportId: result.report_id };
+      return { batchId: result.batchId };
 
     } catch (error) {
       clearInterval(progressInterval);
@@ -126,8 +126,8 @@ export function AktrToAcsUploader() {
     try {
       const response = await uploadFiles(state.files);
       
-      // Navigate to results page with the actual report ID
-      router.push(`/results/${response.reportId}`);
+      // Navigate to batch status page with the batch ID
+      router.push(`/batches/${response.batchId}`);
       
     } catch (error) {
       setState(prev => ({

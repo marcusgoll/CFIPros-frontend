@@ -441,6 +441,14 @@ export class FileUploadSecurity {
    * Helper: Read file bytes
    */
   private static async readFileBytes(file: File, bytes: number): Promise<ArrayBuffer> {
+    // For server-side, we need to handle File/Blob differently
+    if (typeof FileReader === 'undefined') {
+      // Server-side: Convert Blob to ArrayBuffer
+      const blob = file.slice(0, bytes);
+      return blob.arrayBuffer();
+    }
+    
+    // Client-side: Use FileReader
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       const blob = file.slice(0, bytes);
@@ -455,6 +463,14 @@ export class FileUploadSecurity {
    * Helper: Read file as text
    */
   private static async readFileAsText(file: File, bytes?: number): Promise<string> {
+    // For server-side, we need to handle File/Blob differently
+    if (typeof FileReader === 'undefined') {
+      // Server-side: Convert Blob to text
+      const blob = bytes ? file.slice(0, bytes) : file;
+      return blob.text();
+    }
+    
+    // Client-side: Use FileReader
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       const blob = bytes ? file.slice(0, bytes) : file;

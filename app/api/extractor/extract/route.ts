@@ -1,12 +1,12 @@
 /**
- * ACS Extractor API Route - File Processing
- * Maps to backend /v1/extract endpoint for AKTR → ACS processing
+ * ACS Extractor API Route v1.2 - Batch File Processing
+ * Maps to backend /v1/aktr endpoint for AKTR → ACS batch processing
  */
 
 import { NextRequest } from 'next/server';
 import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
 import { validateRequest } from '@/lib/api/validation';
-import { proxyFileUpload, getClientIP, addCorrelationId } from '@/lib/api/proxy';
+import { proxyFileUploadWithFormData, getClientIP, addCorrelationId } from '@/lib/api/proxy';
 import { CommonErrors, handleAPIError } from '@/lib/api/errors';
 import { FileUploadRateLimiter } from '@/lib/security/fileUpload';
 import { trackEvent } from '@/lib/analytics/telemetry';
@@ -31,12 +31,12 @@ async function extractHandler(request: NextRequest) {
     );
   }
 
-  // Validate AKTR file upload with specific requirements
+  // Validate AKTR file upload with v1.2 batch requirements
   const validation = await validateRequest.fileUpload(request, {
     maxFiles: 5,
-    maxSize: 10 * 1024 * 1024, // 10MB per file
+    maxSize: 15 * 1024 * 1024, // Updated to 15MB per file per v1.2 spec
     acceptedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
-    requiredField: 'files' // Expecting 'files' field for multi-file support
+    requiredField: 'files' // Expecting 'files[]' field for batch upload
   });
 
   if (!validation.isValid) {
@@ -51,7 +51,7 @@ async function extractHandler(request: NextRequest) {
     if (errorMessage.includes('No files provided') || errorMessage.includes('No file')) {
       error = CommonErrors.NO_FILE_PROVIDED('Please select at least one AKTR file to process');
     } else if (errorMessage.includes('exceeds maximum size')) {
-      error = CommonErrors.FILE_TOO_LARGE('Each file must be 10MB or less');
+      error = CommonErrors.FILE_TOO_LARGE('Each file must be 15MB or less');
     } else if (errorMessage.includes('Unsupported file type') || errorMessage.includes('file extension')) {
       error = CommonErrors.UNSUPPORTED_FILE_TYPE('Only PDF, JPG, and PNG files are allowed');
     } else if (errorMessage.includes('Maximum') && errorMessage.includes('files')) {
@@ -63,27 +63,27 @@ async function extractHandler(request: NextRequest) {
     return handleAPIError(error);
   }
 
-  // Track extraction attempt
-  trackEvent('extractor_upload_started', {
+  // Track batch upload attempt
+  trackEvent('batch_upload_started', {
     file_count: validation.files?.length || 0,
     correlation_id: correlationId,
     client_ip: clientIP.substring(0, 8) + '...' // Partial IP for privacy
   });
 
   try {
-    // Proxy to backend extraction endpoint
-    const response = await proxyFileUpload(request, '/v1/extract', {
+    // Proxy to backend v1.2 batch endpoint using the already-read formData
+    const response = await proxyFileUploadWithFormData(validation.data!, '/v1/aktr', {
       headers: {
         'X-Correlation-ID': correlationId,
         'X-Client-IP': clientIP,
-        'X-Service': 'acs-extractor',
+        'X-Service': 'acs-extractor-v1.2',
         'X-Rate-Limit-Remaining': rateLimitCheck.remainingUploads.toString(),
       },
     });
 
-    // Track successful extraction
-    if (response.status === 200 || response.status === 202) {
-      trackEvent('extractor_upload_success', {
+    // Track successful batch upload (expecting 202 Accepted for async processing)
+    if (response.status === 202) {
+      trackEvent('batch_upload_accepted', {
         file_count: validation.files?.length || 0,
         correlation_id: correlationId,
         response_status: response.status
@@ -103,15 +103,15 @@ async function extractHandler(request: NextRequest) {
     return response;
 
   } catch (error: unknown) {
-    // Track extraction failure
+    // Track batch upload failure
     const message = error instanceof Error ? error.message : 'unknown_error';
-    trackEvent('extractor_upload_failed', {
+    trackEvent('batch_upload_failed', {
       file_count: validation.files?.length || 0,
       correlation_id: correlationId,
       error: message
     });
 
-    return handleAPIError(CommonErrors.INTERNAL_ERROR('Extraction service temporarily unavailable. Please try again.'));
+    return handleAPIError(CommonErrors.INTERNAL_ERROR('Batch processing service temporarily unavailable. Please try again.'));
   }
 }
 

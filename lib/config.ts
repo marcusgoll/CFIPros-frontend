@@ -30,7 +30,8 @@ const validateEnvironment = (env?: string): void => {
 
 // Runtime validation
 const validateEnvironmentVariables = (): EnvironmentVariables => {
-  const backendUrl = process.env['BACKEND_API_URL'];
+  // Support both BACKEND_API_URL and API_BASE_URL for backward compatibility
+  const backendUrl = process.env['BACKEND_API_URL'] || process.env['API_BASE_URL'];
   const nodeEnv = process.env['NODE_ENV'] as 'development' | 'production' | 'test' | undefined;
   const redisUrl = process.env['REDIS_URL'];
   const allowedOrigins = process.env['ALLOWED_ORIGINS'];
@@ -38,7 +39,7 @@ const validateEnvironmentVariables = (): EnvironmentVariables => {
 
   // Required variables
   if (!backendUrl) {
-    throw new Error('BACKEND_API_URL environment variable is required');
+    throw new Error('BACKEND_API_URL (or API_BASE_URL) environment variable is required');
   }
   validateUrl(backendUrl, 'BACKEND_API_URL');
 
@@ -105,22 +106,27 @@ export const config = {
     results: { windowMs: 60 * 60 * 1000, maxRequests: 100 },
     auth: { windowMs: 15 * 60 * 1000, maxRequests: 10 },
     default: { windowMs: 60 * 60 * 1000, maxRequests: 120 },
+    'batch-status': { windowMs: 60 * 60 * 1000, maxRequests: 200 }, // More frequent polling
+    'batch-export': { windowMs: 60 * 60 * 1000, maxRequests: 50 }, // File downloads
+    'batch-sharing': { windowMs: 60 * 60 * 1000, maxRequests: 100 },
+    'batch-consent': { windowMs: 60 * 60 * 1000, maxRequests: 100 },
+    'batch-audit': { windowMs: 60 * 60 * 1000, maxRequests: 50 },
+    'batch-audit-export': { windowMs: 60 * 60 * 1000, maxRequests: 20 }, // CSV exports
   },
   
   // Request timeout
   requestTimeout: 30000, // 30 seconds
   
-  // File upload limits
+  // File upload limits (updated for v1.2 API spec)
   fileUpload: {
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 15 * 1024 * 1024, // 15MB per v1.2 spec
+    maxFiles: 5, // Maximum 5 files per batch
     allowedTypes: [
       'application/pdf',
       'image/jpeg', 
-      'image/jpg',
-      'image/png',
-      'image/webp',
+      'image/png', // v1.2 spec: PDF, JPG, PNG only
     ],
-    allowedExtensions: ['.pdf', '.jpg', '.jpeg', '.png', '.webp'],
+    allowedExtensions: ['.pdf', '.jpg', '.jpeg', '.png'],
   },
   
   // Environment flags (validated)

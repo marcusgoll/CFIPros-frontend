@@ -207,6 +207,80 @@ export async function proxyFileUpload(
 }
 
 /**
+ * Proxy file upload with FormData to backend
+ */
+export async function proxyFileUploadWithFormData(
+  formData: FormData,
+  path: string,
+  options: ProxyConfig = {}
+): Promise<NextResponse> {
+  const {
+    timeout = 60000, // 1 minute for file uploads
+    headers: additionalHeaders = {},
+  } = options;
+
+  try {
+    // Build backend URL
+    const backendUrl = `${config.backendUrl}${path}`;
+    
+    // Create fetch options
+    const fetchOptions: RequestInit = {
+      method: 'POST',
+      headers: {
+        'User-Agent': 'CFIPros-BFF/1.0',
+        ...additionalHeaders,
+        // Don't set Content-Type for FormData (browser sets it with boundary)
+      },
+      body: formData,
+      signal: AbortSignal.timeout(timeout),
+    };
+
+    // Make request to backend
+    const backendResponse = await fetch(backendUrl, fetchOptions);
+
+    // Handle backend response
+    if (!backendResponse.ok) {
+      await handleBackendError(backendResponse);
+    }
+
+    // Forward successful response
+    const responseData = await backendResponse.json();
+    const response = NextResponse.json(responseData, {
+      status: backendResponse.status,
+    });
+
+    // Copy relevant response headers
+    const headersToForward = [
+      'content-type',
+      'cache-control',
+      'etag',
+      'last-modified',
+      'x-ratelimit-limit',
+      'x-ratelimit-remaining',
+      'x-ratelimit-reset',
+    ];
+
+    headersToForward.forEach(header => {
+      const value = backendResponse.headers.get(header);
+      if (value) {
+        response.headers.set(header, value);
+      }
+    });
+
+    return response;
+
+  } catch (error) {
+    if (error instanceof APIError) {
+      return handleAPIError(error);
+    }
+
+    const message = error instanceof Error ? error.message : 'Proxy request failed';
+    logError('Proxy request error:', error);
+    return handleAPIError(new APIError('proxy_error', 500, message));
+  }
+}
+
+/**
  * Extract client IP from request headers
  */
 export function getClientIP(request: NextRequest): string {
@@ -259,7 +333,138 @@ export function addCorrelationId(request: NextRequest): string {
 }
 
 /**
- * Proxy API request with flexible method and body support
+ * Create a simple proxy request without NextRequest dependency
+ * Useful for direct API calls from server-side code
+ */
+export async function simpleProxyRequest(
+  path: string,
+  options: {
+    method?: string;
+    body?: string | FormData;
+    headers?: Record<string, string>;
+    timeout?: number;
+  } = {}
+): Promise<NextResponse> {
+  const {
+    method = 'GET',
+    body,
+    headers: additionalHeaders = {},
+    timeout = config.requestTimeout,
+  } = options;
+
+  try {
+    // Build backend URL
+    const backendUrl = `${config.backendUrl}${path}`;
+    
+    // Create headers
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'CFIPros-BFF/1.0',
+      ...additionalHeaders
+    };
+
+    // Remove Content-Type for FormData
+    if (body instanceof FormData) {
+      delete headers['Content-Type'];
+    }
+
+    // Create fetch options
+    const fetchOptions: RequestInit = {
+      method,
+      headers,
+      signal: AbortSignal.timeout(timeout),
+    };
+
+    if (body) {
+      fetchOptions.body = body;
+    }
+
+    // Make request to backend
+    const backendResponse = await fetch(backendUrl, fetchOptions);
+
+    // Handle backend response
+    if (!backendResponse.ok) {
+      await handleBackendError(backendResponse);
+    }
+
+    // Check if response is JSON or binary
+    const contentType = backendResponse.headers.get('content-type') || '';
+    let responseData: unknown;
+    
+    if (contentType.includes('application/json')) {
+      responseData = await backendResponse.json();
+    } else {
+      // For binary content (like file downloads), return as blob
+      const blob = await backendResponse.blob();
+      const response = new NextResponse(blob, {
+        status: backendResponse.status,
+        headers: backendResponse.headers,
+      });
+      return response;
+    }
+
+    // Forward successful JSON response
+    const response = NextResponse.json(responseData, {
+      status: backendResponse.status,
+    });
+
+    // Copy relevant response headers
+    const headersToForward = [
+      'content-type',
+      'cache-control',
+      'etag',
+      'last-modified',
+      'x-ratelimit-limit',
+      'x-ratelimit-remaining',
+      'x-ratelimit-reset'
+    ];
+
+    headersToForward.forEach(headerName => {
+      const value = backendResponse.headers.get(headerName);
+      if (value) {
+        response.headers.set(headerName, value);
+      }
+    });
+
+    return response;
+
+  } catch (error) {
+    if (error instanceof APIError) {
+      return handleAPIError(error);
+    }
+
+    if (error instanceof Error) {
+      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+        const timeoutError = new APIError(
+          'request_timeout',
+          504,
+          'Backend request timed out'
+        );
+        return handleAPIError(timeoutError);
+      }
+
+      if (error.message.includes('fetch')) {
+        const networkError = new APIError(
+          'backend_error',
+          502,
+          'Failed to connect to backend service'
+        );
+        return handleAPIError(networkError);
+      }
+    }
+
+    logError('Proxy request error:', error);
+    const internalError = new APIError(
+      'internal_error',
+      500,
+      'Proxy request failed'
+    );
+    return handleAPIError(internalError);
+  }
+}
+
+/**
+ * Proxy API request with NextRequest context (legacy function)
  */
 export async function proxyApiRequest(
   request: NextRequest,

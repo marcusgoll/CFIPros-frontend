@@ -33,7 +33,7 @@ export function FileUploader({
   loading = false,
   uploadProgress = [],
   maxFiles = 5,
-  maxSize = 10 * 1024 * 1024, // 10MB
+  maxSize = 15 * 1024 * 1024, // 15MB per v1.2 spec
   acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png'],
   className,
   disabled = false,

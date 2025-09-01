@@ -274,6 +274,65 @@ export class RequestValidator {
   }
 
   /**
+   * Validate JSON request body with flexible field requirements
+   */
+  static async json(
+    request: NextRequest,
+    options: {
+      requiredFields?: string[];
+      optionalFields?: string[];
+      schema?: z.ZodSchema;
+    }
+  ): Promise<ValidationResult> {
+    try {
+      const body = await request.json();
+      
+      if (options.schema) {
+        const validatedData = options.schema.parse(body);
+        return {
+          isValid: true,
+          data: validatedData,
+        };
+      }
+
+      // Manual field validation if no schema provided
+      const { requiredFields = [], optionalFields = [] } = options;
+      const errors: string[] = [];
+      
+      // Check required fields
+      for (const field of requiredFields) {
+        if (!(field in body) || body[field] === null || body[field] === undefined) {
+          errors.push(`Missing required field: ${field}`);
+        }
+      }
+
+      if (errors.length > 0) {
+        return {
+          isValid: false,
+          error: errors.join(', '),
+        };
+      }
+
+      return {
+        isValid: true,
+        data: body,
+      };
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        return {
+          isValid: false,
+          error: 'Invalid JSON format',
+        };
+      }
+      
+      return {
+        isValid: false,
+        error: error instanceof Error ? error.message : 'JSON validation failed',
+      };
+    }
+  }
+
+  /**
    * Validate query parameters
    */
   static queryParams(
