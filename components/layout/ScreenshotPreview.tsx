@@ -69,7 +69,9 @@ export const ScreenshotPreview: React.FC<ScreenshotPreviewProps> = ({
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
       );
       const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
@@ -133,7 +135,7 @@ export const ScreenshotPreview: React.FC<ScreenshotPreviewProps> = ({
         <button
           ref={closeButtonRef}
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
+          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
           aria-label="Close preview"
         >
           <X className="h-5 w-5" />
@@ -217,10 +219,7 @@ export const ScreenshotPreview: React.FC<ScreenshotPreviewProps> = ({
                   >
                     <Play className="ml-1 h-8 w-8 fill-white text-white transition-transform group-hover:scale-110 md:h-10 md:w-10" />
                   </button>
-                  <div
-                    id={`play-description-${featureId}`}
-                    className="sr-only"
-                  >
+                  <div id={`play-description-${featureId}`} className="sr-only">
                     Click to watch a demo video of the {featureName} feature
                   </div>
                 </div>

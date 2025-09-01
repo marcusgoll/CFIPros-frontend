@@ -9,22 +9,22 @@ import { logError, logWarn } from "@/lib/utils/logger";
 
 // Video path from environment configuration with validation
 const getValidatedVideoPath = (): string => {
-  const envPath = process.env['NEXT_PUBLIC_DEMO_VIDEO_PATH'];
+  const envPath = process.env["NEXT_PUBLIC_DEMO_VIDEO_PATH"];
   const defaultPath = "/videos/6739601-hd_1920_1080_24fps.mp4";
-  
+
   if (!envPath) {
-    if (process.env['NODE_ENV'] === 'development') {
-      logWarn('NEXT_PUBLIC_DEMO_VIDEO_PATH not configured, using default path');
+    if (process.env["NODE_ENV"] === "development") {
+      logWarn("NEXT_PUBLIC_DEMO_VIDEO_PATH not configured, using default path");
     }
     return defaultPath;
   }
-  
+
   // Basic validation - ensure it's a video file path
   if (!envPath.match(/\.(mp4|webm|mov|avi)$/i)) {
-    logError('Invalid video file extension in NEXT_PUBLIC_DEMO_VIDEO_PATH');
+    logError("Invalid video file extension in NEXT_PUBLIC_DEMO_VIDEO_PATH");
     return defaultPath;
   }
-  
+
   return envPath;
 };
 
@@ -57,41 +57,51 @@ export const VideoModal: React.FC<VideoModalProps> = ({
   useEffect(() => {
     const shouldPreloadVideo = () => {
       // Don't preload on slow connections to save bandwidth
-      if (typeof navigator !== 'undefined' && 'connection' in navigator) {
-        const nav = navigator as Navigator & { connection?: { effectiveType?: string; saveData?: boolean; downlink?: number; rtt?: number } };
+      if (typeof navigator !== "undefined" && "connection" in navigator) {
+        const nav = navigator as Navigator & {
+          connection?: {
+            effectiveType?: string;
+            saveData?: boolean;
+            downlink?: number;
+            rtt?: number;
+          };
+        };
         const connection = nav.connection;
-        
+
         if (!connection) {
           return true; // Default to preload if no connection info
         }
-        
+
         // Check for slow connection types
-        const slowTypes = ['slow-2g', '2g'];
-        if (slowTypes.includes(connection.effectiveType || '')) {
+        const slowTypes = ["slow-2g", "2g"];
+        if (slowTypes.includes(connection.effectiveType || "")) {
           return false;
         }
-        
+
         // Check for limited data plans (save data mode)
         if (connection.saveData === true) {
           return false;
         }
-        
+
         // Check for very slow connections based on downlink
-        if (typeof connection.downlink === 'number' && connection.downlink < 0.5) {
+        if (
+          typeof connection.downlink === "number" &&
+          connection.downlink < 0.5
+        ) {
           return false; // Less than 500 kbps
         }
-        
+
         // Check round trip time (high latency)
-        if (typeof connection.rtt === 'number' && connection.rtt > 2000) {
+        if (typeof connection.rtt === "number" && connection.rtt > 2000) {
           return false; // More than 2 seconds RTT
         }
       }
-      
+
       // Also check for reduced motion preference as indicator of performance needs
       if (prefersReducedMotion()) {
         return false; // Users with motion sensitivity likely prefer minimal resource usage
       }
-      
+
       return true;
     };
 
@@ -99,23 +109,23 @@ export const VideoModal: React.FC<VideoModalProps> = ({
       if (!shouldPreloadVideo()) {
         return;
       }
-      
-      const video = document.createElement('video');
-      video.preload = 'metadata';
+
+      const video = document.createElement("video");
+      video.preload = "metadata";
       video.src = DEMO_VIDEO_PATH;
-      
-      video.addEventListener('loadedmetadata', () => {
+
+      video.addEventListener("loadedmetadata", () => {
         setVideoPreloaded(true);
       });
-      
-      video.addEventListener('error', () => {
+
+      video.addEventListener("error", () => {
         setVideoError(true);
-        trackEvent('video_preload_failed', {
+        trackEvent("video_preload_failed", {
           videoPath: DEMO_VIDEO_PATH,
-          component: 'VideoModal_preload',
+          component: "VideoModal_preload",
         });
       });
-      
+
       video.load();
     };
 
@@ -171,7 +181,9 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), iframe'
       );
       const firstElement = focusableElements[0] as HTMLElement;
-      const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+      const lastElement = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
@@ -222,7 +234,7 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         <button
           ref={closeButtonRef}
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-black/70 text-white transition-all hover:bg-black/90 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-white/50"
+          className="absolute right-4 top-4 z-10 flex h-12 w-12 items-center justify-center rounded-full bg-black/70 text-white transition-all hover:scale-110 hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-white/50"
           aria-label="Close video"
         >
           <X className="h-6 w-6" />
@@ -231,10 +243,20 @@ export const VideoModal: React.FC<VideoModalProps> = ({
         {/* Video container */}
         <motion.div
           className="relative mx-4 w-full max-w-6xl"
-          initial={reducedMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0, y: 50 }}
-          animate={reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }}
-          exit={reducedMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0, y: 50 }}
-          transition={{ duration: reducedMotion ? 0.1 : 0.4, delay: reducedMotion ? 0 : 0.1, ease: "easeOut" }}
+          initial={
+            reducedMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0, y: 50 }
+          }
+          animate={
+            reducedMotion ? { opacity: 1 } : { scale: 1, opacity: 1, y: 0 }
+          }
+          exit={
+            reducedMotion ? { opacity: 0 } : { scale: 0.9, opacity: 0, y: 50 }
+          }
+          transition={{
+            duration: reducedMotion ? 0.1 : 0.4,
+            delay: reducedMotion ? 0 : 0.1,
+            ease: "easeOut",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -248,18 +270,18 @@ export const VideoModal: React.FC<VideoModalProps> = ({
           </div>
 
           {/* Video container with skeleton loader */}
-          <div className="relative overflow-hidden rounded-lg shadow-2xl bg-gray-900">
-            <div className="aspect-video w-full relative">
+          <div className="relative overflow-hidden rounded-lg bg-gray-900 shadow-2xl">
+            <div className="aspect-video relative w-full">
               {/* Skeleton loader */}
               {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-800 animate-pulse">
+                <div className="absolute inset-0 flex animate-pulse items-center justify-center bg-gray-800">
                   <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-700 rounded-full animate-pulse"></div>
-                    <div className="h-4 w-32 mx-auto bg-gray-700 rounded animate-pulse"></div>
+                    <div className="mx-auto mb-4 h-16 w-16 animate-pulse rounded-full bg-gray-700"></div>
+                    <div className="mx-auto h-4 w-32 animate-pulse rounded bg-gray-700"></div>
                   </div>
                 </div>
               )}
-              
+
               {/* Video player */}
               <video
                 ref={videoRef}
@@ -274,30 +296,32 @@ export const VideoModal: React.FC<VideoModalProps> = ({
                 onError={() => {
                   setIsLoading(false);
                   setVideoError(true);
-                  trackEvent('video_load_failed', {
+                  trackEvent("video_load_failed", {
                     featureId,
                     featureName,
                     videoPath: DEMO_VIDEO_PATH,
-                    component: 'VideoModal_player',
+                    component: "VideoModal_player",
                   });
                 }}
                 data-testid="video-player"
               >
                 Your browser does not support the video tag.
               </video>
-              
+
               {/* Error state */}
               {videoError && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
                   <div className="text-center">
-                    <X className="w-16 h-16 mx-auto mb-4 text-red-500" />
+                    <X className="mx-auto mb-4 h-16 w-16 text-red-500" />
                     <p className="text-white">Failed to load video</p>
-                    <p className="text-gray-400 text-sm mt-2">Please try again later</p>
+                    <p className="mt-2 text-sm text-gray-400">
+                      Please try again later
+                    </p>
                   </div>
                 </div>
               )}
             </div>
-            
+
             {/* Decorative border */}
             <div className="pointer-events-none absolute inset-0 rounded-lg ring-1 ring-inset ring-white/10" />
           </div>

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import * as Icons from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { instructorsMenu } from '@/lib/config/navigation';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
+import * as Icons from "lucide-react";
+import { cn } from "@/lib/utils";
+import { instructorsMenu } from "@/lib/config/navigation";
 
 export function InstructorDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,30 +33,36 @@ export function InstructorDropdown() {
     setIsOpen(!isOpen);
   }, [isOpen]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      setIsOpen(!isOpen);
-    }
-    if (e.key === 'Escape') {
-      setIsOpen(false);
-    }
-  }, [isOpen]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setIsOpen(!isOpen);
+      }
+      if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    },
+    [isOpen]
+  );
 
   // Close dropdown on outside clicks
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
     return () => {
       if (isOpen) {
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener("mousedown", handleClickOutside);
       }
     };
   }, [isOpen]);
@@ -71,14 +77,14 @@ export function InstructorDropdown() {
   }, []);
 
   return (
-    <div 
-      ref={dropdownRef} 
+    <div
+      ref={dropdownRef}
       className="relative ml-1"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <button 
-        className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-accent transition-colors group"
+      <button
+        className="text-foreground/80 group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-primary"
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         aria-expanded={isOpen}
@@ -108,22 +114,26 @@ export function InstructorDropdown() {
           />
         </svg>
       </button>
-      
+
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 bg-popover rounded-md shadow-lg border border-border z-50">
+        <div className="absolute right-0 z-50 mt-2 w-80 rounded-md border border-border bg-popover shadow-lg">
           <div className="p-4">
             <div className="space-y-2">
               {instructorsMenu.items?.map((item, itemIndex) => {
-                const IconComponent = item.icon ? Icons[item.icon] as React.ComponentType<{ className: string }> : null;
+                const IconComponent = item.icon
+                  ? (Icons[item.icon] as React.ComponentType<{
+                      className: string;
+                    }>)
+                  : null;
                 return (
-                  <Link 
-                    key={itemIndex} 
-                    href={item.href} 
-                    className="flex items-start space-x-3 p-3 rounded-md hover:bg-accent/50 transition-colors group block"
+                  <Link
+                    key={itemIndex}
+                    href={item.href}
+                    className="hover:bg-accent/50 group block flex items-start space-x-3 rounded-md p-3 transition-colors"
                     onClick={() => setIsOpen(false)}
                   >
                     {IconComponent && (
-                      <div className="flex-shrink-0 mt-1 text-primary-600">
+                      <div className="text-primary-600 mt-1 flex-shrink-0">
                         <IconComponent className="h-5 w-5" />
                       </div>
                     )}
@@ -132,7 +142,7 @@ export function InstructorDropdown() {
                         {item.title}
                       </div>
                       {item.description && (
-                        <div className="text-sm text-muted-foreground mt-1">
+                        <div className="mt-1 text-sm text-muted-foreground">
                           {item.description}
                         </div>
                       )}

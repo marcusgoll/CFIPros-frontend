@@ -3,7 +3,7 @@
  * Uses in-memory cache for development and Redis for production
  */
 
-import type { RedisClient } from '@/lib/types';
+import type { RedisClient } from "@/lib/types";
 
 export interface RateLimiterResult {
   success: boolean;
@@ -56,9 +56,10 @@ class RateLimiter {
    * Check rate limit for a client IP and endpoint
    */
   async check(clientIP: string, endpoint: string): Promise<RateLimiterResult> {
-    const config = RATE_LIMIT_CONFIGS[endpoint] ?? RATE_LIMIT_CONFIGS['default']!;
+    const config =
+      RATE_LIMIT_CONFIGS[endpoint] ?? RATE_LIMIT_CONFIGS["default"]!;
     const key = `rate_limit:${endpoint}:${clientIP}`;
-    
+
     if (this.redisClient) {
       return this.checkRedis(key, config);
     } else {
@@ -69,19 +70,26 @@ class RateLimiter {
   /**
    * Redis-based rate limiting for production
    */
-  private async checkRedis(key: string, config: RateLimitConfig): Promise<RateLimiterResult> {
+  private async checkRedis(
+    key: string,
+    config: RateLimitConfig
+  ): Promise<RateLimiterResult> {
     if (!this.redisClient) {
       return this.checkMemory(key, config);
     }
-    
+
     try {
       const current = await this.redisClient.get(key);
       const now = Date.now();
 
       if (!current) {
         // First request in window
-        await this.redisClient.setEx(key, Math.ceil(config.windowMs / 1000), '1');
-        
+        await this.redisClient.setEx(
+          key,
+          Math.ceil(config.windowMs / 1000),
+          "1"
+        );
+
         return {
           success: true,
           limit: config.maxRequests,
@@ -92,7 +100,7 @@ class RateLimiter {
 
       const count = parseInt(current, 10);
       const ttl = await this.redisClient.ttl(key);
-      const reset = now + (ttl * 1000);
+      const reset = now + ttl * 1000;
 
       if (count >= config.maxRequests) {
         return {
@@ -105,7 +113,7 @@ class RateLimiter {
 
       // Increment counter
       await this.redisClient.incr(key);
-      
+
       return {
         success: true,
         limit: config.maxRequests,
@@ -113,8 +121,8 @@ class RateLimiter {
         reset,
       };
     } catch (error) {
-      const { logError } = await import('@/lib/utils/logger');
-      logError('Redis rate limiting error:', error);
+      const { logError } = await import("@/lib/utils/logger");
+      logError("Redis rate limiting error:", error);
       // Fallback to memory cache
       return this.checkMemory(key, config);
     }
@@ -134,7 +142,7 @@ class RateLimiter {
       // First request or expired window
       const reset = now + config.windowMs;
       memoryCache.set(key, { count: 1, reset });
-      
+
       return {
         success: true,
         limit: config.maxRequests,
@@ -154,7 +162,7 @@ class RateLimiter {
 
     // Increment counter
     cached.count += 1;
-    
+
     return {
       success: true,
       limit: config.maxRequests,
@@ -180,18 +188,18 @@ class RateLimiter {
    */
   static getClientIP(request: Request): string {
     // Check for forwarded IP headers (behind proxies)
-    const forwarded = request.headers.get('x-forwarded-for');
+    const forwarded = request.headers.get("x-forwarded-for");
     if (forwarded) {
-      return forwarded.split(',')[0]!.trim();
+      return forwarded.split(",")[0]!.trim();
     }
 
-    const realIP = request.headers.get('x-real-ip');
+    const realIP = request.headers.get("x-real-ip");
     if (realIP) {
       return realIP;
     }
 
     // Fallback to connection IP (won't work in serverless)
-    return 'unknown';
+    return "unknown";
   }
 
   /**
@@ -212,5 +220,5 @@ export const rateLimiter = new RateLimiter();
  * Get rate limit info for endpoint
  */
 export function getRateLimitConfig(endpoint: string): RateLimitConfig {
-  return RATE_LIMIT_CONFIGS[endpoint] ?? RATE_LIMIT_CONFIGS['default']!;
+  return RATE_LIMIT_CONFIGS[endpoint] ?? RATE_LIMIT_CONFIGS["default"]!;
 }

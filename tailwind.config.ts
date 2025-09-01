@@ -45,7 +45,7 @@ const config: Config = {
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
-        
+
         // Chart colors
         chart: {
           1: "var(--chart-1)",
@@ -60,22 +60,22 @@ const config: Config = {
         mono: ["var(--font-mono)", "Consolas", "monospace"],
       },
       borderRadius: {
-        "xs": "var(--radius-sm)",
-        "sm": "var(--radius-md)",
-        "md": "var(--radius)",
-        "lg": "var(--radius-lg)",
-        "xl": "var(--radius-xl)",
+        xs: "var(--radius-sm)",
+        sm: "var(--radius-md)",
+        md: "var(--radius)",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
         "2xl": "var(--radius-2xl)",
-        "full": "var(--radius-full)",
+        full: "var(--radius-full)",
       },
       boxShadow: {
         "2xs": "var(--shadow-2xs)",
-        "xs": "var(--shadow-xs)",
-        "sm": "var(--shadow-sm)",
-        "DEFAULT": "var(--shadow)",
-        "md": "var(--shadow-md)",
-        "lg": "var(--shadow-lg)",
-        "xl": "var(--shadow-xl)",
+        xs: "var(--shadow-xs)",
+        sm: "var(--shadow-sm)",
+        DEFAULT: "var(--shadow)",
+        md: "var(--shadow-md)",
+        lg: "var(--shadow-lg)",
+        xl: "var(--shadow-xl)",
         "2xl": "var(--shadow-2xl)",
       },
       animation: {
@@ -84,9 +84,9 @@ const config: Config = {
         "slide-down": "slideDown 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
         "scale-in": "scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
         "pulse-slow": "pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "gradient": "gradient-shift 8s ease infinite",
-        "float": "float 6s ease-in-out infinite",
-        "glow": "glow 2s ease-in-out infinite",
+        gradient: "gradient-shift 8s ease infinite",
+        float: "float 6s ease-in-out infinite",
+        glow: "glow 2s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -125,9 +125,12 @@ const config: Config = {
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "gradient-premium": "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
-        "gradient-glass": "linear-gradient(120deg, oklch(1 0 0 / 0.1), oklch(1 0 0 / 0.05))",
+        "gradient-conic":
+          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "gradient-premium":
+          "linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)",
+        "gradient-glass":
+          "linear-gradient(120deg, oklch(1 0 0 / 0.1), oklch(1 0 0 / 0.05))",
       },
       backdropBlur: {
         xs: "2px",

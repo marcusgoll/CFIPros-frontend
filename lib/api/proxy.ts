@@ -3,11 +3,11 @@
  * Handles request forwarding, authentication, and error translation
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import { APIError, handleAPIError } from './errors';
-import { config } from '@/lib/config';
-import type { BackendErrorResponse } from '@/lib/types';
-import { logError } from '@/lib/utils/logger';
+import { NextRequest, NextResponse } from "next/server";
+import { APIError, handleAPIError } from "./errors";
+import { config } from "@/lib/config";
+import type { BackendErrorResponse } from "@/lib/types";
+import { logError } from "@/lib/utils/logger";
 
 export interface ProxyConfig {
   timeout?: number;
@@ -26,22 +26,22 @@ export async function proxyRequest(
   const {
     timeout = config.requestTimeout,
     headers: additionalHeaders = {},
-    preserveHeaders = ['authorization', 'content-type', 'accept']
+    preserveHeaders = ["authorization", "content-type", "accept"],
   } = options;
 
   try {
     // Build backend URL
     const backendUrl = `${config.backendUrl}${path}`;
-    
+
     // Extract and forward relevant headers
     const forwardedHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'User-Agent': 'CFIPros-BFF/1.0',
-      ...additionalHeaders
+      "Content-Type": "application/json",
+      "User-Agent": "CFIPros-BFF/1.0",
+      ...additionalHeaders,
     };
 
     // Preserve specific headers from client request
-    preserveHeaders.forEach(headerName => {
+    preserveHeaders.forEach((headerName) => {
       const value = request.headers.get(headerName);
       if (value) {
         forwardedHeaders[headerName] = value;
@@ -50,19 +50,19 @@ export async function proxyRequest(
 
     // Get request body if present
     let body: string | FormData | null = null;
-    if (request.method !== 'GET' && request.method !== 'HEAD') {
-      const contentType = request.headers.get('content-type') || '';
-      
-      if (contentType.includes('application/json')) {
+    if (request.method !== "GET" && request.method !== "HEAD") {
+      const contentType = request.headers.get("content-type") || "";
+
+      if (contentType.includes("application/json")) {
         try {
           body = JSON.stringify(await request.json());
         } catch {
           body = null;
         }
-      } else if (contentType.includes('multipart/form-data')) {
+      } else if (contentType.includes("multipart/form-data")) {
         body = await request.formData();
         // Remove Content-Type header for FormData (browser sets it with boundary)
-        delete forwardedHeaders['Content-Type'];
+        delete forwardedHeaders["Content-Type"];
       }
     }
 
@@ -93,16 +93,16 @@ export async function proxyRequest(
 
     // Copy relevant response headers
     const headersToForward = [
-      'content-type',
-      'cache-control',
-      'etag',
-      'last-modified',
-      'x-ratelimit-limit',
-      'x-ratelimit-remaining',
-      'x-ratelimit-reset'
+      "content-type",
+      "cache-control",
+      "etag",
+      "last-modified",
+      "x-ratelimit-limit",
+      "x-ratelimit-remaining",
+      "x-ratelimit-reset",
     ];
 
-    headersToForward.forEach(headerName => {
+    headersToForward.forEach((headerName) => {
       const value = backendResponse.headers.get(headerName);
       if (value) {
         response.headers.set(headerName, value);
@@ -110,37 +110,36 @@ export async function proxyRequest(
     });
 
     return response;
-
   } catch (error) {
     if (error instanceof APIError) {
       return handleAPIError(error);
     }
 
     if (error instanceof Error) {
-      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+      if (error.name === "AbortError" || error.message.includes("timeout")) {
         const timeoutError = new APIError(
-          'request_timeout',
+          "request_timeout",
           504,
-          'Backend request timed out'
+          "Backend request timed out"
         );
         return handleAPIError(timeoutError);
       }
 
-      if (error.message.includes('fetch')) {
+      if (error.message.includes("fetch")) {
         const networkError = new APIError(
-          'backend_error',
+          "backend_error",
           502,
-          'Failed to connect to backend service'
+          "Failed to connect to backend service"
         );
         return handleAPIError(networkError);
       }
     }
 
-    logError('Proxy request error:', error);
+    logError("Proxy request error:", error);
     const internalError = new APIError(
-      'internal_error',
+      "internal_error",
       500,
-      'Proxy request failed'
+      "Proxy request failed"
     );
     return handleAPIError(internalError);
   }
@@ -151,13 +150,13 @@ export async function proxyRequest(
  */
 async function handleBackendError(response: Response): Promise<never> {
   let errorData: BackendErrorResponse;
-  
+
   try {
     errorData = await response.json();
   } catch {
     // Non-JSON error response
     throw new APIError(
-      'backend_error',
+      "backend_error",
       response.status,
       `Backend returned ${response.status} ${response.statusText}`
     );
@@ -181,7 +180,7 @@ export async function authenticatedProxyRequest(
     ...config,
     headers: {
       ...config.headers,
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
     },
   };
 
@@ -199,7 +198,7 @@ export async function proxyFileUpload(
   // File uploads may take longer
   const uploadConfig: ProxyConfig = {
     timeout: 60000, // 1 minute
-    preserveHeaders: ['authorization'],
+    preserveHeaders: ["authorization"],
     ...config,
   };
 
@@ -222,12 +221,12 @@ export async function proxyFileUploadWithFormData(
   try {
     // Build backend URL
     const backendUrl = `${config.backendUrl}${path}`;
-    
+
     // Create fetch options
     const fetchOptions: RequestInit = {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'User-Agent': 'CFIPros-BFF/1.0',
+        "User-Agent": "CFIPros-BFF/1.0",
         ...additionalHeaders,
         // Don't set Content-Type for FormData (browser sets it with boundary)
       },
@@ -251,16 +250,16 @@ export async function proxyFileUploadWithFormData(
 
     // Copy relevant response headers
     const headersToForward = [
-      'content-type',
-      'cache-control',
-      'etag',
-      'last-modified',
-      'x-ratelimit-limit',
-      'x-ratelimit-remaining',
-      'x-ratelimit-reset',
+      "content-type",
+      "cache-control",
+      "etag",
+      "last-modified",
+      "x-ratelimit-limit",
+      "x-ratelimit-remaining",
+      "x-ratelimit-reset",
     ];
 
-    headersToForward.forEach(header => {
+    headersToForward.forEach((header) => {
       const value = backendResponse.headers.get(header);
       if (value) {
         response.headers.set(header, value);
@@ -268,15 +267,15 @@ export async function proxyFileUploadWithFormData(
     });
 
     return response;
-
   } catch (error) {
     if (error instanceof APIError) {
       return handleAPIError(error);
     }
 
-    const message = error instanceof Error ? error.message : 'Proxy request failed';
-    logError('Proxy request error:', error);
-    return handleAPIError(new APIError('proxy_error', 500, message));
+    const message =
+      error instanceof Error ? error.message : "Proxy request failed";
+    logError("Proxy request error:", error);
+    return handleAPIError(new APIError("proxy_error", 500, message));
   }
 }
 
@@ -285,23 +284,23 @@ export async function proxyFileUploadWithFormData(
  */
 export function getClientIP(request: NextRequest): string {
   // Check for forwarded IP headers (behind proxies/CDN)
-  const forwarded = request.headers.get('x-forwarded-for');
+  const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
-    return forwarded.split(',')[0]!.trim();
+    return forwarded.split(",")[0]!.trim();
   }
 
-  const realIP = request.headers.get('x-real-ip');
+  const realIP = request.headers.get("x-real-ip");
   if (realIP) {
     return realIP;
   }
 
-  const cfConnectingIP = request.headers.get('cf-connecting-ip');
+  const cfConnectingIP = request.headers.get("cf-connecting-ip");
   if (cfConnectingIP) {
     return cfConnectingIP;
   }
 
   // Fallback for development
-  return 'unknown';
+  return "unknown";
 }
 
 /**
@@ -309,19 +308,21 @@ export function getClientIP(request: NextRequest): string {
  */
 export function isDevelopmentRequest(request: NextRequest): boolean {
   const clientIP = getClientIP(request);
-  const developmentIPs = ['127.0.0.1', '::1', 'localhost', 'unknown'];
-  
-  return developmentIPs.includes(clientIP) || 
-         clientIP.startsWith('192.168.') || 
-         clientIP.startsWith('10.') ||
-         clientIP.startsWith('172.');
+  const developmentIPs = ["127.0.0.1", "::1", "localhost", "unknown"];
+
+  return (
+    developmentIPs.includes(clientIP) ||
+    clientIP.startsWith("192.168.") ||
+    clientIP.startsWith("10.") ||
+    clientIP.startsWith("172.")
+  );
 }
 
 /**
  * Add correlation ID for request tracing
  */
 export function addCorrelationId(request: NextRequest): string {
-  const existingId = request.headers.get('x-correlation-id');
+  const existingId = request.headers.get("x-correlation-id");
   if (existingId) {
     return existingId;
   }
@@ -346,7 +347,7 @@ export async function simpleProxyRequest(
   } = {}
 ): Promise<NextResponse> {
   const {
-    method = 'GET',
+    method = "GET",
     body,
     headers: additionalHeaders = {},
     timeout = config.requestTimeout,
@@ -355,17 +356,17 @@ export async function simpleProxyRequest(
   try {
     // Build backend URL
     const backendUrl = `${config.backendUrl}${path}`;
-    
+
     // Create headers
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'User-Agent': 'CFIPros-BFF/1.0',
-      ...additionalHeaders
+      "Content-Type": "application/json",
+      "User-Agent": "CFIPros-BFF/1.0",
+      ...additionalHeaders,
     };
 
     // Remove Content-Type for FormData
     if (body instanceof FormData) {
-      delete headers['Content-Type'];
+      delete headers["Content-Type"];
     }
 
     // Create fetch options
@@ -388,10 +389,10 @@ export async function simpleProxyRequest(
     }
 
     // Check if response is JSON or binary
-    const contentType = backendResponse.headers.get('content-type') || '';
+    const contentType = backendResponse.headers.get("content-type") || "";
     let responseData: unknown;
-    
-    if (contentType.includes('application/json')) {
+
+    if (contentType.includes("application/json")) {
       responseData = await backendResponse.json();
     } else {
       // For binary content (like file downloads), return as blob
@@ -410,16 +411,16 @@ export async function simpleProxyRequest(
 
     // Copy relevant response headers
     const headersToForward = [
-      'content-type',
-      'cache-control',
-      'etag',
-      'last-modified',
-      'x-ratelimit-limit',
-      'x-ratelimit-remaining',
-      'x-ratelimit-reset'
+      "content-type",
+      "cache-control",
+      "etag",
+      "last-modified",
+      "x-ratelimit-limit",
+      "x-ratelimit-remaining",
+      "x-ratelimit-reset",
     ];
 
-    headersToForward.forEach(headerName => {
+    headersToForward.forEach((headerName) => {
       const value = backendResponse.headers.get(headerName);
       if (value) {
         response.headers.set(headerName, value);
@@ -427,37 +428,36 @@ export async function simpleProxyRequest(
     });
 
     return response;
-
   } catch (error) {
     if (error instanceof APIError) {
       return handleAPIError(error);
     }
 
     if (error instanceof Error) {
-      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+      if (error.name === "AbortError" || error.message.includes("timeout")) {
         const timeoutError = new APIError(
-          'request_timeout',
+          "request_timeout",
           504,
-          'Backend request timed out'
+          "Backend request timed out"
         );
         return handleAPIError(timeoutError);
       }
 
-      if (error.message.includes('fetch')) {
+      if (error.message.includes("fetch")) {
         const networkError = new APIError(
-          'backend_error',
+          "backend_error",
           502,
-          'Failed to connect to backend service'
+          "Failed to connect to backend service"
         );
         return handleAPIError(networkError);
       }
     }
 
-    logError('Proxy request error:', error);
+    logError("Proxy request error:", error);
     const internalError = new APIError(
-      'internal_error',
+      "internal_error",
       500,
-      'Proxy request failed'
+      "Proxy request failed"
     );
     return handleAPIError(internalError);
   }
@@ -476,22 +476,22 @@ export async function proxyApiRequest(
   const {
     timeout = 30000, // Default 30 seconds
     headers: additionalHeaders = {},
-    preserveHeaders = ['authorization', 'content-type', 'accept']
+    preserveHeaders = ["authorization", "content-type", "accept"],
   } = options;
 
   try {
     // Build backend URL (use centralized config)
     const backendUrl = `${config.backendUrl}${path}`;
-    
+
     // Extract and forward relevant headers
     const forwardedHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'User-Agent': 'CFIPros-BFF/1.0',
-      ...additionalHeaders
+      "Content-Type": "application/json",
+      "User-Agent": "CFIPros-BFF/1.0",
+      ...additionalHeaders,
     };
 
     // Preserve specific headers from client request
-    preserveHeaders.forEach(headerName => {
+    preserveHeaders.forEach((headerName) => {
       const value = request.headers.get(headerName);
       if (value) {
         forwardedHeaders[headerName] = value;
@@ -506,8 +506,16 @@ export async function proxyApiRequest(
     };
 
     // Add body for non-GET requests
-    if (body !== null && body !== undefined && method !== 'GET' && method !== 'HEAD') {
-      fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body as Record<string, unknown>);
+    if (
+      body !== null &&
+      body !== undefined &&
+      method !== "GET" &&
+      method !== "HEAD"
+    ) {
+      fetchOptions.body =
+        typeof body === "string"
+          ? body
+          : JSON.stringify(body as Record<string, unknown>);
     }
 
     // Make request to backend
@@ -526,16 +534,16 @@ export async function proxyApiRequest(
 
     // Copy relevant response headers
     const headersToForward = [
-      'content-type',
-      'cache-control',
-      'etag',
-      'last-modified',
-      'x-ratelimit-limit',
-      'x-ratelimit-remaining',
-      'x-ratelimit-reset'
+      "content-type",
+      "cache-control",
+      "etag",
+      "last-modified",
+      "x-ratelimit-limit",
+      "x-ratelimit-remaining",
+      "x-ratelimit-reset",
     ];
 
-    headersToForward.forEach(headerName => {
+    headersToForward.forEach((headerName) => {
       const value = backendResponse.headers.get(headerName);
       if (value) {
         response.headers.set(headerName, value);
@@ -543,37 +551,36 @@ export async function proxyApiRequest(
     });
 
     return response;
-
   } catch (error) {
     if (error instanceof APIError) {
       return handleAPIError(error);
     }
 
     if (error instanceof Error) {
-      if (error.name === 'AbortError' || error.message.includes('timeout')) {
+      if (error.name === "AbortError" || error.message.includes("timeout")) {
         const timeoutError = new APIError(
-          'request_timeout',
+          "request_timeout",
           504,
-          'Backend request timed out'
+          "Backend request timed out"
         );
         return handleAPIError(timeoutError);
       }
 
-      if (error.message.includes('fetch')) {
+      if (error.message.includes("fetch")) {
         const networkError = new APIError(
-          'backend_error',
+          "backend_error",
           502,
-          'Failed to connect to backend service'
+          "Failed to connect to backend service"
         );
         return handleAPIError(networkError);
       }
     }
 
-    logError('Proxy API request error:', error);
+    logError("Proxy API request error:", error);
     const internalError = new APIError(
-      'internal_error',
+      "internal_error",
       500,
-      'Proxy API request failed'
+      "Proxy API request failed"
     );
     return handleAPIError(internalError);
   }
@@ -584,13 +591,13 @@ export async function proxyApiRequest(
  */
 export function validateBackendResponse(data: unknown): boolean {
   // Basic validation - backend should return objects with expected structure
-  if (!data || typeof data !== 'object') {
+  if (!data || typeof data !== "object") {
     return false;
   }
 
   // Check for common error indicators
   const errorData = data as Record<string, unknown>;
-  if (errorData['error'] && typeof errorData['error'] === 'string') {
+  if (errorData["error"] && typeof errorData["error"] === "string") {
     return false;
   }
 

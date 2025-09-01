@@ -26,7 +26,7 @@ updates:
       - dependency-name: "*"
         update-types:
           - "version-update:semver-major"
-    
+
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"

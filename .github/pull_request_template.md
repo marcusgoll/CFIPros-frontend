@@ -24,19 +24,24 @@
 ## 🔧 Technical Details
 
 ### Changes Made
+
 <!-- List the key changes in this PR -->
-- 
-- 
-- 
+
+-
+-
+-
 
 ### Files Changed
+
 <!-- Highlight the most important files modified -->
+
 - `path/to/file.ts` - Brief description of changes
 - `path/to/component.tsx` - Brief description of changes
 
 ## 🧪 Testing
 
 ### Testing Performed
+
 - [ ] Unit tests pass locally (`npm test`)
 - [ ] Build succeeds (`npm run build`)
 - [ ] TypeScript compiles without errors (`npm run type-check`)
@@ -47,15 +52,18 @@
 - [ ] Cross-browser testing (Chrome, Firefox, Safari)
 
 ### Test Coverage
+
 - [ ] I have added tests that prove my fix is effective or that my feature works
 - [ ] New and existing unit tests pass locally with my changes
 - [ ] I have added tests for edge cases and error conditions
 
 ### Testing Instructions
+
 <!-- Provide step-by-step instructions for reviewers to test this PR -->
-1. 
-2. 
-3. 
+
+1.
+2.
+3.
 
 ## 📱 Device Testing
 
@@ -70,8 +78,8 @@
 <!-- Include screenshots for UI changes or videos for complex interactions -->
 <!-- Use tables for before/after comparisons -->
 
-| Before | After |
-|--------|-------|
+| Before         | After         |
+| -------------- | ------------- |
 | ![before](url) | ![after](url) |
 
 ## ♿ Accessibility
@@ -130,6 +138,7 @@
 ## 🔗 Related Issues
 
 <!-- Link any related issues using GitHub keywords -->
+
 - Closes #
 - Fixes #
 - Resolves #
@@ -142,6 +151,7 @@
 ## 🙏 Review Focus Areas
 
 <!-- Highlight specific areas where you'd like extra attention from reviewers -->
+
 - [ ] Architecture/design decisions
 - [ ] Security implementation
 - [ ] Performance implications
@@ -161,8 +171,8 @@
 
 ---
 
-<!-- 
-Thank you for contributing to CFIPros! 🛩️ 
+<!--
+Thank you for contributing to CFIPros! 🛩️
 
 Your contribution helps make aviation training more accessible and effective for flight instructors and students worldwide.
 -->

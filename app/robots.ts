@@ -24,7 +24,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: ["/", "/acs", "/acs/*", "/upload"],
         disallow: [
           "/dashboard",
-          "/lesson/*", 
+          "/lesson/*",
           "/study-plan/*",
           "/settings",
           "/analytics",

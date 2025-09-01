@@ -6,11 +6,11 @@ import { Button } from "@/components/ui";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="max-w-lg w-full text-center">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <div className="w-full max-w-lg text-center">
         <div className="mb-8">
-          <h1 className="text-9xl font-bold text-primary-200 mb-4">404</h1>
-          <h2 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-primary-200 mb-4 text-9xl font-bold">404</h1>
+          <h2 className="mb-2 text-3xl font-bold text-foreground">
             Page not found
           </h2>
           <p className="text-lg text-muted-foreground">
@@ -18,16 +18,16 @@ export default function NotFound() {
           </p>
         </div>
 
-        <div className="bg-card rounded-lg shadow-sm border border-border p-6 mb-8">
-          <div className="flex justify-center mb-4">
+        <div className="mb-8 rounded-lg border border-border bg-card p-6 shadow-sm">
+          <div className="mb-4 flex justify-center">
             <Search className="h-8 w-8 text-muted-foreground" />
           </div>
-          
-          <h3 className="text-lg font-semibold text-foreground mb-2">
+
+          <h3 className="mb-2 text-lg font-semibold text-foreground">
             What can you do?
           </h3>
-          
-          <ul className="text-sm text-muted-foreground space-y-2">
+
+          <ul className="space-y-2 text-sm text-muted-foreground">
             <li>• Check if the URL is spelled correctly</li>
             <li>• Go back to the previous page</li>
             <li>• Visit our homepage to find what you need</li>
@@ -35,7 +35,7 @@ export default function NotFound() {
           </ul>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <div className="flex flex-col justify-center gap-3 sm:flex-row">
           <Button
             onClick={() => window.history.back()}
             variant="primary"
@@ -44,45 +44,42 @@ export default function NotFound() {
             <ArrowLeft className="h-4 w-4" />
             Go back
           </Button>
-          
+
           <Link href="/">
-            <Button
-              variant="outline"
-              className="flex items-center gap-2"
-            >
+            <Button variant="outline" className="flex items-center gap-2">
               <Home className="h-4 w-4" />
               Homepage
             </Button>
           </Link>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-border">
-          <p className="text-sm text-muted-foreground mb-4">
+        <div className="mt-8 border-t border-border pt-8">
+          <p className="mb-4 text-sm text-muted-foreground">
             Looking for something specific?
           </p>
-          
+
           <div className="flex justify-center space-x-6">
-            <Link 
-              href="/acs" 
-              className="text-sm text-primary hover:text-primary/80"
+            <Link
+              href="/acs"
+              className="hover:text-primary/80 text-sm text-primary"
             >
               ACS Codes
             </Link>
-            <Link 
-              href="/upload" 
-              className="text-sm text-primary hover:text-primary/80"
+            <Link
+              href="/upload"
+              className="hover:text-primary/80 text-sm text-primary"
             >
               Upload Report
             </Link>
-            <Link 
-              href="/help" 
-              className="text-sm text-primary hover:text-primary/80"
+            <Link
+              href="/help"
+              className="hover:text-primary/80 text-sm text-primary"
             >
               Help Center
             </Link>
-            <Link 
-              href="/contact" 
-              className="text-sm text-primary hover:text-primary/80"
+            <Link
+              href="/contact"
+              className="hover:text-primary/80 text-sm text-primary"
             >
               Contact Us
             </Link>

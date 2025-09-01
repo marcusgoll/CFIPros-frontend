@@ -12,21 +12,26 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format a date to a human-readable string
  */
-export function formatDate(date: Date | string, options?: Intl.DateTimeFormatOptions): string {
+export function formatDate(
+  date: Date | string,
+  options?: Intl.DateTimeFormatOptions
+): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
-  
+
   // Check for invalid dates
   if (isNaN(dateObj.getTime())) {
     return "Invalid Date";
   }
-  
+
   const defaultOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
   };
-  
-  return new Intl.DateTimeFormat("en-US", options || defaultOptions).format(dateObj);
+
+  return new Intl.DateTimeFormat("en-US", options || defaultOptions).format(
+    dateObj
+  );
 }
 
 /**
@@ -60,7 +65,11 @@ export function formatRelativeTime(date: Date | string): string {
 /**
  * Truncate text to a specified length
  */
-export function truncate(text: string, length: number, suffix: string = "..."): string {
+export function truncate(
+  text: string,
+  length: number,
+  suffix: string = "..."
+): string {
   if (!text) {
     return text;
   }
@@ -77,9 +86,7 @@ export function truncate(text: string, length: number, suffix: string = "..."): 
  * Convert a string to a URL-friendly slug
  */
 export function slugify(text: string): string {
-  const normalized = text
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
+  const normalized = text.normalize("NFD").replace(/\p{Diacritic}/gu, "");
   return normalized
     .toLowerCase()
     .replace(/[^\w\s-]/g, "")
@@ -93,7 +100,8 @@ export function slugify(text: string): string {
  * Generate a random string of specified length
  */
 export function generateRandomString(length: number): string {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
   for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
@@ -122,15 +130,15 @@ export function capitalizeFirst(text: string): string {
  * Check if a string is a valid email address
  */
 export function isValidEmail(email: string): boolean {
-  if (!email || !email.includes('@')) return false;
-  const [local, domain] = email.split('@');
-  if (!local || !domain) return false;
-  if (/\.\./.test(local) || /\.\./.test(domain)) return false;
-  if (local.startsWith('.') || local.endsWith('.')) return false;
-  if (domain.startsWith('.') || domain.endsWith('.')) return false;
-  if (!domain.includes('.')) return false;
-  if (!/^[A-Za-z0-9.-]+$/.test(domain)) return false;
-  if (!/^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$/.test(local)) return false;
+  if (!email || !email.includes("@")) { return false; }
+  const [local, domain] = email.split("@");
+  if (!local || !domain) { return false; }
+  if (/\.\./.test(local) || /\.\./.test(domain)) { return false; }
+  if (local.startsWith(".") || local.endsWith(".")) { return false; }
+  if (domain.startsWith(".") || domain.endsWith(".")) { return false; }
+  if (!domain.includes(".")) { return false; }
+  if (!/^[A-Za-z0-9.-]+$/.test(domain)) { return false; }
+  if (!/^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$/.test(local)) { return false; }
   return true;
 }
 
@@ -141,16 +149,16 @@ export function formatFileSize(bytes: number): string {
   if (bytes <= 0) {
     return "0 B";
   }
-  
+
   const k = 1024;
   const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   // For bytes, don't show decimals
   if (i === 0) {
     return bytes + " B";
   }
-  
+
   // For larger units, always show one decimal place
   const value = (bytes / Math.pow(k, i)).toFixed(1);
   return value + " " + sizes[i];
@@ -181,7 +189,7 @@ export function deepClone<T>(obj: T): T {
     return new Date(obj.getTime()) as T;
   }
   if (obj instanceof Array) {
-    return obj.map(item => deepClone(item)) as T;
+    return obj.map((item) => deepClone(item)) as T;
   }
   if (typeof obj === "object") {
     const clonedObj = {} as T;
@@ -215,7 +223,7 @@ export function getMotionVariants<T extends Record<string, unknown>>(
   if (!prefersReducedMotion()) {
     return normalVariants;
   }
-  
+
   return {
     ...normalVariants,
     ...reducedVariants,

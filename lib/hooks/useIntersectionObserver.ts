@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from "react";
 
 interface UseIntersectionObserverOptions {
   threshold?: number;
@@ -12,7 +12,7 @@ export function useIntersectionObserver(
 ) {
   const {
     threshold = 0.1,
-    rootMargin = '0px',
+    rootMargin = "0px",
     triggerOnce = true,
     fallbackInView = false,
   } = options;
@@ -28,7 +28,7 @@ export function useIntersectionObserver(
     }
 
     // Fallback for environments without IntersectionObserver (SSR, older browsers)
-    if (typeof IntersectionObserver === 'undefined') {
+    if (typeof IntersectionObserver === "undefined") {
       setIsInView(fallbackInView);
       return;
     }

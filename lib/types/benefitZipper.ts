@@ -21,40 +21,40 @@ export interface BenefitZipperListProps {
    * If not provided, uses default sections.
    */
   sections?: FeatureSection[];
-  
+
   /**
    * Configuration overrides for animations and layout.
    */
   config?: Partial<typeof BENEFIT_CONFIG>;
-  
+
   /**
    * Additional CSS classes for the container.
    */
   className?: string;
-  
+
   /**
    * Called when a feature section becomes visible.
    * Useful for analytics tracking.
    */
   onSectionView?: (sectionId: string) => void;
-  
+
   /**
    * Called when a feature item is interacted with.
    * Useful for engagement tracking.
    */
   onFeatureInteraction?: (sectionId: string, featureIndex: number) => void;
-  
+
   /**
    * Whether to show the bottom CTA section.
    * @default true
    */
   showCTA?: boolean;
-  
+
   /**
    * Custom CTA content to replace the default.
    */
   customCTA?: React.ReactNode;
-  
+
   /**
    * Whether to enable reduced motion globally.
    * Overrides user preference detection.
@@ -67,13 +67,13 @@ export interface MockupComponentProps {
    * Unique identifier for the mockup (for error tracking)
    */
   id: string;
-  
+
   /**
    * Height of the mockup container
    * @default "h-80"
    */
   height?: string;
-  
+
   /**
    * Additional CSS classes
    */

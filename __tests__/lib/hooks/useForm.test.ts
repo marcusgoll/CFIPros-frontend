@@ -3,9 +3,15 @@
  * Testing form management and validation integration
  */
 
-import { renderHook, act } from '@testing-library/react';
-import { z } from 'zod';
-import { useForm, useLoginForm, useContactForm, createFormSchema, validateField } from '@/lib/hooks/useForm';
+import { renderHook, act } from "@testing-library/react";
+import { z } from "zod";
+import {
+  useForm,
+  useLoginForm,
+  useContactForm,
+  createFormSchema,
+  validateField,
+} from "@/lib/hooks/useForm";
 
 // Mock react-hook-form
 const mockRegister = jest.fn();
@@ -33,7 +39,7 @@ const mockFormState = {
   defaultValues: {},
 };
 
-jest.mock('react-hook-form', () => ({
+jest.mock("react-hook-form", () => ({
   useForm: jest.fn(() => ({
     register: mockRegister,
     handleSubmit: mockHandleSubmit,
@@ -48,29 +54,29 @@ jest.mock('react-hook-form', () => ({
   })),
 }));
 
-describe('useForm hook', () => {
+describe("useForm hook", () => {
   const testSchema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    email: z.string().email('Invalid email'),
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Invalid email"),
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockHandleSubmit.mockImplementation((successFn) => 
+    mockHandleSubmit.mockImplementation((successFn) =>
       jest.fn((e) => {
         e?.preventDefault?.();
-        successFn({ name: 'Test', email: 'test@example.com' });
+        successFn({ name: "Test", email: "test@example.com" });
       })
     );
   });
 
-  it('should initialize with schema and options', () => {
+  it("should initialize with schema and options", () => {
     const mockOnSubmit = jest.fn();
-    const { result } = renderHook(() => 
+    const { result } = renderHook(() =>
       useForm({
         schema: testSchema,
         onSubmit: mockOnSubmit,
-        defaultValues: { name: '', email: '' },
+        defaultValues: { name: "", email: "" },
       })
     );
 
@@ -83,35 +89,31 @@ describe('useForm hook', () => {
     expect(result.current.isDirty).toBe(false);
   });
 
-  it('should provide getError helper', () => {
+  it("should provide getError helper", () => {
     mockFormState.errors = {
-      name: { message: 'Name is required', type: 'required' },
+      name: { message: "Name is required", type: "required" },
     };
 
-    const { result } = renderHook(() => 
-      useForm({ schema: testSchema })
-    );
+    const { result } = renderHook(() => useForm({ schema: testSchema }));
 
-    expect(result.current.getError('name' as any)).toBe('Name is required');
-    expect(result.current.getError('email' as any)).toBeUndefined();
+    expect(result.current.getError("name" as any)).toBe("Name is required");
+    expect(result.current.getError("email" as any)).toBeUndefined();
   });
 
-  it('should provide hasError helper', () => {
+  it("should provide hasError helper", () => {
     mockFormState.errors = {
-      name: { message: 'Name is required', type: 'required' },
+      name: { message: "Name is required", type: "required" },
     };
 
-    const { result } = renderHook(() => 
-      useForm({ schema: testSchema })
-    );
+    const { result } = renderHook(() => useForm({ schema: testSchema }));
 
-    expect(result.current.hasError('name' as any)).toBe(true);
-    expect(result.current.hasError('email' as any)).toBe(false);
+    expect(result.current.hasError("name" as any)).toBe(true);
+    expect(result.current.hasError("email" as any)).toBe(false);
   });
 
-  it('should handle successful form submission', async () => {
+  it("should handle successful form submission", async () => {
     const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
-    const { result } = renderHook(() => 
+    const { result } = renderHook(() =>
       useForm({
         schema: testSchema,
         onSubmit: mockOnSubmit,
@@ -123,16 +125,18 @@ describe('useForm hook', () => {
     });
 
     expect(mockOnSubmit).toHaveBeenCalledWith({
-      name: 'Test',
-      email: 'test@example.com',
+      name: "Test",
+      email: "test@example.com",
     });
   });
 
-  it('should handle form submission errors', async () => {
-    const mockOnSubmit = jest.fn().mockRejectedValue(new Error('Submission failed'));
+  it("should handle form submission errors", async () => {
+    const mockOnSubmit = jest
+      .fn()
+      .mockRejectedValue(new Error("Submission failed"));
     const mockOnError = jest.fn();
-    
-    const { result } = renderHook(() => 
+
+    const { result } = renderHook(() =>
       useForm({
         schema: testSchema,
         onSubmit: mockOnSubmit,
@@ -145,24 +149,24 @@ describe('useForm hook', () => {
     });
 
     expect(mockOnError).toHaveBeenCalledWith({
-      _root: 'Submission failed',
+      _root: "Submission failed",
     });
   });
 
-  it('should handle validation errors', async () => {
+  it("should handle validation errors", async () => {
     const mockOnError = jest.fn();
     const validationErrors = {
-      name: { message: 'Name is required', type: 'required' },
+      name: { message: "Name is required", type: "required" },
     };
 
-    mockHandleSubmit.mockImplementation((successFn, errorFn) => 
+    mockHandleSubmit.mockImplementation((successFn, errorFn) =>
       jest.fn((e) => {
         e?.preventDefault?.();
         errorFn(validationErrors);
       })
     );
 
-    const { result } = renderHook(() => 
+    const { result } = renderHook(() =>
       useForm({
         schema: testSchema,
         onError: mockOnError,
@@ -174,11 +178,11 @@ describe('useForm hook', () => {
     });
 
     expect(mockOnError).toHaveBeenCalledWith({
-      name: 'Name is required',
+      name: "Name is required",
     });
   });
 
-  it('should return form state properties', () => {
+  it("should return form state properties", () => {
     const customFormState = {
       ...mockFormState,
       isValid: false,
@@ -186,15 +190,14 @@ describe('useForm hook', () => {
       isDirty: true,
     };
 
-    const { useForm: mockUseFormOriginal } = jest.requireMock('react-hook-form');
+    const { useForm: mockUseFormOriginal } =
+      jest.requireMock("react-hook-form");
     mockUseFormOriginal.mockReturnValueOnce({
       ...mockUseFormOriginal(),
       formState: customFormState,
     });
 
-    const { result } = renderHook(() => 
-      useForm({ schema: testSchema })
-    );
+    const { result } = renderHook(() => useForm({ schema: testSchema }));
 
     expect(result.current.isValid).toBe(false);
     expect(result.current.isSubmitting).toBe(true);
@@ -202,8 +205,8 @@ describe('useForm hook', () => {
   });
 });
 
-describe('useLoginForm hook', () => {
-  it('should create login form with correct schema', () => {
+describe("useLoginForm hook", () => {
+  it("should create login form with correct schema", () => {
     const mockOnSubmit = jest.fn();
     const { result } = renderHook(() => useLoginForm(mockOnSubmit));
 
@@ -211,7 +214,7 @@ describe('useLoginForm hook', () => {
     expect(result.current.handleSubmit).toBe(mockHandleSubmit);
   });
 
-  it('should work without onSubmit callback', () => {
+  it("should work without onSubmit callback", () => {
     const { result } = renderHook(() => useLoginForm());
 
     expect(result.current.register).toBe(mockRegister);
@@ -219,8 +222,8 @@ describe('useLoginForm hook', () => {
   });
 });
 
-describe('useContactForm hook', () => {
-  it('should create contact form with correct schema', () => {
+describe("useContactForm hook", () => {
+  it("should create contact form with correct schema", () => {
     const mockOnSubmit = jest.fn();
     const { result } = renderHook(() => useContactForm(mockOnSubmit));
 
@@ -228,7 +231,7 @@ describe('useContactForm hook', () => {
     expect(result.current.handleSubmit).toBe(mockHandleSubmit);
   });
 
-  it('should work without onSubmit callback', () => {
+  it("should work without onSubmit callback", () => {
     const { result } = renderHook(() => useContactForm());
 
     expect(result.current.register).toBe(mockRegister);
@@ -236,22 +239,22 @@ describe('useContactForm hook', () => {
   });
 });
 
-describe('createFormSchema utility', () => {
+describe("createFormSchema utility", () => {
   const testSchema = z.object({
-    name: z.string().min(1, 'Name is required'),
-    email: z.string().email('Invalid email'),
+    name: z.string().min(1, "Name is required"),
+    email: z.string().email("Invalid email"),
   });
 
-  it('should create form schema with validation function', () => {
+  it("should create form schema with validation function", () => {
     const formSchema = createFormSchema(testSchema);
 
     expect(formSchema.schema).toBe(testSchema);
-    expect(typeof formSchema.validate).toBe('function');
+    expect(typeof formSchema.validate).toBe("function");
   });
 
-  it('should validate correct data', () => {
+  it("should validate correct data", () => {
     const formSchema = createFormSchema(testSchema);
-    const validData = { name: 'John', email: 'john@example.com' };
+    const validData = { name: "John", email: "john@example.com" };
 
     const result = formSchema.validate(validData);
 
@@ -259,64 +262,66 @@ describe('createFormSchema utility', () => {
     expect(result.data).toEqual(validData);
   });
 
-  it('should return errors for invalid data', () => {
+  it("should return errors for invalid data", () => {
     const formSchema = createFormSchema(testSchema);
-    const invalidData = { name: '', email: 'invalid-email' };
+    const invalidData = { name: "", email: "invalid-email" };
 
     const result = formSchema.validate(invalidData);
 
     expect(result.success).toBe(false);
     expect(result.errors).toBeDefined();
-    expect(result.errors?.name).toContain('Name is required');
-    expect(result.errors?.email).toContain('Invalid email');
+    expect(result.errors?.name).toContain("Name is required");
+    expect(result.errors?.email).toContain("Invalid email");
   });
 
-  it('should handle unexpected validation errors', () => {
+  it("should handle unexpected validation errors", () => {
     const formSchema = createFormSchema(testSchema);
 
     const result = formSchema.validate(null);
 
     expect(result.success).toBe(false);
-    expect(result.errors?._root).toBe('An unexpected validation error occurred');
+    expect(result.errors?._root).toBe(
+      "An unexpected validation error occurred"
+    );
   });
 });
 
-describe('validateField utility', () => {
-  const nameSchema = z.string().min(1, 'Name is required');
+describe("validateField utility", () => {
+  const nameSchema = z.string().min(1, "Name is required");
 
-  it('should validate correct field value', () => {
-    const result = validateField(nameSchema, 'John Doe');
+  it("should validate correct field value", () => {
+    const result = validateField(nameSchema, "John Doe");
 
     expect(result.isValid).toBe(true);
     expect(result.error).toBeUndefined();
   });
 
-  it('should return error for invalid field value', () => {
-    const result = validateField(nameSchema, '');
+  it("should return error for invalid field value", () => {
+    const result = validateField(nameSchema, "");
 
     expect(result.isValid).toBe(false);
-    expect(result.error).toBe('Name is required');
+    expect(result.error).toBe("Name is required");
   });
 
-  it('should handle Zod errors without message', () => {
+  it("should handle Zod errors without message", () => {
     const strictSchema = z.number();
-    const result = validateField(strictSchema, 'not-a-number');
+    const result = validateField(strictSchema, "not-a-number");
 
     expect(result.isValid).toBe(false);
-    expect(result.error).toBe('Expected number, received string');
+    expect(result.error).toBe("Expected number, received string");
   });
 
-  it('should handle unexpected validation errors', () => {
+  it("should handle unexpected validation errors", () => {
     // Create a schema that will throw a non-Zod error
     const schema = {
       parse: () => {
-        throw new Error('Unexpected error');
-      }
+        throw new Error("Unexpected error");
+      },
     } as any;
 
-    const result = validateField(schema, 'test');
+    const result = validateField(schema, "test");
 
     expect(result.isValid).toBe(false);
-    expect(result.error).toBe('An unexpected validation error occurred');
+    expect(result.error).toBe("An unexpected validation error occurred");
   });
 });

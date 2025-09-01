@@ -1,6 +1,6 @@
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { ResultsView } from '@/components/forms/ResultsView';
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { ResultsView } from "@/components/forms/ResultsView";
 
 interface PageProps {
   params: Promise<{
@@ -10,9 +10,10 @@ interface PageProps {
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: 'ACS Analysis Results | CFI Pros',
-    description: 'Your personalized ACS study plan based on knowledge test analysis',
-    robots: 'noindex, nofollow', // Keep results private
+    title: "ACS Analysis Results | CFI Pros",
+    description:
+      "Your personalized ACS study plan based on knowledge test analysis",
+    robots: "noindex, nofollow", // Keep results private
   };
 }
 

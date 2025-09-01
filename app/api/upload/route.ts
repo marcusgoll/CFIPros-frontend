@@ -3,12 +3,19 @@
  * Handles document upload, validation, and processing with enhanced security
  */
 
-import { NextRequest } from 'next/server';
-import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
-import { validateRequest } from '@/lib/api/validation';
-import { proxyFileUpload, getClientIP, addCorrelationId } from '@/lib/api/proxy';
-import { CommonErrors, handleAPIError } from '@/lib/api/errors';
-import { FileUploadRateLimiter, FileUploadCSP } from '@/lib/security/fileUpload';
+import { NextRequest } from "next/server";
+import { withAPIMiddleware, createOptionsHandler } from "@/lib/api/middleware";
+import { validateRequest } from "@/lib/api/validation";
+import {
+  proxyFileUpload,
+  getClientIP,
+  addCorrelationId,
+} from "@/lib/api/proxy";
+import { CommonErrors, handleAPIError } from "@/lib/api/errors";
+import {
+  FileUploadRateLimiter,
+  FileUploadCSP,
+} from "@/lib/security/fileUpload";
 
 async function uploadHandler(request: NextRequest) {
   // Add correlation ID for tracing
@@ -37,30 +44,39 @@ async function uploadHandler(request: NextRequest) {
     // Determine specific error type based on validation message
     const errorMessage = validation.error!;
     let error;
-    
-    if (errorMessage.includes('No file was provided')) {
+
+    if (errorMessage.includes("No file was provided")) {
       error = CommonErrors.NO_FILE_PROVIDED(errorMessage);
-    } else if (errorMessage.includes('exceeds maximum size')) {
+    } else if (errorMessage.includes("exceeds maximum size")) {
       error = CommonErrors.FILE_TOO_LARGE(errorMessage);
-    } else if (errorMessage.includes('Unsupported file type') || errorMessage.includes('Unsupported file extension')) {
+    } else if (
+      errorMessage.includes("Unsupported file type") ||
+      errorMessage.includes("Unsupported file extension")
+    ) {
       error = CommonErrors.UNSUPPORTED_FILE_TYPE(errorMessage);
-    } else if (errorMessage.includes('security') || errorMessage.includes('dangerous') || errorMessage.includes('suspicious')) {
+    } else if (
+      errorMessage.includes("security") ||
+      errorMessage.includes("dangerous") ||
+      errorMessage.includes("suspicious")
+    ) {
       // Security-related errors
-      error = CommonErrors.VALIDATION_ERROR(`Security validation failed: ${errorMessage}`);
+      error = CommonErrors.VALIDATION_ERROR(
+        `Security validation failed: ${errorMessage}`
+      );
     } else {
       error = CommonErrors.VALIDATION_ERROR(errorMessage);
     }
-    
+
     return handleAPIError(error);
   }
 
   // Proxy request to backend for processing with security headers
-  const response = await proxyFileUpload(request, '/upload', {
+  const response = await proxyFileUpload(request, "/upload", {
     headers: {
-      'X-Correlation-ID': correlationId,
-      'X-Client-IP': clientIP,
-      'X-Upload-Remaining': rateLimitCheck.remainingUploads.toString(),
-      'X-Rate-Limit-Reset': new Date(rateLimitCheck.resetTime).toISOString(),
+      "X-Correlation-ID": correlationId,
+      "X-Client-IP": clientIP,
+      "X-Upload-Remaining": rateLimitCheck.remainingUploads.toString(),
+      "X-Rate-Limit-Reset": new Date(rateLimitCheck.resetTime).toISOString(),
     },
   });
 
@@ -71,19 +87,25 @@ async function uploadHandler(request: NextRequest) {
   });
 
   // Add rate limit headers
-  response.headers.set('X-RateLimit-Limit', '10');
-  response.headers.set('X-RateLimit-Remaining', rateLimitCheck.remainingUploads.toString());
-  response.headers.set('X-RateLimit-Reset', new Date(rateLimitCheck.resetTime).toISOString());
+  response.headers.set("X-RateLimit-Limit", "10");
+  response.headers.set(
+    "X-RateLimit-Remaining",
+    rateLimitCheck.remainingUploads.toString()
+  );
+  response.headers.set(
+    "X-RateLimit-Reset",
+    new Date(rateLimitCheck.resetTime).toISOString()
+  );
 
   return response;
 }
 
 // Apply middleware wrapper
 export const POST = withAPIMiddleware(uploadHandler, {
-  endpoint: 'upload',
+  endpoint: "upload",
   cors: true,
-  methods: ['POST', 'OPTIONS']
+  methods: ["POST", "OPTIONS"],
 });
 
 // Simple OPTIONS handler
-export const OPTIONS = createOptionsHandler(['POST', 'OPTIONS']);
+export const OPTIONS = createOptionsHandler(["POST", "OPTIONS"]);

@@ -12,12 +12,13 @@ interface LazyMotionWrapperProps {
  * Optimized motion wrapper using LazyMotion for reduced bundle size
  * Only loads animations when needed, reducing initial bundle size
  */
-export function LazyMotionWrapper({ children, className }: LazyMotionWrapperProps) {
+export function LazyMotionWrapper({
+  children,
+  className,
+}: LazyMotionWrapperProps) {
   return (
     <LazyMotion features={domAnimation} strict>
-      <div className={className}>
-        {children}
-      </div>
+      <div className={className}>{children}</div>
     </LazyMotion>
   );
 }

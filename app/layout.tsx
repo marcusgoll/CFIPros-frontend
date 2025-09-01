@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider } from '@clerk/nextjs';
-import { SimplePerformanceMonitor } from '@/components/SimplePerformanceMonitor';
-import { PostHogProvider } from '@/components/providers/PostHogProvider';
-import { ThemeProvider } from '@/components/providers/ThemeProvider';
+import { ClerkProvider } from "@clerk/nextjs";
+import { SimplePerformanceMonitor } from "@/components/SimplePerformanceMonitor";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,7 +23,8 @@ export const metadata: Metadata = {
     default: "CFIPros - CFI Training Platform",
     template: "%s | CFIPros",
   },
-  description: "Comprehensive pilot training platform that helps student pilots and CFIs master aviation standards with SEO-discoverable ACS code references and premium lesson content.",
+  description:
+    "Comprehensive pilot training platform that helps student pilots and CFIs master aviation standards with SEO-discoverable ACS code references and premium lesson content.",
   keywords: [
     "CFI training",
     "pilot training",
@@ -61,7 +62,8 @@ export const metadata: Metadata = {
     url: "https://cfipros.com",
     siteName: "CFIPros",
     title: "CFIPros - CFI Training Platform",
-    description: "Master aviation standards with our comprehensive CFI training platform",
+    description:
+      "Master aviation standards with our comprehensive CFI training platform",
     images: [
       {
         url: "/og-image.png",
@@ -74,7 +76,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "CFIPros - CFI Training Platform",
-    description: "Master aviation standards with our comprehensive CFI training platform",
+    description:
+      "Master aviation standards with our comprehensive CFI training platform",
     images: ["/twitter-image.png"],
     creator: "@cfipros",
   },
@@ -91,7 +94,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

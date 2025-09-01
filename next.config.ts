@@ -1,8 +1,8 @@
 import type { NextConfig } from "next";
-import withBundleAnalyzer from '@next/bundle-analyzer';
+import withBundleAnalyzer from "@next/bundle-analyzer";
 
 const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env['ANALYZE'] === 'true',
+  enabled: process.env["ANALYZE"] === "true",
 });
 
 const nextConfig: NextConfig = {
@@ -24,33 +24,33 @@ const nextConfig: NextConfig = {
   experimental: {},
 
   // Server external packages
-  serverExternalPackages: ['redis'],
+  serverExternalPackages: ["redis"],
 
   // Image optimization configuration
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'api.cfipros.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "api.cfipros.com",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'via.placeholder.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "via.placeholder.com",
+        port: "",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "picsum.photos",
+        port: "",
+        pathname: "/**",
       },
     ],
     formats: ["image/webp", "image/avif"],
     dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
+    contentDispositionType: "attachment",
   },
 
   // Environment variables that should be available on the client side
@@ -88,8 +88,8 @@ const nextConfig: NextConfig = {
               "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev https://safe-rooster-9.clerk.accounts.dev https://api.cfipros.com https://us.i.posthog.com wss:",
               "frame-src https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://safe-rooster-9.clerk.accounts.dev",
               "object-src 'none'",
-              "base-uri 'self'"
-            ].join("; ")
+              "base-uri 'self'",
+            ].join("; "),
           },
         ],
       },
@@ -131,14 +131,16 @@ const nextConfig: NextConfig = {
     }
 
     // Fix webpack optimization conflict between usedExports and cacheUnaffected
-    if (config.experiments?.cacheUnaffected && config.optimization?.usedExports) {
+    if (
+      config.experiments?.cacheUnaffected &&
+      config.optimization?.usedExports
+    ) {
       // Disable cacheUnaffected when usedExports is enabled to avoid conflict
       config.experiments.cacheUnaffected = false;
     }
 
     return config;
   },
-
 };
 
 export default bundleAnalyzer(nextConfig);

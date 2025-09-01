@@ -1,11 +1,11 @@
-import React from 'react';
-import { render } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
-import { FileUploader } from '@/components/forms/FileUploader';
-import { AktrToAcsUploader } from '@/components/forms/AktrToAcsUploader';
+import React from "react";
+import { render } from "@testing-library/react";
+import { axe, toHaveNoViolations } from "jest-axe";
+import { FileUploader } from "@/components/forms/FileUploader";
+import { AktrToAcsUploader } from "@/components/forms/AktrToAcsUploader";
 
 // Mock analytics to avoid real tracking in tests
-jest.mock('@/lib/analytics/telemetry', () => ({
+jest.mock("@/lib/analytics/telemetry", () => ({
   trackUploadStarted: jest.fn(),
   trackUploadCompleted: jest.fn(),
   trackUploadFailed: jest.fn(),
@@ -15,7 +15,7 @@ jest.mock('@/lib/analytics/telemetry', () => ({
 }));
 
 // Mock router
-jest.mock('next/navigation', () => ({
+jest.mock("next/navigation", () => ({
   useRouter: () => ({
     push: jest.fn(),
     replace: jest.fn(),
@@ -28,15 +28,17 @@ jest.mock('next/navigation', () => ({
 
 expect.extend(toHaveNoViolations);
 
-describe('FileUploader Accessibility', () => {
-  it('should not have any accessibility violations - empty state', async () => {
+describe("FileUploader Accessibility", () => {
+  it("should not have any accessibility violations - empty state", async () => {
     const { container } = render(<FileUploader onFilesChange={jest.fn()} />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
-  it('should not have any accessibility violations - with files', async () => {
-    const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+  it("should not have any accessibility violations - with files", async () => {
+    const mockFile = new File(["test"], "test.pdf", {
+      type: "application/pdf",
+    });
     const { container } = render(
       <FileUploader onFilesChange={jest.fn()} files={[mockFile]} />
     );
@@ -44,15 +46,19 @@ describe('FileUploader Accessibility', () => {
     expect(results).toHaveNoViolations();
   });
 
-  it('should not have any accessibility violations - loading state', async () => {
-    const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
-    const progress = [{ file: mockFile, progress: 50, status: 'uploading' as const }];
-    
+  it("should not have any accessibility violations - loading state", async () => {
+    const mockFile = new File(["test"], "test.pdf", {
+      type: "application/pdf",
+    });
+    const progress = [
+      { file: mockFile, progress: 50, status: "uploading" as const },
+    ];
+
     const { container } = render(
-      <FileUploader 
-        onFilesChange={jest.fn()} 
-        files={[mockFile]} 
-        loading 
+      <FileUploader
+        onFilesChange={jest.fn()}
+        files={[mockFile]}
+        loading
         uploadProgress={progress}
       />
     );
@@ -60,19 +66,23 @@ describe('FileUploader Accessibility', () => {
     expect(results).toHaveNoViolations();
   });
 
-  it('should not have any accessibility violations - error state', async () => {
-    const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
-    const progress = [{ 
-      file: mockFile, 
-      progress: 50, 
-      status: 'error' as const, 
-      error: 'Upload failed' 
-    }];
-    
+  it("should not have any accessibility violations - error state", async () => {
+    const mockFile = new File(["test"], "test.pdf", {
+      type: "application/pdf",
+    });
+    const progress = [
+      {
+        file: mockFile,
+        progress: 50,
+        status: "error" as const,
+        error: "Upload failed",
+      },
+    ];
+
     const { container } = render(
-      <FileUploader 
-        onFilesChange={jest.fn()} 
-        files={[mockFile]} 
+      <FileUploader
+        onFilesChange={jest.fn()}
+        files={[mockFile]}
         uploadProgress={progress}
       />
     );
@@ -81,16 +91,16 @@ describe('FileUploader Accessibility', () => {
   });
 });
 
-describe('AktrToAcsUploader Accessibility', () => {
-  it('should not have any accessibility violations - initial state', async () => {
+describe("AktrToAcsUploader Accessibility", () => {
+  it("should not have any accessibility violations - initial state", async () => {
     const { container } = render(<AktrToAcsUploader />);
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
 
-  it('should not have any accessibility violations - with uploaded files', async () => {
+  it("should not have any accessibility violations - with uploaded files", async () => {
     const { container } = render(<AktrToAcsUploader />);
-    
+
     // The component manages its own state, so we test the initial render
     // In a real test environment, we'd interact with the component to change state
     const results = await axe(container);

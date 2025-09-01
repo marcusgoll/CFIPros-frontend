@@ -1,4 +1,4 @@
-import { SignUp } from '@clerk/nextjs';
+import { SignUp } from "@clerk/nextjs";
 
 export default function SignUpPage() {
   return (
@@ -11,7 +11,7 @@ export default function SignUpPage() {
           Start your aviation training journey today
         </p>
       </div>
-      <SignUp 
+      <SignUp
         path="/sign-up"
         routing="path"
         signInUrl="/sign-in"

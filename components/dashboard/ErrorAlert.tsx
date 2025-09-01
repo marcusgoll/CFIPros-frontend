@@ -12,13 +12,21 @@ type ProblemDetails = {
   instance?: string;
 };
 
-export function ErrorAlert({ problem, requestId, onRetry }: { problem: ProblemDetails; requestId?: string | null; onRetry: () => void }) {
+export function ErrorAlert({
+  problem,
+  requestId,
+  onRetry,
+}: {
+  problem: ProblemDetails;
+  requestId?: string | null;
+  onRetry: () => void;
+}) {
   const [copied, setCopied] = useState(false);
-  const title = problem.title || 'Request failed';
-  const detail = problem.detail || 'An error occurred while loading data.';
+  const title = problem.title || "Request failed";
+  const detail = problem.detail || "An error occurred while loading data.";
 
   const copy = async () => {
-    if (!requestId) return;
+    if (!requestId) { return; }
     try {
       await navigator.clipboard.writeText(requestId);
       setCopied(true);
@@ -30,11 +38,16 @@ export function ErrorAlert({ problem, requestId, onRetry }: { problem: ProblemDe
     <div className="flex items-center gap-2">
       <ErrorMessage error={detail} title={title} onRetry={onRetry} />
       {requestId && (
-        <Button size="sm" variant="ghost" aria-label="Copy request id" onClick={copy} title={copied ? 'Copied' : 'Copy x-request-id'}>
+        <Button
+          size="sm"
+          variant="ghost"
+          aria-label="Copy request id"
+          onClick={copy}
+          title={copied ? "Copied" : "Copy x-request-id"}
+        >
           <Copy className="h-4 w-4" />
         </Button>
       )}
     </div>
   );
 }
-

@@ -19,7 +19,7 @@ export function LatestResults({ results }: { results: LatestResult[] }) {
             <Button size="sm">Upload AKTR</Button>
           </Link>
         </div>
-        <p className="text-gray-600 text-sm mt-2">No results yet.</p>
+        <p className="mt-2 text-sm text-gray-600">No results yet.</p>
       </Card>
     );
   }
@@ -33,21 +33,30 @@ export function LatestResults({ results }: { results: LatestResult[] }) {
         {results.slice(0, 3).map((r) => (
           <li key={r.id} className="flex items-center justify-between">
             <div>
-              <div className="font-medium">{new Date(r.date).toLocaleDateString()}</div>
-              <div className="text-sm text-gray-600 flex flex-wrap gap-2 mt-1">
-                {typeof r.score === 'number' && (
+              <div className="font-medium">
+                {new Date(r.date).toLocaleDateString()}
+              </div>
+              <div className="mt-1 flex flex-wrap gap-2 text-sm text-gray-600">
+                {typeof r.score === "number" && (
                   <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-800">
                     Score: {r.score}
                   </span>
                 )}
                 {(r.weakAcsCodes || []).slice(0, 3).map((code) => (
-                  <span key={code} className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800">
+                  <span
+                    key={code}
+                    className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-800"
+                  >
                     {code}
                   </span>
                 ))}
               </div>
             </div>
-            <Link href={`/results/${r.id}`} className="text-sm text-primary-600 hover:underline" onClick={() => trackEvent('open_report', { id: r.id })}>
+            <Link
+              href={`/results/${r.id}`}
+              className="text-primary-600 text-sm hover:underline"
+              onClick={() => trackEvent("open_report", { id: r.id })}
+            >
               View full result
             </Link>
           </li>

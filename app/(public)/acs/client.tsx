@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import { Search, Filter, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { Input, Card, CardContent, Button, LoadingSpinner } from "@/components/ui";
+import {
+  Input,
+  Card,
+  CardContent,
+  Button,
+  LoadingSpinner,
+} from "@/components/ui";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import type { ACSCode } from "@/lib/types";
 
@@ -15,7 +21,8 @@ const mockACSCodes: ACSCode[] = [
     area: "Preflight Preparation",
     task: "Pilot Qualifications",
     element: "Certification requirements",
-    description: "Understanding pilot certification requirements, including certificates and ratings.",
+    description:
+      "Understanding pilot certification requirements, including certificates and ratings.",
   },
   {
     code: "PA.I.B.K1",
@@ -23,7 +30,8 @@ const mockACSCodes: ACSCode[] = [
     area: "Preflight Preparation",
     task: "Airworthiness Requirements",
     element: "Required certificates and documents",
-    description: "Knowledge of required aircraft certificates and documents for airworthiness.",
+    description:
+      "Knowledge of required aircraft certificates and documents for airworthiness.",
   },
   {
     code: "PA.I.B.K2",
@@ -31,7 +39,8 @@ const mockACSCodes: ACSCode[] = [
     area: "Preflight Preparation",
     task: "Weather Information",
     element: "Weather reports and forecasts",
-    description: "Understanding weather services, reports, and forecasts for flight planning.",
+    description:
+      "Understanding weather services, reports, and forecasts for flight planning.",
   },
   {
     code: "PA.II.A.K1",
@@ -39,7 +48,8 @@ const mockACSCodes: ACSCode[] = [
     area: "Navigation",
     task: "Navigation Systems and Radar Services",
     element: "Navigation systems",
-    description: "Knowledge of various navigation systems including VOR, GPS, and radar services.",
+    description:
+      "Knowledge of various navigation systems including VOR, GPS, and radar services.",
   },
   {
     code: "PA.II.A.K2",
@@ -47,12 +57,25 @@ const mockACSCodes: ACSCode[] = [
     area: "Navigation",
     task: "Navigation Systems and Radar Services",
     element: "Chart interpretation",
-    description: "Ability to read and interpret aeronautical charts for navigation.",
+    description:
+      "Ability to read and interpret aeronautical charts for navigation.",
   },
 ];
 
-const areas = ["All Areas", "Preflight Preparation", "Navigation", "Airport Operations", "Takeoffs and Landings"];
-const tasks = ["All Tasks", "Pilot Qualifications", "Airworthiness Requirements", "Weather Information", "Navigation Systems and Radar Services"];
+const areas = [
+  "All Areas",
+  "Preflight Preparation",
+  "Navigation",
+  "Airport Operations",
+  "Takeoffs and Landings",
+];
+const tasks = [
+  "All Tasks",
+  "Pilot Qualifications",
+  "Airworthiness Requirements",
+  "Weather Information",
+  "Navigation Systems and Radar Services",
+];
 
 export default function ACSIndexClient() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,19 +90,21 @@ export default function ACSIndexClient() {
   useEffect(() => {
     // Filter codes based on search and filters
     setIsLoading(true);
-    
+
     const filtered = mockACSCodes.filter((code) => {
-      const matchesSearch = 
+      const matchesSearch =
         code.code.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         code.title.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
         code.description?.toLowerCase().includes(debouncedSearch.toLowerCase());
-      
-      const matchesArea = selectedArea === "All Areas" || code.area === selectedArea;
-      const matchesTask = selectedTask === "All Tasks" || code.task === selectedTask;
-      
+
+      const matchesArea =
+        selectedArea === "All Areas" || code.area === selectedArea;
+      const matchesTask =
+        selectedTask === "All Tasks" || code.task === selectedTask;
+
       return matchesSearch && matchesArea && matchesTask;
     });
-    
+
     setFilteredCodes(filtered);
     setIsLoading(false);
   }, [debouncedSearch, selectedArea, selectedTask]);
@@ -87,27 +112,28 @@ export default function ACSIndexClient() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="border-b border-gray-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               ACS Code Database
             </h1>
             <p className="mt-3 text-lg text-gray-600">
-              Browse and search through 200+ Airman Certification Standards codes
+              Browse and search through 200+ Airman Certification Standards
+              codes
             </p>
           </div>
 
           {/* Search Bar */}
-          <div className="mt-8 max-w-2xl mx-auto">
+          <div className="mx-auto mt-8 max-w-2xl">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
               <Input
                 type="text"
                 placeholder="Search by code, title, or description..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-3 text-base"
+                className="py-3 pl-10 pr-4 text-base"
               />
             </div>
           </div>
@@ -127,15 +153,15 @@ export default function ACSIndexClient() {
 
           {/* Filters */}
           {showFilters && (
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 max-w-2xl mx-auto">
+            <div className="mx-auto mt-6 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Area
                 </label>
                 <select
                   value={selectedArea}
                   onChange={(e) => setSelectedArea(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  className="focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1"
                 >
                   {areas.map((area) => (
                     <option key={area} value={area}>
@@ -145,13 +171,13 @@ export default function ACSIndexClient() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Task
                 </label>
                 <select
                   value={selectedTask}
                   onChange={(e) => setSelectedTask(e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  className="focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1"
                 >
                   {tasks.map((task) => (
                     <option key={task} value={task}>
@@ -189,12 +215,13 @@ export default function ACSIndexClient() {
         ) : filteredCodes.length === 0 ? (
           <Card className="p-12 text-center">
             <CardContent>
-              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <Search className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+              <h3 className="mb-2 text-lg font-medium text-gray-900">
                 No results found
               </h3>
               <p className="text-sm text-gray-600">
-                Try adjusting your search or filters to find what you&apos;re looking for.
+                Try adjusting your search or filters to find what you&apos;re
+                looking for.
               </p>
             </CardContent>
           </Card>
@@ -202,18 +229,18 @@ export default function ACSIndexClient() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredCodes.map((code) => (
               <Link key={code.code} href={`/acs/${code.code}`}>
-                <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer">
+                <Card className="h-full cursor-pointer transition-shadow duration-200 hover:shadow-lg">
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="rounded-lg bg-primary-100 px-3 py-1 text-sm font-medium text-primary-700">
+                    <div className="mb-3 flex items-start justify-between">
+                      <div className="bg-primary-100 text-primary-700 rounded-lg px-3 py-1 text-sm font-medium">
                         {code.code}
                       </div>
                       <ChevronRight className="h-5 w-5 text-gray-400" />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="mb-2 text-lg font-semibold text-gray-900">
                       {code.title}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                    <p className="mb-3 line-clamp-2 text-sm text-gray-600">
                       {code.description}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -237,19 +264,19 @@ export default function ACSIndexClient() {
         {filteredCodes.length > 0 && (
           <div className="mt-8 flex justify-center">
             <nav className="flex items-center space-x-2">
-              <span className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">
+              <span className="inline-flex cursor-not-allowed items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-400">
                 Previous
               </span>
-              <span className="inline-flex items-center justify-center rounded-lg border border-primary-600 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-600">
+              <span className="border-primary-600 bg-primary-50 text-primary-600 inline-flex items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium">
                 1
               </span>
-              <span className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+              <span className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 2
               </span>
-              <span className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+              <span className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 3
               </span>
-              <span className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+              <span className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
                 Next
               </span>
             </nav>

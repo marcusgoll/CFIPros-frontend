@@ -1,34 +1,94 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Simple 1x1 pixel PNG data (transparent)
 const pngData = Buffer.from([
-  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
-  0x00, 0x00, 0x00, 0x0D, // IHDR chunk length
-  0x49, 0x48, 0x44, 0x52, // IHDR
-  0x00, 0x00, 0x03, 0x20, // Width: 800
-  0x00, 0x00, 0x01, 0xC2, // Height: 450 (16:9 ratio)
-  0x08, 0x06, 0x00, 0x00, 0x00, // Bit depth: 8, Color type: 6 (RGBA)
-  0x72, 0x0A, 0x5C, 0x57, // CRC
-  0x00, 0x00, 0x00, 0x0A, // IDAT chunk length  
-  0x49, 0x44, 0x41, 0x54, // IDAT
-  0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00, 0x05, 0x00, 0x01, // Minimal IDAT data
-  0x0D, 0x0A, 0x2D, 0xB4, // CRC
-  0x00, 0x00, 0x00, 0x00, // IEND chunk length
-  0x49, 0x45, 0x4E, 0x44, // IEND
-  0xAE, 0x42, 0x60, 0x82  // CRC
+  0x89,
+  0x50,
+  0x4e,
+  0x47,
+  0x0d,
+  0x0a,
+  0x1a,
+  0x0a, // PNG signature
+  0x00,
+  0x00,
+  0x00,
+  0x0d, // IHDR chunk length
+  0x49,
+  0x48,
+  0x44,
+  0x52, // IHDR
+  0x00,
+  0x00,
+  0x03,
+  0x20, // Width: 800
+  0x00,
+  0x00,
+  0x01,
+  0xc2, // Height: 450 (16:9 ratio)
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00, // Bit depth: 8, Color type: 6 (RGBA)
+  0x72,
+  0x0a,
+  0x5c,
+  0x57, // CRC
+  0x00,
+  0x00,
+  0x00,
+  0x0a, // IDAT chunk length
+  0x49,
+  0x44,
+  0x41,
+  0x54, // IDAT
+  0x78,
+  0x9c,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01, // Minimal IDAT data
+  0x0d,
+  0x0a,
+  0x2d,
+  0xb4, // CRC
+  0x00,
+  0x00,
+  0x00,
+  0x00, // IEND chunk length
+  0x49,
+  0x45,
+  0x4e,
+  0x44, // IEND
+  0xae,
+  0x42,
+  0x60,
+  0x82, // CRC
 ]);
 
 const features = [
-  'upload', 'analyzer', 'planner', 'lessons', 'quizzes',
-  'acs-lib', 'dashboard', 'schools', 'reports'
+  "upload",
+  "analyzer",
+  "planner",
+  "lessons",
+  "quizzes",
+  "acs-lib",
+  "dashboard",
+  "schools",
+  "reports",
 ];
 
-const featuresDir = path.join(__dirname, '../public/images/features');
+const featuresDir = path.join(__dirname, "../public/images/features");
 
 // Ensure directory exists
 if (!fs.existsSync(featuresDir)) {
@@ -36,7 +96,7 @@ if (!fs.existsSync(featuresDir)) {
 }
 
 // Create placeholder images for each feature
-features.forEach(feature => {
+features.forEach((feature) => {
   const filePath = path.join(featuresDir, `${feature}-screenshot.jpg`);
   // Create a simple colored rectangle SVG and convert to PNG-like data
   const svgContent = `<svg width="800" height="450" xmlns="http://www.w3.org/2000/svg">
@@ -55,9 +115,9 @@ features.forEach(feature => {
     </text>
     <rect x="50" y="50" width="700" height="350" fill="none" stroke="white" stroke-width="2" opacity="0.5" rx="10"/>
   </svg>`;
-  
-  fs.writeFileSync(filePath.replace('.jpg', '.svg'), svgContent);
+
+  fs.writeFileSync(filePath.replace(".jpg", ".svg"), svgContent);
   console.log(`Created ${feature}-screenshot.svg`);
 });
 
-console.log('Placeholder images created successfully!');
+console.log("Placeholder images created successfully!");

@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "next/core-web-vitals",
-    "next/typescript"
-  ],
+  "extends": ["next/core-web-vitals", "next/typescript"],
   "rules": {
     "react/no-unescaped-entities": "off",
     "react/react-in-jsx-scope": "off",
@@ -12,11 +9,5 @@
     "eqeqeq": "error",
     "curly": "error"
   },
-  "ignorePatterns": [
-    "node_modules/",
-    ".next/",
-    "out/",
-    "build/",
-    "dist/"
-  ]
+  "ignorePatterns": ["node_modules/", ".next/", "out/", "build/", "dist/"]
 }

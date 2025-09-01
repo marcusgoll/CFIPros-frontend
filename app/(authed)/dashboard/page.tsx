@@ -27,35 +27,29 @@ export default async function DashboardPage() {
       </div>
       <DashboardAnalyticsClient />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           <Suspense fallback={<PanelSkeleton />}>
-            {/* @ts-expect-error Async Server Component */}
             <TodayPanel />
           </Suspense>
 
           <OnboardingActions />
           <Suspense fallback={<PanelSkeleton />}>
-            {/* @ts-expect-error Async Server Component */}
             <ResultsPanel />
           </Suspense>
 
           <Suspense fallback={<PanelSkeleton />}>
-            {/* @ts-expect-error Async Server Component */}
             <PlanPanel />
           </Suspense>
         </div>
         <div className="space-y-6">
           <QuickTools />
           <Suspense fallback={<PanelSkeleton />}>
-            {/* @ts-expect-error Async Server Component */}
             <ActivityPanel />
           </Suspense>
           <Suspense fallback={<PanelSkeleton />}>
-            {/* @ts-expect-error Async Server Component */}
             <PlanStripPanel />
           </Suspense>
           <Suspense fallback={null}>
-            {/* @ts-expect-error Async Server Component */}
             <StudentsPanel />
           </Suspense>
         </div>

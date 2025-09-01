@@ -3,20 +3,20 @@ export const BENEFIT_CONFIG = {
   ANIMATION_DURATION: 0.6,
   STAGGER_DELAY: 0.1,
   INITIAL_OFFSET: 40,
-  
+
   // Visual configuration
   SECTION_SPACING: 32, // space-y-32 in tailwind (128px)
   CONTENT_GAP: 12, // gap-12 in tailwind (48px)
   FEATURE_SPACING: 6, // space-y-6 in tailwind (24px)
-  
+
   // Intersection observer settings
   INTERSECTION_THRESHOLD: 0.1,
-  INTERSECTION_ROOT_MARGIN: '-100px',
-  
+  INTERSECTION_ROOT_MARGIN: "-100px",
+
   // Mobile optimizations
   MOBILE_REDUCE_MOTION: true,
   MOBILE_ANIMATION_DURATION: 0.3,
-  
+
   // Error handling
   MAX_RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000,

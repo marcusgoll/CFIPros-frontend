@@ -7,7 +7,7 @@ import { Upload, ClipboardList, Wrench } from "lucide-react";
 export function OnboardingActions() {
   return (
     <Card className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Get Started</h2>
+      <h2 className="mb-4 text-xl font-semibold">Get Started</h2>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Link href="/upload" aria-label="Upload AKTR">
           <Button className="w-full justify-center gap-2">
@@ -28,4 +28,3 @@ export function OnboardingActions() {
     </Card>
   );
 }
-
