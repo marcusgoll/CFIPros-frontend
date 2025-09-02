@@ -31,6 +31,7 @@ export {
   NavigationMenuViewport,
   navigationMenuTriggerStyle,
 } from "./navigation-menu";
+export { Badge, type BadgeProps } from "./badge";
 
 export type { InputProps } from "./Input";
 export type { ModalProps } from "./Modal";
