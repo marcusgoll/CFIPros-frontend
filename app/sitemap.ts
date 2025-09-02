@@ -3,7 +3,7 @@ import { MetadataRoute } from "next";
 // In production, these would be fetched from the API
 const acsCodesList = [
   "PA.I.A.K1",
-  "PA.I.B.K1", 
+  "PA.I.B.K1",
   "PA.I.B.K2",
   "PA.II.A.K1",
   "PA.II.A.K2",
@@ -12,7 +12,7 @@ const acsCodesList = [
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env["NEXT_PUBLIC_APP_URL"] || "https://cfipros.com";
-  
+
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,

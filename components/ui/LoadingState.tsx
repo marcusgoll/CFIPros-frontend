@@ -3,9 +3,9 @@
  * Provides consistent loading indicators across the application
  */
 
-import React from 'react';
-import { LoadingSpinner } from './LoadingSpinner';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { LoadingSpinner } from "./LoadingSpinner";
+import { cn } from "@/lib/utils";
 
 interface LoadingStateProps {
   loading: boolean;
@@ -15,18 +15,18 @@ interface LoadingStateProps {
   errorComponent?: React.ComponentType<{ error: string; onRetry?: () => void }>;
   onRetry?: () => void;
   className?: string;
-  spinnerSize?: 'sm' | 'md' | 'lg';
+  spinnerSize?: "sm" | "md" | "lg";
 }
 
 export function LoadingState({
   loading,
   error,
   children,
-  loadingText = 'Loading...',
+  loadingText = "Loading...",
   errorComponent: ErrorComponent,
   onRetry,
   className,
-  spinnerSize = 'md',
+  spinnerSize = "md",
 }: LoadingStateProps) {
   if (error && ErrorComponent) {
     const errorProps: { error: string; onRetry?: () => void } = { error };
@@ -38,14 +38,14 @@ export function LoadingState({
 
   if (error) {
     return (
-      <div className={cn('flex justify-center items-center py-8', className)}>
+      <div className={cn("flex items-center justify-center py-8", className)}>
         <div className="text-center">
-          <p className="text-red-600 mb-4">{error}</p>
+          <p className="mb-4 text-red-600">{error}</p>
           {onRetry && (
             <button
               type="button"
               onClick={onRetry}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               Try Again
             </button>
@@ -57,12 +57,10 @@ export function LoadingState({
 
   if (loading) {
     return (
-      <div className={cn('flex justify-center items-center py-8', className)}>
+      <div className={cn("flex items-center justify-center py-8", className)}>
         <div className="text-center">
           <LoadingSpinner size={spinnerSize} />
-          {loadingText && (
-            <p className="mt-2 text-gray-600">{loadingText}</p>
-          )}
+          {loadingText && <p className="mt-2 text-gray-600">{loadingText}</p>}
         </div>
       </div>
     );
@@ -76,9 +74,17 @@ interface PageLoadingProps {
   className?: string;
 }
 
-export function PageLoading({ text = 'Loading...', className }: PageLoadingProps) {
+export function PageLoading({
+  text = "Loading...",
+  className,
+}: PageLoadingProps) {
   return (
-    <div className={cn('flex justify-center items-center min-h-[400px]', className)}>
+    <div
+      className={cn(
+        "flex min-h-[400px] items-center justify-center",
+        className
+      )}
+    >
       <div className="text-center">
         <LoadingSpinner size="lg" />
         <p className="mt-4 text-lg text-gray-600">{text}</p>
@@ -94,15 +100,15 @@ interface InlineLoadingProps {
   className?: string;
 }
 
-export function InlineLoading({ 
-  loading, 
-  children, 
-  text = 'Loading...', 
-  className 
+export function InlineLoading({
+  loading,
+  children,
+  text = "Loading...",
+  className,
 }: InlineLoadingProps) {
   if (loading) {
     return (
-      <div className={cn('flex items-center space-x-2', className)}>
+      <div className={cn("flex items-center space-x-2", className)}>
         <LoadingSpinner size="sm" />
         <span className="text-sm text-gray-600">{text}</span>
       </div>
@@ -121,10 +127,10 @@ interface ButtonLoadingProps {
   [key: string]: unknown; // Allow other button props
 }
 
-export function ButtonLoading({ 
-  loading, 
-  children, 
-  loadingText, 
+export function ButtonLoading({
+  loading,
+  children,
+  loadingText,
   disabled,
   className,
   ...props
@@ -134,8 +140,8 @@ export function ButtonLoading({
       type="button"
       disabled={loading || disabled}
       className={cn(
-        'inline-flex items-center justify-center space-x-2',
-        loading && 'opacity-75 cursor-not-allowed',
+        "inline-flex items-center justify-center space-x-2",
+        loading && "cursor-not-allowed opacity-75",
         className
       )}
       {...props}
@@ -153,22 +159,22 @@ interface SkeletonProps {
   rounded?: boolean;
 }
 
-export function Skeleton({ 
-  className, 
-  width, 
-  height, 
-  rounded = false 
+export function Skeleton({
+  className,
+  width,
+  height,
+  rounded = false,
 }: SkeletonProps) {
   return (
     <div
       className={cn(
-        'animate-pulse bg-gray-200',
-        rounded ? 'rounded-full' : 'rounded',
+        "animate-pulse bg-gray-200",
+        rounded ? "rounded-full" : "rounded",
         className
       )}
-      style={{ 
-        width: typeof width === 'number' ? `${width}px` : width,
-        height: typeof height === 'number' ? `${height}px` : height 
+      style={{
+        width: typeof width === "number" ? `${width}px` : width,
+        height: typeof height === "number" ? `${height}px` : height,
       }}
     />
   );
@@ -181,12 +187,12 @@ interface SkeletonTextProps {
 
 export function SkeletonText({ lines = 3, className }: SkeletonTextProps) {
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn("space-y-2", className)}>
       {Array.from({ length: lines }).map((_, index) => (
         <Skeleton
           key={index}
           height={16}
-          width={index === lines - 1 ? '75%' : '100%'}
+          width={index === lines - 1 ? "75%" : "100%"}
         />
       ))}
     </div>
@@ -198,15 +204,16 @@ interface SkeletonCardProps {
   className?: string;
 }
 
-export function SkeletonCard({ showImage = false, className }: SkeletonCardProps) {
+export function SkeletonCard({
+  showImage = false,
+  className,
+}: SkeletonCardProps) {
   return (
-    <div className={cn('p-4 border rounded-lg', className)}>
-      {showImage && (
-        <Skeleton height={160} className="mb-4 rounded" />
-      )}
+    <div className={cn("rounded-lg border p-4", className)}>
+      {showImage && <Skeleton height={160} className="mb-4 rounded" />}
       <Skeleton height={20} width="60%" className="mb-2" />
       <SkeletonText lines={2} />
-      <div className="flex space-x-2 mt-4">
+      <div className="mt-4 flex space-x-2">
         <Skeleton height={32} width={80} rounded />
         <Skeleton height={32} width={80} rounded />
       </div>
@@ -250,15 +257,15 @@ export function withLoading<P extends object>(
         }
         return <ErrorComponent {...errorProps} />;
       }
-      
+
       return (
-        <div className="text-center py-8">
-          <p className="text-red-600 mb-4">{error}</p>
+        <div className="py-8 text-center">
+          <p className="mb-4 text-red-600">{error}</p>
           {onRetry && (
             <button
               type="button"
               onClick={onRetry}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
             >
               Try Again
             </button>

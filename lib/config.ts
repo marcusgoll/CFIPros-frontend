@@ -6,7 +6,7 @@
 // Environment variable validation schema
 interface EnvironmentVariables {
   BACKEND_API_URL: string;
-  NODE_ENV?: 'development' | 'production' | 'test';
+  NODE_ENV?: "development" | "production" | "test";
   REDIS_URL?: string;
   ALLOWED_ORIGINS?: string;
   NEXT_PUBLIC_DEMO_VIDEO_PATH?: string;
@@ -22,25 +22,35 @@ const validateUrl = (url: string, name: string): void => {
 };
 
 const validateEnvironment = (env?: string): void => {
-  const validEnvs = ['development', 'production', 'test'];
+  const validEnvs = ["development", "production", "test"];
   if (env && !validEnvs.includes(env)) {
-    throw new Error(`NODE_ENV must be one of: ${validEnvs.join(', ')}, got: ${env}`);
+    throw new Error(
+      `NODE_ENV must be one of: ${validEnvs.join(", ")}, got: ${env}`
+    );
   }
 };
 
 // Runtime validation
 const validateEnvironmentVariables = (): EnvironmentVariables => {
-  const backendUrl = process.env['BACKEND_API_URL'];
-  const nodeEnv = process.env['NODE_ENV'] as 'development' | 'production' | 'test' | undefined;
-  const redisUrl = process.env['REDIS_URL'];
-  const allowedOrigins = process.env['ALLOWED_ORIGINS'];
-  const demoVideoPath = process.env['NEXT_PUBLIC_DEMO_VIDEO_PATH'];
+  // Support both BACKEND_API_URL and API_BASE_URL for backward compatibility
+  const backendUrl =
+    process.env["BACKEND_API_URL"] || process.env["API_BASE_URL"];
+  const nodeEnv = process.env["NODE_ENV"] as
+    | "development"
+    | "production"
+    | "test"
+    | undefined;
+  const redisUrl = process.env["REDIS_URL"];
+  const allowedOrigins = process.env["ALLOWED_ORIGINS"];
+  const demoVideoPath = process.env["NEXT_PUBLIC_DEMO_VIDEO_PATH"];
 
   // Required variables
   if (!backendUrl) {
-    throw new Error('BACKEND_API_URL environment variable is required');
+    throw new Error(
+      "BACKEND_API_URL (or API_BASE_URL) environment variable is required"
+    );
   }
-  validateUrl(backendUrl, 'BACKEND_API_URL');
+  validateUrl(backendUrl, "BACKEND_API_URL");
 
   // Optional but validated if present
   if (nodeEnv) {
@@ -48,15 +58,21 @@ const validateEnvironmentVariables = (): EnvironmentVariables => {
   }
 
   if (redisUrl) {
-    validateUrl(redisUrl, 'REDIS_URL');
+    validateUrl(redisUrl, "REDIS_URL");
   }
 
   if (allowedOrigins) {
     // Validate each origin in the comma-separated list
-    const origins = allowedOrigins.split(',').map(o => o.trim());
+    const origins = allowedOrigins.split(",").map((o) => o.trim());
     origins.forEach((origin, index) => {
-      if (origin && !origin.startsWith('http://') && !origin.startsWith('https://')) {
-        throw new Error(`ALLOWED_ORIGINS[${index}] must start with http:// or https://, got: ${origin}`);
+      if (
+        origin &&
+        !origin.startsWith("http://") &&
+        !origin.startsWith("https://")
+      ) {
+        throw new Error(
+          `ALLOWED_ORIGINS[${index}] must start with http:// or https://, got: ${origin}`
+        );
       }
     });
   }
@@ -64,11 +80,15 @@ const validateEnvironmentVariables = (): EnvironmentVariables => {
   if (demoVideoPath) {
     // Validate video file extension
     if (!demoVideoPath.match(/\.(mp4|webm|mov|avi)$/i)) {
-      throw new Error(`NEXT_PUBLIC_DEMO_VIDEO_PATH must be a valid video file path, got: ${demoVideoPath}`);
+      throw new Error(
+        `NEXT_PUBLIC_DEMO_VIDEO_PATH must be a valid video file path, got: ${demoVideoPath}`
+      );
     }
     // Ensure it starts with forward slash for proper routing
-    if (!demoVideoPath.startsWith('/')) {
-      throw new Error(`NEXT_PUBLIC_DEMO_VIDEO_PATH must start with '/', got: ${demoVideoPath}`);
+    if (!demoVideoPath.startsWith("/")) {
+      throw new Error(
+        `NEXT_PUBLIC_DEMO_VIDEO_PATH must start with '/', got: ${demoVideoPath}`
+      );
     }
   }
 
@@ -87,46 +107,53 @@ const validatedEnv = validateEnvironmentVariables();
 export const config = {
   // Backend API configuration (validated)
   backendUrl: validatedEnv.BACKEND_API_URL,
-  
+
   // Redis configuration (optional, validated if present)
   redisUrl: validatedEnv.REDIS_URL,
-  
+
   // CORS configuration (validated if present)
-  allowedOrigins: validatedEnv.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [
-    'http://localhost:3000',
-    'http://localhost:3001', 
-    'https://cfipros.com',
-    'https://www.cfipros.com'
+  allowedOrigins: validatedEnv.ALLOWED_ORIGINS?.split(",").map((o) =>
+    o.trim()
+  ) || [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://cfipros.com",
+    "https://www.cfipros.com",
   ],
-  
+
   // Rate limiting configuration
   rateLimiting: {
     upload: { windowMs: 60 * 60 * 1000, maxRequests: 60 },
     results: { windowMs: 60 * 60 * 1000, maxRequests: 100 },
     auth: { windowMs: 15 * 60 * 1000, maxRequests: 10 },
     default: { windowMs: 60 * 60 * 1000, maxRequests: 120 },
+    "batch-status": { windowMs: 60 * 60 * 1000, maxRequests: 200 }, // More frequent polling
+    "batch-export": { windowMs: 60 * 60 * 1000, maxRequests: 50 }, // File downloads
+    "batch-sharing": { windowMs: 60 * 60 * 1000, maxRequests: 100 },
+    "batch-consent": { windowMs: 60 * 60 * 1000, maxRequests: 100 },
+    "batch-audit": { windowMs: 60 * 60 * 1000, maxRequests: 50 },
+    "batch-audit-export": { windowMs: 60 * 60 * 1000, maxRequests: 20 }, // CSV exports
   },
-  
+
   // Request timeout
   requestTimeout: 30000, // 30 seconds
-  
-  // File upload limits
+
+  // File upload limits (updated for v1.2 API spec)
   fileUpload: {
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 15 * 1024 * 1024, // 15MB per v1.2 spec
+    maxFiles: 5, // Maximum 5 files per batch
     allowedTypes: [
-      'application/pdf',
-      'image/jpeg', 
-      'image/jpg',
-      'image/png',
-      'image/webp',
+      "application/pdf",
+      "image/jpeg",
+      "image/png", // v1.2 spec: PDF, JPG, PNG only
     ],
-    allowedExtensions: ['.pdf', '.jpg', '.jpeg', '.png', '.webp'],
+    allowedExtensions: [".pdf", ".jpg", ".jpeg", ".png"],
   },
-  
+
   // Environment flags (validated)
-  isDevelopment: validatedEnv.NODE_ENV === 'development',
-  isProduction: validatedEnv.NODE_ENV === 'production',
-  
+  isDevelopment: validatedEnv.NODE_ENV === "development",
+  isProduction: validatedEnv.NODE_ENV === "production",
+
   // Runtime environment validation status
   environmentValidated: true,
 } as const;

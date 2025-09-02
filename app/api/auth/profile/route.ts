@@ -3,15 +3,15 @@
  * Handle profile retrieval and updates
  */
 
-import { NextRequest } from 'next/server';
-import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
-import { validateRequest } from '@/lib/api/validation';
-import { authenticatedProxyRequest, getClientIP } from '@/lib/api/proxy';
-import { CommonErrors, handleAPIError } from '@/lib/api/errors';
+import { NextRequest } from "next/server";
+import { withAPIMiddleware, createOptionsHandler } from "@/lib/api/middleware";
+import { validateRequest } from "@/lib/api/validation";
+import { authenticatedProxyRequest, getClientIP } from "@/lib/api/proxy";
+import { CommonErrors, handleAPIError } from "@/lib/api/errors";
 
 function getAuthToken(request: NextRequest): string | null {
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  const authHeader = request.headers.get("authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return null;
   }
   return authHeader.substring(7); // Remove 'Bearer ' prefix
@@ -20,7 +20,7 @@ function getAuthToken(request: NextRequest): string | null {
 async function profileGetHandler(request: NextRequest) {
   const token = getAuthToken(request);
   if (!token) {
-    const error = CommonErrors.UNAUTHORIZED('Authentication token required');
+    const error = CommonErrors.UNAUTHORIZED("Authentication token required");
     return handleAPIError(error);
   }
 
@@ -28,26 +28,26 @@ async function profileGetHandler(request: NextRequest) {
 
   // Proxy authenticated request to backend
   const response = await authenticatedProxyRequest(
-    request, 
-    '/auth/profile', 
+    request,
+    "/auth/profile",
     token,
     {
       headers: {
-        'X-Client-IP': clientIP,
+        "X-Client-IP": clientIP,
       },
     }
   );
 
   // Add security headers
-  response.headers.set('Cache-Control', 'private, no-cache'); // Private data, don't cache
-  
+  response.headers.set("Cache-Control", "private, no-cache"); // Private data, don't cache
+
   return response;
 }
 
 async function profileUpdateHandler(request: NextRequest) {
   const token = getAuthToken(request);
   if (!token) {
-    const error = CommonErrors.UNAUTHORIZED('Authentication token required');
+    const error = CommonErrors.UNAUTHORIZED("Authentication token required");
     return handleAPIError(error);
   }
 
@@ -62,34 +62,34 @@ async function profileUpdateHandler(request: NextRequest) {
 
   // Proxy authenticated request to backend
   const response = await authenticatedProxyRequest(
-    request, 
-    '/auth/profile', 
+    request,
+    "/auth/profile",
     token,
     {
       headers: {
-        'X-Client-IP': clientIP,
+        "X-Client-IP": clientIP,
       },
     }
   );
 
   // Add security headers
-  response.headers.set('Cache-Control', 'no-store'); // Don't cache profile updates
-  
+  response.headers.set("Cache-Control", "no-store"); // Don't cache profile updates
+
   return response;
 }
 
 export const GET = withAPIMiddleware(profileGetHandler, {
-  endpoint: 'default',
+  endpoint: "default",
   auth: true,
   cors: true,
-  methods: ['GET', 'PUT', 'OPTIONS']
+  methods: ["GET", "PUT", "OPTIONS"],
 });
 
 export const PUT = withAPIMiddleware(profileUpdateHandler, {
-  endpoint: 'default', 
+  endpoint: "default",
   auth: true,
   cors: true,
-  methods: ['GET', 'PUT', 'OPTIONS']
+  methods: ["GET", "PUT", "OPTIONS"],
 });
 
-export const OPTIONS = createOptionsHandler(['GET', 'PUT', 'OPTIONS']);
+export const OPTIONS = createOptionsHandler(["GET", "PUT", "OPTIONS"]);

@@ -15,14 +15,14 @@
       "purpose": "maskable"
     },
     {
-      "src": "/icon-512.png", 
+      "src": "/icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
       "src": "/apple-touch-icon.png",
-      "type": "image/png", 
+      "type": "image/png",
       "sizes": "180x180"
     }
   ],
@@ -35,7 +35,7 @@
       "form_factor": "wide"
     },
     {
-      "src": "/screenshot-mobile.png", 
+      "src": "/screenshot-mobile.png",
       "type": "image/png",
       "sizes": "375x812",
       "form_factor": "narrow"

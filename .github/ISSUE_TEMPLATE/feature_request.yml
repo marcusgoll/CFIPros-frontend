@@ -84,7 +84,7 @@ body:
       description: Describe how different users would interact with this feature
       placeholder: |
         As a [type of user], I want [goal/desire] so that [benefit].
-        
+
         Examples:
         - As a CFI instructor, I want to quickly filter training materials so that I can find relevant content faster.
         - As a student pilot, I want to track my progress so that I can see which areas need more study.

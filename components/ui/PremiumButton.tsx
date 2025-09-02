@@ -5,7 +5,13 @@ import { motion, HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends Omit<HTMLMotionProps<"button">, "size"> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "glass" | "gradient";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "outline"
+    | "ghost"
+    | "glass"
+    | "gradient";
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   loading?: boolean;
   leftIcon?: React.ReactNode;
@@ -78,7 +84,7 @@ export const PremiumButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="h-4 w-4 border-2 border-current border-t-transparent rounded-full"
+            className="h-4 w-4 rounded-full border-2 border-current border-t-transparent"
           />
         ) : (
           <>

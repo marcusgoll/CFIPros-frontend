@@ -1,7 +1,18 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, Search, BookOpen, BarChart3, Target, Award, Calendar, Layers, Building, type LucideIcon } from "lucide-react";
+import {
+  Upload,
+  Search,
+  BookOpen,
+  BarChart3,
+  Target,
+  Award,
+  Calendar,
+  Layers,
+  Building,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // TypeScript interfaces as specified in tasks.md
@@ -38,13 +49,13 @@ export const DEFAULT_FEATURES: FeatureItem[] = [
     Icon: Upload,
   },
   {
-    id: "analyzer", 
+    id: "analyzer",
     label: "Analyzer",
     Icon: Search,
   },
   {
     id: "planner",
-    label: "Planner", 
+    label: "Planner",
     Icon: Calendar,
   },
   {
@@ -82,7 +93,7 @@ export const DEFAULT_FEATURES: FeatureItem[] = [
 // Custom hook for overflow detection
 export function useOverflow(ref: React.RefObject<HTMLElement>) {
   const [state, setState] = useState({ canLeft: false, canRight: false });
-  
+
   const update = useCallback(() => {
     const el = ref.current;
     if (!el) {
@@ -102,19 +113,19 @@ export function useOverflow(ref: React.RefObject<HTMLElement>) {
     if (!el) {
       return;
     }
-    
+
     const onScroll = () => update();
     el.addEventListener("scroll", onScroll, { passive: true });
-    
+
     const onResize = () => update();
     window.addEventListener("resize", onResize);
-    
+
     let ro: ResizeObserver | undefined;
     if (typeof ResizeObserver !== "undefined") {
       ro = new ResizeObserver(update);
       ro.observe(el);
     }
-    
+
     return () => {
       el.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
@@ -123,7 +134,7 @@ export function useOverflow(ref: React.RefObject<HTMLElement>) {
       }
     };
   }, [update, ref]);
-  
+
   return state;
 }
 
@@ -134,10 +145,12 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
 }) => {
   const listRef = useRef<HTMLUListElement>(null);
   const defaultIndex = Math.floor(features.length / 2);
-  const [active, setActive] = useState<string>(features[defaultIndex]?.id || "");
+  const [active, setActive] = useState<string>(
+    features[defaultIndex]?.id || ""
+  );
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const { canLeft, canRight } = useOverflow(listRef);
- 
+
   // Center a tab within the scroll container
   const centerItem = useCallback((index: number, smooth = false) => {
     const el = listRef.current;
@@ -152,19 +165,22 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
     const elRect = el.getBoundingClientRect();
     const childCenter = childRect.left - elRect.left + childRect.width / 2;
     const target = childCenter - el.clientWidth / 2;
-    el.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' });
+    el.scrollTo({ left: target, behavior: smooth ? "smooth" : "auto" });
   }, []);
 
-  const select = useCallback((id: string) => {
-    setActive(id);
-    if (onSelect) {
-      onSelect(id);
-    }
-    const idx = features.findIndex(f => f.id === id);
-    if (idx >= 0) {
-      centerItem(idx, true);
-    }
-  }, [features, onSelect, centerItem]);
+  const select = useCallback(
+    (id: string) => {
+      setActive(id);
+      if (onSelect) {
+        onSelect(id);
+      }
+      const idx = features.findIndex((f) => f.id === id);
+      if (idx >= 0) {
+        centerItem(idx, true);
+      }
+    },
+    [features, onSelect, centerItem]
+  );
 
   const scrollByAmount = useCallback((dir: number) => {
     const el = listRef.current;
@@ -175,42 +191,54 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
     el.scrollBy({ left: dir * amount, behavior: "smooth" });
   }, []);
 
-  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
-    if (!features.length) {
-      return;
-    }
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      const next = (idx + 1) % features.length;
-      select(features[next]!.id);
-      // Move focus to next tab button
-      const nextBtn = (e.currentTarget.parentElement?.nextElementSibling as HTMLElement | null)?.querySelector('button') as HTMLButtonElement | null;
-      nextBtn?.focus();
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      const prev = (idx - 1 + features.length) % features.length;
-      select(features[prev]!.id);
-      // Move focus to previous tab button
-      const prevBtn = (e.currentTarget.parentElement?.previousElementSibling as HTMLElement | null)?.querySelector('button') as HTMLButtonElement | null;
-      prevBtn?.focus();
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      select(features[0]!.id);
-      const firstBtn = listRef.current?.querySelector('li:first-child button') as HTMLButtonElement | null;
-      firstBtn?.focus();
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      select(features[features.length - 1]!.id);
-      const lastBtn = listRef.current?.querySelector('li:last-child button') as HTMLButtonElement | null;
-      lastBtn?.focus();
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      select(features[idx]!.id);
-    }
-  }, [features, select]);
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLButtonElement>, idx: number) => {
+      if (!features.length) {
+        return;
+      }
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        const next = (idx + 1) % features.length;
+        select(features[next]!.id);
+        // Move focus to next tab button
+        const nextBtn = (
+          e.currentTarget.parentElement
+            ?.nextElementSibling as HTMLElement | null
+        )?.querySelector("button") as HTMLButtonElement | null;
+        nextBtn?.focus();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        const prev = (idx - 1 + features.length) % features.length;
+        select(features[prev]!.id);
+        // Move focus to previous tab button
+        const prevBtn = (
+          e.currentTarget.parentElement
+            ?.previousElementSibling as HTMLElement | null
+        )?.querySelector("button") as HTMLButtonElement | null;
+        prevBtn?.focus();
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        select(features[0]!.id);
+        const firstBtn = listRef.current?.querySelector(
+          "li:first-child button"
+        ) as HTMLButtonElement | null;
+        firstBtn?.focus();
+      } else if (e.key === "End") {
+        e.preventDefault();
+        select(features[features.length - 1]!.id);
+        const lastBtn = listRef.current?.querySelector(
+          "li:last-child button"
+        ) as HTMLButtonElement | null;
+        lastBtn?.focus();
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        select(features[idx]!.id);
+      }
+    },
+    [features, select]
+  );
 
   // Center a tab within the scroll container
-  
 
   // On mount, center the default (middle) feature
   useEffect(() => {
@@ -232,12 +260,16 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
   // If no features, render empty state
   if (features.length === 0) {
     return (
-      <div className={cn(
-        "relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-background p-4",
-        className
-      )}>
+      <div
+        className={cn(
+          "relative rounded-2xl border border-gray-200 bg-background p-4 dark:border-gray-700",
+          className
+        )}
+      >
         <div role="tablist" className="flex justify-center">
-          <p className="text-gray-500 dark:text-gray-400 text-sm">No features available</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No features available
+          </p>
         </div>
       </div>
     );
@@ -251,20 +283,26 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
       `}</style>
 
       {/* Scroll container with border */}
-      <div className="relative rounded-2xl border border-gray-200 dark:border-gray-700 bg-background">
-        
+      <div className="relative rounded-2xl border border-gray-200 bg-background dark:border-gray-700">
         {/* Mobile swipe gradient indicators */}
-        <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10 rounded-l-2xl sm:hidden" />
-        <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10 rounded-r-2xl sm:hidden" />
-        
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-8 rounded-l-2xl bg-gradient-to-r from-background to-transparent sm:hidden" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-8 rounded-r-2xl bg-gradient-to-l from-background to-transparent sm:hidden" />
+
         {/* Mobile swipe hint */}
         {showSwipeHint && (
-          <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 sm:hidden">
-            <div className="flex items-center gap-1 text-xs text-gray-400 animate-pulse">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                <path d="M10 17l5-5-5-5"/>
-                <path d="M14 12H3"/>
+          <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 transform sm:hidden">
+            <div className="flex animate-pulse items-center gap-1 text-xs text-gray-400">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <path d="M10 17l5-5-5-5" />
+                <path d="M14 12H3" />
               </svg>
               <span>Swipe to explore</span>
             </div>
@@ -275,11 +313,20 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
           <button
             type="button"
             onClick={() => scrollByAmount(-1)}
-            className="absolute left-1 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-background shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            className="absolute left-1 top-1/2 z-20 hidden h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-background shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 sm:flex"
             aria-label="Scroll left"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
             </svg>
           </button>
         )}
@@ -289,11 +336,20 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
           <button
             type="button"
             onClick={() => scrollByAmount(1)}
-            className="absolute right-1 top-1/2 -translate-y-1/2 z-20 hidden sm:flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 dark:border-gray-700 bg-background shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+            className="absolute right-1 top-1/2 z-20 hidden h-8 w-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-gray-200 bg-background shadow-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800 sm:flex"
             aria-label="Scroll right"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6"/>
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 18l6-6-6-6" />
             </svg>
           </button>
         )}
@@ -302,7 +358,7 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
         <ul
           ref={listRef}
           role="tablist"
-          className="flex justify-center gap-0.5 sm:gap-1 overflow-x-auto scroll-smooth px-4 sm:px-6 py-2 sm:py-3 items-center select-none snap-x snap-mandatory no-scrollbar"
+          className="no-scrollbar flex select-none snap-x snap-mandatory items-center justify-center gap-0.5 overflow-x-auto scroll-smooth px-4 py-2 sm:gap-1 sm:px-6 sm:py-3"
           style={{ WebkitOverflowScrolling: "touch" }}
           onTouchStart={handleUserInteraction}
           onScroll={handleUserInteraction}
@@ -310,7 +366,11 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
           {features.map(({ id, label, Icon }, idx) => {
             const isActive = id === active;
             return (
-              <li key={id} role="presentation" className="snap-start first:ml-10 last:mr-10 sm:first:ml-12 sm:last:mr-12">
+              <li
+                key={id}
+                role="presentation"
+                className="snap-start first:ml-10 last:mr-10 sm:first:ml-12 sm:last:mr-12"
+              >
                 <button
                   role="tab"
                   aria-selected={isActive}
@@ -318,23 +378,32 @@ export const FeatureSpotlightMenu: React.FC<FeatureSpotlightMenuProps> = ({
                   onClick={() => select(id)}
                   onKeyDown={(e) => onKeyDown(e, idx)}
                   className={cn(
-                    "group relative flex h-full min-w-[92px] sm:min-w-[108px] flex-col items-center justify-center gap-1 rounded-xl bg-transparent px-2.5 py-3 text-sm sm:text-base cursor-pointer transition-colors",
-                    isActive 
-                      ? 'text-primary' 
-                      : 'text-foreground hover:text-primary'
+                    "group relative flex h-full min-w-[92px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl bg-transparent px-2.5 py-3 text-sm transition-colors sm:min-w-[108px] sm:text-base",
+                    isActive
+                      ? "text-primary"
+                      : "text-foreground hover:text-primary"
                   )}
                 >
-                  <span className="inline-flex h-8 w-8 items-center justify-center" aria-hidden="true">
-                    <Icon className="w-6 h-6" aria-hidden="true" focusable="false" />
+                  <span
+                    className="inline-flex h-8 w-8 items-center justify-center"
+                    aria-hidden="true"
+                  >
+                    <Icon
+                      className="h-6 w-6"
+                      aria-hidden="true"
+                      focusable="false"
+                    />
                   </span>
                   <span className="font-medium">{label}</span>
-                  
+
                   {/* Bottom primary indicator */}
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "pointer-events-none absolute inset-x-4 bottom-0 h-1 origin-center rounded-full transition-transform bg-[#1e9df1]",
-                      isActive ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'
+                      "pointer-events-none absolute inset-x-4 bottom-0 h-1 origin-center rounded-full bg-[#1e9df1] transition-transform",
+                      isActive
+                        ? "scale-x-100"
+                        : "scale-x-0 group-hover:scale-x-100"
                     )}
                   />
                 </button>

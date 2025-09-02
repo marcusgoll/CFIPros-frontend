@@ -3,39 +3,48 @@
  * Maps to backend /v1/results/{id}/email endpoint for email capture on public results
  */
 
-import { NextRequest } from 'next/server';
-import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
-import { proxyApiRequest, getClientIP, addCorrelationId } from '@/lib/api/proxy';
-import { CommonErrors, handleAPIError, APIError } from '@/lib/api/errors';
-import { trackEvent } from '@/lib/analytics/telemetry';
-import { z } from 'zod';
-
+import { NextRequest } from "next/server";
+import { withAPIMiddleware, createOptionsHandler } from "@/lib/api/middleware";
+import {
+  proxyApiRequest,
+  getClientIP,
+  addCorrelationId,
+} from "@/lib/api/proxy";
+import { CommonErrors, handleAPIError, APIError } from "@/lib/api/errors";
+import { trackEvent } from "@/lib/analytics/telemetry";
+import { z } from "zod";
 
 // Email capture validation schema
 const emailCaptureSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  email: z.string().email("Please enter a valid email address"),
   consent_marketing: z.boolean().optional().default(false),
-  source: z.string().optional().default('extractor_results')
+  source: z.string().optional().default("extractor_results"),
 });
 
 async function emailCaptureHandler(
   request: NextRequest,
-  ctx: { params: { id: string } } | { params: Promise<{ id: string | string[] | undefined }> }
+  ctx:
+    | { params: { id: string } }
+    | { params: Promise<{ id: string | string[] | undefined }> }
 ) {
   const correlationId = addCorrelationId(request);
   const clientIP = getClientIP(request);
-  const rawParams = (ctx as { params?: { id: string } | Promise<{ id: string | string[] | undefined }> })?.params;
+  const rawParams = (
+    ctx as {
+      params?: { id: string } | Promise<{ id: string | string[] | undefined }>;
+    }
+  )?.params;
   const maybePromise = rawParams as unknown as { then?: unknown };
-  const isPromise = typeof maybePromise?.then === 'function';
+  const isPromise = typeof maybePromise?.then === "function";
   const resolvedParams = isPromise
     ? await (rawParams as Promise<{ id: string | string[] | undefined }>)
     : (rawParams as { id: string } | undefined);
   const { id: reportId } = (resolvedParams || {}) as { id: string };
 
   // Basic validation for report ID format
-  if (!reportId || typeof reportId !== 'string' || reportId.length < 10) {
+  if (!reportId || typeof reportId !== "string" || reportId.length < 10) {
     return handleAPIError(
-      CommonErrors.VALIDATION_ERROR('Invalid report ID format')
+      CommonErrors.VALIDATION_ERROR("Invalid report ID format")
     );
   }
 
@@ -45,64 +54,68 @@ async function emailCaptureHandler(
     const validation = emailCaptureSchema.safeParse(body);
 
     if (!validation.success) {
-      return handleAPIError(CommonErrors.VALIDATION_ERROR('Invalid email capture data'));
+      return handleAPIError(
+        CommonErrors.VALIDATION_ERROR("Invalid email capture data")
+      );
     }
 
     const { email, consent_marketing, source } = validation.data;
 
     // Track email capture attempt
-    trackEvent('email_captured', {
-      report_id: reportId.substring(0, 8) + '...', // Partial ID for privacy
-      email_domain: email.split('@')[1], // Domain only for analytics
+    trackEvent("email_captured", {
+      report_id: reportId.substring(0, 8) + "...", // Partial ID for privacy
+      email_domain: email.split("@")[1], // Domain only for analytics
       correlation_id: correlationId,
       source,
-      has_marketing_consent: consent_marketing
+      has_marketing_consent: consent_marketing,
     });
 
     // Proxy to backend email capture endpoint
     const response = await proxyApiRequest(
       request,
-      'POST',
+      "POST",
       `/v1/results/${reportId}/email`,
       {
         email,
         consent_marketing,
         source,
         client_ip: clientIP,
-        correlation_id: correlationId
+        correlation_id: correlationId,
       },
       {
         headers: {
-          'X-Correlation-ID': correlationId,
-          'X-Client-IP': clientIP,
-          'X-Service': 'acs-extractor-email',
-          'Content-Type': 'application/json'
+          "X-Correlation-ID": correlationId,
+          "X-Client-IP": clientIP,
+          "X-Service": "acs-extractor-email",
+          "Content-Type": "application/json",
         },
       }
     );
 
     // Track successful email capture
     if (response.status === 200 || response.status === 201) {
-      trackEvent('email_capture_success', {
-        report_id: reportId.substring(0, 8) + '...',
-        email_domain: email.split('@')[1],
-        correlation_id: correlationId
+      trackEvent("email_capture_success", {
+        report_id: reportId.substring(0, 8) + "...",
+        email_domain: email.split("@")[1],
+        correlation_id: correlationId,
       });
     }
 
     // Add CORS headers for public access
-    response.headers.set('Access-Control-Allow-Origin', '*');
-    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
+    response.headers.set("Access-Control-Allow-Origin", "*");
+    response.headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    response.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, X-Requested-With"
+    );
 
     return response;
-
   } catch (error: unknown) {
     // Track email capture failure
-    trackEvent('email_capture_failed', {
-      report_id: reportId.substring(0, 8) + '...',
+    trackEvent("email_capture_failed", {
+      report_id: reportId.substring(0, 8) + "...",
       correlation_id: correlationId,
-      error: error instanceof Error ? error.message : 'unknown_error'
+      error: error instanceof Error ? error.message : "unknown_error",
     });
 
     if (error instanceof APIError) {
@@ -110,12 +123,20 @@ async function emailCaptureHandler(
         return handleAPIError(CommonErrors.RESULT_NOT_FOUND(reportId));
       }
       if (error.status === 409) {
-        return handleAPIError(CommonErrors.VALIDATION_ERROR('Email already registered for this report'));
+        return handleAPIError(
+          CommonErrors.VALIDATION_ERROR(
+            "Email already registered for this report"
+          )
+        );
       }
       return handleAPIError(error);
     }
 
-    return handleAPIError(CommonErrors.INTERNAL_ERROR('Unable to save email at this time. Please try again.'));
+    return handleAPIError(
+      CommonErrors.INTERNAL_ERROR(
+        "Unable to save email at this time. Please try again."
+      )
+    );
   }
 }
 
@@ -125,12 +146,12 @@ export async function POST(
   context: { params: Promise<{ id: string | string[] | undefined }> }
 ) {
   const wrapped = withAPIMiddleware(emailCaptureHandler, {
-    endpoint: 'results',
+    endpoint: "results",
     cors: true,
-    methods: ['POST', 'OPTIONS']
+    methods: ["POST", "OPTIONS"],
   });
   return wrapped(request, context);
 }
 
 // OPTIONS handler for CORS preflight
-export const OPTIONS = createOptionsHandler(['POST', 'OPTIONS']);
+export const OPTIONS = createOptionsHandler(["POST", "OPTIONS"]);

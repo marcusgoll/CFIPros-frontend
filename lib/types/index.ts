@@ -1,5 +1,5 @@
 // Common types used throughout the application
-import type { NextRequest, NextResponse } from 'next/server';
+import type { NextRequest, NextResponse } from "next/server";
 
 export interface BackendErrorResponse {
   type?: string;
@@ -200,7 +200,7 @@ export interface ProfileUpdateRequest {
 }
 
 export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
+  theme: "light" | "dark" | "system";
   notifications: boolean;
   emailUpdates: boolean;
 }

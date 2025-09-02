@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
-import Link from 'next/link';
-import * as Icons from 'lucide-react';
+import React from "react";
+import Link from "next/link";
+import * as Icons from "lucide-react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -10,12 +10,12 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
-} from '@/components/ui';
-import { featuresMenu } from '@/lib/config/navigation';
+} from "@/components/ui";
+import { featuresMenu } from "@/lib/config/navigation";
 
 export function DesktopNavigation() {
   return (
-    <div className="hidden lg:flex items-center">
+    <div className="hidden items-center lg:flex">
       <NavigationMenu>
         <NavigationMenuList>
           {/* Our Features */}
@@ -24,17 +24,29 @@ export function DesktopNavigation() {
               {featuresMenu.title}
             </NavigationMenuTrigger>
             <NavigationMenuContent>
-              <div className="p-6 min-w-[600px]">
-                <div className="grid gap-8" style={{ gridTemplateColumns: `repeat(${featuresMenu.columns?.length}, minmax(250px, 1fr))` }}>
+              <div className="min-w-[600px] p-6">
+                <div
+                  className="grid gap-8"
+                  style={{
+                    gridTemplateColumns: `repeat(${featuresMenu.columns?.length}, minmax(250px, 1fr))`,
+                  }}
+                >
                   {featuresMenu.columns?.map((column, columnIndex) => (
                     <div key={columnIndex} className="space-y-2">
                       {column.items.map((item, itemIndex) => {
-                        const IconComponent = item.icon ? Icons[item.icon] as React.ComponentType<{ className: string }> : null;
+                        const IconComponent = item.icon
+                          ? (Icons[item.icon] as React.ComponentType<{
+                              className: string;
+                            }>)
+                          : null;
                         return (
                           <NavigationMenuLink key={itemIndex} asChild>
-                            <Link href={item.href} className="flex items-start space-x-3 p-3 rounded-md hover:bg-accent/50 transition-colors group block">
+                            <Link
+                              href={item.href}
+                              className="hover:bg-accent/50 group block flex items-start space-x-3 rounded-md p-3 transition-colors"
+                            >
                               {IconComponent && (
-                                <div className="flex-shrink-0 mt-1 text-primary-600">
+                                <div className="text-primary-600 mt-1 flex-shrink-0">
                                   <IconComponent className="h-5 w-5" />
                                 </div>
                               )}
@@ -43,7 +55,7 @@ export function DesktopNavigation() {
                                   {item.title}
                                 </div>
                                 {item.description && (
-                                  <div className="text-sm text-muted-foreground mt-1">
+                                  <div className="mt-1 text-sm text-muted-foreground">
                                     {item.description}
                                   </div>
                                 )}
@@ -62,7 +74,10 @@ export function DesktopNavigation() {
           {/* Research */}
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
-              <Link href="/research" className="inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-accent transition-colors">
+              <Link
+                href="/research"
+                className="text-foreground/80 inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-primary"
+              >
                 Research
               </Link>
             </NavigationMenuLink>

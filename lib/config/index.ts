@@ -3,4 +3,4 @@
  * Re-exports main configuration for modular import structure
  */
 
-export { config, type Config, type RateLimitEndpoint } from '../config';
+export { config, type Config, type RateLimitEndpoint } from "../config";

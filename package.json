@@ -36,6 +36,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:api": "node scripts/test-api-connection.js",
+    "demo:api": "node scripts/demo-api-flow.js",
     "analyze": "cross-env ANALYZE=true npm run build",
     "analyze:server": "cross-env ANALYZE=true BUNDLE_ANALYZE=server npm run build",
     "analyze:browser": "cross-env ANALYZE=true BUNDLE_ANALYZE=browser npm run build"
@@ -82,6 +84,7 @@
     "@typescript-eslint/parser": "^8.15.0",
     "autoprefixer": "^10.4.20",
     "cross-env": "^10.0.0",
+    "dotenv": "^17.2.1",
     "eslint": "^9.16.0",
     "eslint-config-next": "^15.5.2",
     "eslint-config-prettier": "^9.1.0",

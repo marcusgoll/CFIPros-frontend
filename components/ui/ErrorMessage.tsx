@@ -3,16 +3,16 @@
  * Provides consistent error display across the application
  */
 
-import React from 'react';
-import { AlertCircle, X } from 'lucide-react';
-import { Button } from './Button';
-import { cn } from '@/lib/utils';
+import React from "react";
+import { AlertCircle, X } from "lucide-react";
+import { Button } from "./Button";
+import { cn } from "@/lib/utils";
 
 interface ErrorMessageProps {
   error?: string | null | undefined;
   title?: string;
-  variant?: 'error' | 'warning' | 'info';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: "error" | "warning" | "info";
+  size?: "sm" | "md" | "lg";
   onDismiss?: () => void;
   onRetry?: () => void;
   className?: string;
@@ -22,8 +22,8 @@ interface ErrorMessageProps {
 export function ErrorMessage({
   error,
   title,
-  variant = 'error',
-  size = 'md',
+  variant = "error",
+  size = "md",
   onDismiss,
   onRetry,
   className,
@@ -33,24 +33,24 @@ export function ErrorMessage({
     return null;
   }
 
-  const baseClasses = 'rounded-md border p-4 flex items-start space-x-3';
-  
+  const baseClasses = "rounded-md border p-4 flex items-start space-x-3";
+
   const variantClasses = {
-    error: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    info: 'bg-blue-50 border-blue-200 text-blue-800',
+    error: "bg-red-50 border-red-200 text-red-800",
+    warning: "bg-yellow-50 border-yellow-200 text-yellow-800",
+    info: "bg-blue-50 border-blue-200 text-blue-800",
   };
 
   const sizeClasses = {
-    sm: 'text-sm p-3',
-    md: 'text-base p-4',
-    lg: 'text-lg p-5',
+    sm: "text-sm p-3",
+    md: "text-base p-4",
+    lg: "text-lg p-5",
   };
 
   const iconClasses = {
-    error: 'text-red-400',
-    warning: 'text-yellow-400',
-    info: 'text-blue-400',
+    error: "text-red-400",
+    warning: "text-yellow-400",
+    info: "text-blue-400",
   };
 
   return (
@@ -66,17 +66,15 @@ export function ErrorMessage({
     >
       {showIcon && (
         <AlertCircle
-          className={cn('h-5 w-5 flex-shrink-0 mt-0.5', iconClasses[variant])}
+          className={cn("mt-0.5 h-5 w-5 flex-shrink-0", iconClasses[variant])}
           aria-hidden="true"
         />
       )}
-      
-      <div className="flex-1 min-w-0">
-        {title && (
-          <h3 className="text-sm font-medium mb-1">{title}</h3>
-        )}
+
+      <div className="min-w-0 flex-1">
+        {title && <h3 className="mb-1 text-sm font-medium">{title}</h3>}
         <p className="text-sm leading-5">{error}</p>
-        
+
         {(onRetry || onDismiss) && (
           <div className="mt-3 flex space-x-2">
             {onRetry && (
@@ -102,16 +100,16 @@ export function ErrorMessage({
           </div>
         )}
       </div>
-      
+
       {onDismiss && (
         <button
           type="button"
           onClick={onDismiss}
           className={cn(
-            'flex-shrink-0 rounded-md p-1.5 hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-offset-2',
-            variant === 'error' && 'text-red-400 focus:ring-red-500',
-            variant === 'warning' && 'text-yellow-400 focus:ring-yellow-500',
-            variant === 'info' && 'text-blue-400 focus:ring-blue-500'
+            "flex-shrink-0 rounded-md p-1.5 hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-offset-2",
+            variant === "error" && "text-red-400 focus:ring-red-500",
+            variant === "warning" && "text-yellow-400 focus:ring-yellow-500",
+            variant === "info" && "text-blue-400 focus:ring-blue-500"
           )}
           aria-label="Dismiss error"
         >
@@ -138,7 +136,7 @@ export function FormError({ error, className }: FormErrorProps) {
       variant="error"
       size="sm"
       showIcon={false}
-      className={cn('mt-1 border-0 bg-transparent p-0 text-red-600', className)}
+      className={cn("mt-1 border-0 bg-transparent p-0 text-red-600", className)}
     />
   );
 }
@@ -150,25 +148,25 @@ interface PageErrorProps {
   className?: string;
 }
 
-export function PageError({ 
-  error, 
-  title = 'Something went wrong',
-  onRetry, 
-  className 
+export function PageError({
+  error,
+  title = "Something went wrong",
+  onRetry,
+  className,
 }: PageErrorProps) {
   const errorMessageProps: {
     error: string;
     title: string;
-    variant: 'error';
-    size: 'lg';
+    variant: "error";
+    size: "lg";
     className: string;
     onRetry?: () => void;
   } = {
-    error: error || 'An unexpected error occurred. Please try again.',
+    error: error || "An unexpected error occurred. Please try again.",
     title,
-    variant: 'error',
-    size: 'lg',
-    className: 'max-w-md',
+    variant: "error",
+    size: "lg",
+    className: "max-w-md",
   };
 
   if (onRetry) {
@@ -176,7 +174,12 @@ export function PageError({
   }
 
   return (
-    <div className={cn('flex justify-center items-center min-h-[200px]', className)}>
+    <div
+      className={cn(
+        "flex min-h-[200px] items-center justify-center",
+        className
+      )}
+    >
       <ErrorMessage {...errorMessageProps} />
     </div>
   );
@@ -191,13 +194,13 @@ export function InlineError({ error, className }: InlineErrorProps) {
   if (!error) {
     return null;
   }
-  
+
   return (
     <ErrorMessage
       error={error}
       variant="error"
       size="sm"
-      className={cn('mb-4', className)}
+      className={cn("mb-4", className)}
     />
   );
 }

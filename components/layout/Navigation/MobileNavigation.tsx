@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
-import { Menu, X, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { featuresMenu, instructorsMenu } from '@/lib/config/navigation';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import Link from "next/link";
+import { Menu, X, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { featuresMenu, instructorsMenu } from "@/lib/config/navigation";
 
 interface MobileNavigationProps {
   isSignedIn: boolean;
@@ -14,7 +14,13 @@ interface MobileNavigationProps {
   UserButton: React.ComponentType<Record<string, unknown>>;
 }
 
-export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpButton, UserButton }: MobileNavigationProps) {
+export function MobileNavigation({
+  isSignedIn,
+  isLoaded,
+  SignInButton,
+  SignUpButton,
+  UserButton,
+}: MobileNavigationProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -25,7 +31,7 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
   }, []);
 
   const toggleMobileAccordion = useCallback((menu: string) => {
-    setMobileAccordion(current => current === menu ? null : menu);
+    setMobileAccordion((current) => (current === menu ? null : menu));
   }, []);
 
   const closeMobileMenu = useCallback(() => {
@@ -36,7 +42,7 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
   // Focus management and close mobile menu when clicking outside
   useEffect(() => {
     // Lock/unlock body scroll
-    document.body.style.overflow = mobileMenuOpen ? 'hidden' : 'unset';
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "unset";
 
     // Focus management - trap focus within mobile menu
     const menuElement = mobileMenuRef.current;
@@ -48,14 +54,16 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
         'a, button, [tabindex]:not([tabindex="-1"])'
       );
       const firstFocusable = focusableElements[0] as HTMLElement;
-      const lastFocusable = focusableElements[focusableElements.length - 1] as HTMLElement;
+      const lastFocusable = focusableElements[
+        focusableElements.length - 1
+      ] as HTMLElement;
 
       // Focus first element when menu opens
       firstFocusable?.focus();
 
       // Trap focus
       handleTabKey = (e: KeyboardEvent) => {
-        if (e.key === 'Tab') {
+        if (e.key === "Tab") {
           if (e.shiftKey && document.activeElement === firstFocusable) {
             e.preventDefault();
             lastFocusable?.focus();
@@ -65,13 +73,15 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
           }
         }
         // Close on Escape
-        if (e.key === 'Escape') {
+        if (e.key === "Escape") {
           closeMobileMenu();
-          const menuButton = document.querySelector('[aria-controls="mobile-menu"]') as HTMLElement;
+          const menuButton = document.querySelector(
+            '[aria-controls="mobile-menu"]'
+          ) as HTMLElement;
           menuButton?.focus();
         }
       };
-      document.addEventListener('keydown', handleTabKey);
+      document.addEventListener("keydown", handleTabKey);
 
       // Handle clicks outside
       handleClickOutside = (event: MouseEvent) => {
@@ -79,30 +89,31 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
           closeMobileMenu();
         }
       };
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       if (handleTabKey) {
-        document.removeEventListener('keydown', handleTabKey);
+        document.removeEventListener("keydown", handleTabKey);
       }
       if (handleClickOutside) {
-        document.removeEventListener('mousedown', handleClickOutside);
+        document.removeEventListener("mousedown", handleClickOutside);
       }
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [mobileMenuOpen, closeMobileMenu]);
 
   // Close mobile menu on resize
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) { // lg breakpoint
+      if (window.innerWidth >= 1024) {
+        // lg breakpoint
         closeMobileMenu();
       }
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [closeMobileMenu]);
 
   return (
@@ -111,7 +122,7 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
       <div className="lg:hidden">
         <button
           type="button"
-          className="text-foreground/80 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary rounded-md p-2"
+          className="text-foreground/80 rounded-md p-2 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-expanded={mobileMenuOpen}
           aria-controls="mobile-menu"
@@ -127,40 +138,46 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div 
+        <div
           ref={mobileMenuRef}
           id="mobile-menu"
-          className="lg:hidden border-t border-border bg-background animate-slide-down absolute top-full left-0 right-0 z-40"
+          className="absolute left-0 right-0 top-full z-40 animate-slide-down border-t border-border bg-background lg:hidden"
           data-testid="mobile-menu"
         >
-          <div className="space-y-1 pb-4 pt-2 px-4">
+          <div className="space-y-1 px-4 pb-4 pt-2">
             {/* Features Accordion */}
             <div>
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md"
-                onClick={() => toggleMobileAccordion('features')}
-                aria-expanded={mobileAccordion === 'features'}
+                className="text-foreground/80 hover:bg-accent/50 flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-medium hover:text-primary"
+                onClick={() => toggleMobileAccordion("features")}
+                aria-expanded={mobileAccordion === "features"}
               >
                 Our Features
-                <ChevronRight className={cn(
-                  "h-5 w-5 transition-transform",
-                  mobileAccordion === 'features' && "rotate-90"
-                )} />
+                <ChevronRight
+                  className={cn(
+                    "h-5 w-5 transition-transform",
+                    mobileAccordion === "features" && "rotate-90"
+                  )}
+                />
               </button>
-              {mobileAccordion === 'features' && (
-                <div className="pl-6 pr-3 py-2 space-y-2 animate-slide-down">
-                  {featuresMenu.columns?.flatMap(column => column.items).map((item, index) => (
-                    <Link
-                      key={index}
-                      href={item.href}
-                      className="block px-3 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-accent/50 rounded-md"
-                      onClick={handleMobileMenuItemClick}
-                    >
-                      <div className="font-medium">{item.title}</div>
-                      <div className="text-xs text-muted-foreground">{item.description}</div>
-                    </Link>
-                  ))}
+              {mobileAccordion === "features" && (
+                <div className="animate-slide-down space-y-2 py-2 pl-6 pr-3">
+                  {featuresMenu.columns
+                    ?.flatMap((column) => column.items)
+                    .map((item, index) => (
+                      <Link
+                        key={index}
+                        href={item.href}
+                        className="hover:bg-accent/50 block rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-primary"
+                        onClick={handleMobileMenuItemClick}
+                      >
+                        <div className="font-medium">{item.title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {item.description}
+                        </div>
+                      </Link>
+                    ))}
                 </div>
               )}
             </div>
@@ -168,7 +185,7 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
             {/* Research Menu */}
             <Link
               href="/research"
-              className="block px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md"
+              className="text-foreground/80 hover:bg-accent/50 block rounded-md px-3 py-2 text-base font-medium hover:text-primary"
               onClick={handleMobileMenuItemClick}
             >
               Research
@@ -178,27 +195,31 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
             <div>
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md"
-                onClick={() => toggleMobileAccordion('instructors')}
-                aria-expanded={mobileAccordion === 'instructors'}
+                className="text-foreground/80 hover:bg-accent/50 flex w-full items-center justify-between rounded-md px-3 py-2 text-base font-medium hover:text-primary"
+                onClick={() => toggleMobileAccordion("instructors")}
+                aria-expanded={mobileAccordion === "instructors"}
               >
                 For Instructors
-                <ChevronRight className={cn(
-                  "h-5 w-5 transition-transform",
-                  mobileAccordion === 'instructors' && "rotate-90"
-                )} />
+                <ChevronRight
+                  className={cn(
+                    "h-5 w-5 transition-transform",
+                    mobileAccordion === "instructors" && "rotate-90"
+                  )}
+                />
               </button>
-              {mobileAccordion === 'instructors' && (
-                <div className="pl-6 pr-3 py-2 space-y-2 animate-slide-down">
+              {mobileAccordion === "instructors" && (
+                <div className="animate-slide-down space-y-2 py-2 pl-6 pr-3">
                   {instructorsMenu.items?.map((item, index) => (
                     <Link
                       key={index}
                       href={item.href}
-                      className="block px-3 py-2 text-sm text-muted-foreground hover:text-primary hover:bg-accent/50 rounded-md"
+                      className="hover:bg-accent/50 block rounded-md px-3 py-2 text-sm text-muted-foreground hover:text-primary"
                       onClick={handleMobileMenuItemClick}
                     >
                       <div className="font-medium">{item.title}</div>
-                      <div className="text-xs text-muted-foreground">{item.description}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {item.description}
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -208,18 +229,18 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
             {/* Flight Schools Menu */}
             <Link
               href="/schools"
-              className="block px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md"
+              className="text-foreground/80 hover:bg-accent/50 block rounded-md px-3 py-2 text-base font-medium hover:text-primary"
               onClick={handleMobileMenuItemClick}
             >
               For Flight Schools
             </Link>
 
             {/* Mobile Authentication */}
-            <div className="border-t border-border pt-4 mt-4 space-y-2">
+            <div className="mt-4 space-y-2 border-t border-border pt-4">
               {!isLoaded ? (
-                <div className="px-3 py-2 space-y-2">
-                  <div className="h-10 bg-muted animate-pulse rounded-md"></div>
-                  <div className="h-10 bg-muted animate-pulse rounded-md"></div>
+                <div className="space-y-2 px-3 py-2">
+                  <div className="h-10 animate-pulse rounded-md bg-muted"></div>
+                  <div className="h-10 animate-pulse rounded-md bg-muted"></div>
                 </div>
               ) : isSignedIn ? (
                 <div className="px-3 py-2">
@@ -228,12 +249,12 @@ export function MobileNavigation({ isSignedIn, isLoaded, SignInButton, SignUpBut
               ) : (
                 <>
                   <SignInButton mode="modal">
-                    <button className="block w-full text-left px-3 py-2 text-base font-medium text-foreground/80 hover:text-primary hover:bg-accent/50 rounded-md">
+                    <button className="text-foreground/80 hover:bg-accent/50 block w-full rounded-md px-3 py-2 text-left text-base font-medium hover:text-primary">
                       Login
                     </button>
                   </SignInButton>
                   <SignUpButton mode="modal">
-                    <button className="block w-full text-left px-3 py-2 text-base font-medium bg-primary text-primary-foreground hover:bg-primary/90 rounded-md">
+                    <button className="hover:bg-primary/90 block w-full rounded-md bg-primary px-3 py-2 text-left text-base font-medium text-primary-foreground">
                       Sign Up
                     </button>
                   </SignUpButton>

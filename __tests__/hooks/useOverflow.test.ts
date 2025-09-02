@@ -12,7 +12,7 @@ const mockResizeObserver = jest.fn().mockImplementation((callback) => ({
   disconnect: jest.fn(),
 }));
 
-Object.defineProperty(window, 'ResizeObserver', {
+Object.defineProperty(window, "ResizeObserver", {
   value: mockResizeObserver,
   writable: true,
 });
@@ -45,7 +45,7 @@ describe("useOverflow Hook", () => {
   describe("Initial State", () => {
     it("returns initial state when ref is null", () => {
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       expect(result.current.canLeft).toBe(false);
       expect(result.current.canRight).toBe(false);
     });
@@ -56,16 +56,16 @@ describe("useOverflow Hook", () => {
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         // Trigger initial update
         jest.runAllTimers();
       });
-      
+
       expect(result.current.canLeft).toBe(false);
       expect(result.current.canRight).toBe(false);
     });
@@ -78,15 +78,15 @@ describe("useOverflow Hook", () => {
         scrollWidth: 200,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         jest.runAllTimers();
       });
-      
+
       expect(result.current.canLeft).toBe(false);
       expect(result.current.canRight).toBe(true);
     });
@@ -97,15 +97,15 @@ describe("useOverflow Hook", () => {
         scrollWidth: 200,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         jest.runAllTimers();
       });
-      
+
       expect(result.current.canLeft).toBe(true);
       expect(result.current.canRight).toBe(true);
     });
@@ -116,15 +116,15 @@ describe("useOverflow Hook", () => {
         scrollWidth: 200,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         jest.runAllTimers();
       });
-      
+
       expect(result.current.canLeft).toBe(true);
       expect(result.current.canRight).toBe(false);
     });
@@ -135,15 +135,15 @@ describe("useOverflow Hook", () => {
         scrollWidth: 200,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         jest.runAllTimers();
       });
-      
+
       expect(result.current.canLeft).toBe(true);
       expect(result.current.canRight).toBe(false);
     });
@@ -156,14 +156,14 @@ describe("useOverflow Hook", () => {
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       renderHook(() => useOverflow(mockRef));
-      
+
       expect(mockElement.addEventListener).toHaveBeenCalledWith(
-        "scroll", 
-        expect.any(Function), 
+        "scroll",
+        expect.any(Function),
         { passive: true }
       );
     });
@@ -174,14 +174,17 @@ describe("useOverflow Hook", () => {
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
-      const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
+
+      const addEventListenerSpy = jest.spyOn(window, "addEventListener");
       mockRef.current = mockElement as any;
-      
+
       renderHook(() => useOverflow(mockRef));
-      
-      expect(addEventListenerSpy).toHaveBeenCalledWith("resize", expect.any(Function));
-      
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith(
+        "resize",
+        expect.any(Function)
+      );
+
       addEventListenerSpy.mockRestore();
     });
 
@@ -191,11 +194,11 @@ describe("useOverflow Hook", () => {
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       renderHook(() => useOverflow(mockRef));
-      
+
       expect(mockResizeObserver).toHaveBeenCalledWith(expect.any(Function));
     });
 
@@ -203,19 +206,19 @@ describe("useOverflow Hook", () => {
       const originalResizeObserver = window.ResizeObserver;
       // @ts-ignore
       delete window.ResizeObserver;
-      
+
       const mockElement = createMockElement({
         scrollLeft: 0,
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       expect(() => {
         renderHook(() => useOverflow(mockRef));
       }).not.toThrow();
-      
+
       window.ResizeObserver = originalResizeObserver;
     });
   });
@@ -227,20 +230,23 @@ describe("useOverflow Hook", () => {
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
-      const removeEventListenerSpy = jest.spyOn(window, 'removeEventListener');
+
+      const removeEventListenerSpy = jest.spyOn(window, "removeEventListener");
       mockRef.current = mockElement as any;
-      
+
       const { unmount } = renderHook(() => useOverflow(mockRef));
-      
+
       unmount();
-      
+
       expect(mockElement.removeEventListener).toHaveBeenCalledWith(
-        "scroll", 
+        "scroll",
         expect.any(Function)
       );
-      expect(removeEventListenerSpy).toHaveBeenCalledWith("resize", expect.any(Function));
-      
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        "resize",
+        expect.any(Function)
+      );
+
       removeEventListenerSpy.mockRestore();
     });
 
@@ -251,21 +257,21 @@ describe("useOverflow Hook", () => {
         unobserve: jest.fn(),
         disconnect: mockDisconnect,
       };
-      
+
       mockResizeObserver.mockImplementationOnce(() => mockObserver);
-      
+
       const mockElement = createMockElement({
         scrollLeft: 0,
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { unmount } = renderHook(() => useOverflow(mockRef));
-      
+
       unmount();
-      
+
       expect(mockDisconnect).toHaveBeenCalled();
     });
 
@@ -275,14 +281,14 @@ describe("useOverflow Hook", () => {
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { rerender } = renderHook(() => useOverflow(mockRef));
-      
+
       // Change ref to null
       mockRef.current = null;
-      
+
       expect(() => {
         rerender();
       }).not.toThrow();
@@ -296,28 +302,29 @@ describe("useOverflow Hook", () => {
         scrollWidth: 200,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         jest.runAllTimers();
       });
-      
+
       expect(result.current.canLeft).toBe(false);
       expect(result.current.canRight).toBe(true);
-      
+
       // Simulate scroll
       mockElement.scrollLeft = 50;
-      
+
       act(() => {
         // Trigger scroll event
-        const scrollCallback = (mockElement.addEventListener as jest.Mock).mock.calls
-          .find(call => call[0] === 'scroll')[1];
+        const scrollCallback = (
+          mockElement.addEventListener as jest.Mock
+        ).mock.calls.find((call) => call[0] === "scroll")[1];
         scrollCallback();
       });
-      
+
       expect(result.current.canLeft).toBe(true);
       expect(result.current.canRight).toBe(true);
     });
@@ -328,30 +335,31 @@ describe("useOverflow Hook", () => {
         scrollWidth: 200,
         clientWidth: 100,
       });
-      
-      const addEventListenerSpy = jest.spyOn(window, 'addEventListener');
+
+      const addEventListenerSpy = jest.spyOn(window, "addEventListener");
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         jest.runAllTimers();
       });
-      
+
       expect(result.current.canRight).toBe(true);
-      
+
       // Simulate window resize by changing clientWidth
       mockElement.clientWidth = 200;
-      
+
       act(() => {
         // Trigger resize event
-        const resizeCallback = addEventListenerSpy.mock.calls
-          .find(call => call[0] === 'resize')[1];
-        (resizeCallback as EventListener)(new Event('resize'));
+        const resizeCallback = addEventListenerSpy.mock.calls.find(
+          (call) => call[0] === "resize"
+        )[1];
+        (resizeCallback as EventListener)(new Event("resize"));
       });
-      
+
       expect(result.current.canRight).toBe(false);
-      
+
       addEventListenerSpy.mockRestore();
     });
 
@@ -361,24 +369,24 @@ describe("useOverflow Hook", () => {
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         jest.runAllTimers();
       });
-      
+
       expect(result.current.canRight).toBe(false);
-      
+
       // Change dimensions and trigger ResizeObserver
       mockElement.scrollWidth = 200;
-      
+
       act(() => {
         jest.runAllTimers(); // This should trigger the ResizeObserver callback
       });
-      
+
       expect(result.current.canRight).toBe(true);
     });
   });
@@ -390,22 +398,23 @@ describe("useOverflow Hook", () => {
         scrollWidth: 100,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       const initialResult = result.current;
-      
+
       act(() => {
         // Trigger multiple scroll events with same result
-        const scrollCallback = (mockElement.addEventListener as jest.Mock).mock.calls
-          .find(call => call[0] === 'scroll')[1];
+        const scrollCallback = (
+          mockElement.addEventListener as jest.Mock
+        ).mock.calls.find((call) => call[0] === "scroll")[1];
         scrollCallback();
         scrollCallback();
         scrollCallback();
       });
-      
+
       // State should remain the same object reference if values haven't changed
       expect(result.current.canLeft).toBe(initialResult.canLeft);
       expect(result.current.canRight).toBe(initialResult.canRight);
@@ -417,22 +426,23 @@ describe("useOverflow Hook", () => {
         scrollWidth: 200,
         clientWidth: 100,
       });
-      
+
       mockRef.current = mockElement as any;
-      
+
       const { result } = renderHook(() => useOverflow(mockRef));
-      
+
       act(() => {
         // Fire many events rapidly
-        const scrollCallback = (mockElement.addEventListener as jest.Mock).mock.calls
-          .find(call => call[0] === 'scroll')[1];
-        
+        const scrollCallback = (
+          mockElement.addEventListener as jest.Mock
+        ).mock.calls.find((call) => call[0] === "scroll")[1];
+
         for (let i = 0; i < 100; i++) {
           mockElement.scrollLeft = i;
           scrollCallback();
         }
       });
-      
+
       // Should handle without errors
       expect(result.current.canLeft).toBe(true);
       expect(result.current.canRight).toBe(true);

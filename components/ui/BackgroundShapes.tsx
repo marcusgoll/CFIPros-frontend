@@ -8,7 +8,10 @@ interface BackgroundShapesProps {
   className?: string;
 }
 
-export function BackgroundShapes({ variant = "gradient", className = "" }: BackgroundShapesProps) {
+export function BackgroundShapes({
+  variant = "gradient",
+  className = "",
+}: BackgroundShapesProps) {
   const baseClass = `absolute inset-0 pointer-events-none overflow-hidden ${className}`;
 
   if (variant === "gradient") {
@@ -16,15 +19,15 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
       <div className={baseClass}>
         {/* Floating geometric shapes with gradients */}
         <motion.svg
-          className="absolute top-10 right-10 w-32 h-32 text-primary/10"
+          className="text-primary/10 absolute right-10 top-10 h-32 w-32"
           initial={{ rotate: 0, scale: 0.8 }}
-          animate={{ 
+          animate={{
             rotate: 360,
-            scale: [0.8, 1, 0.8]
+            scale: [0.8, 1, 0.8],
           }}
-          transition={{ 
+          transition={{
             rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-            scale: { duration: 4, repeat: Infinity, ease: "easeInOut" }
+            scale: { duration: 4, repeat: Infinity, ease: "easeInOut" },
           }}
           viewBox="0 0 100 100"
           fill="currentColor"
@@ -33,7 +36,7 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
         </motion.svg>
 
         <motion.svg
-          className="absolute bottom-20 left-16 w-24 h-24 text-accent/10"
+          className="text-accent/10 absolute bottom-20 left-16 h-24 w-24"
           initial={{ rotate: 0 }}
           animate={{ rotate: -360 }}
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
@@ -45,7 +48,7 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
         </motion.svg>
 
         <motion.svg
-          className="absolute top-1/3 left-8 w-16 h-16 text-primary/8"
+          className="text-primary/8 absolute left-8 top-1/3 h-16 w-16"
           initial={{ y: 0 }}
           animate={{ y: [-10, 10, -10] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -56,7 +59,7 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
         </motion.svg>
 
         <motion.svg
-          className="absolute bottom-1/4 right-8 w-20 h-20 text-accent/8"
+          className="text-accent/8 absolute bottom-1/4 right-8 h-20 w-20"
           initial={{ scale: 1 }}
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
@@ -68,16 +71,21 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
 
         {/* Subtle gradient overlay lines */}
         <motion.div
-          className="absolute top-0 left-1/4 w-px h-full bg-gradient-to-b from-transparent via-primary/5 to-transparent"
+          className="via-primary/5 absolute left-1/4 top-0 h-full w-px bg-gradient-to-b from-transparent to-transparent"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.5, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute top-0 right-1/3 w-px h-full bg-gradient-to-b from-transparent via-accent/5 to-transparent"
+          className="via-accent/5 absolute right-1/3 top-0 h-full w-px bg-gradient-to-b from-transparent to-transparent"
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.3, 0] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
         />
       </div>
     );
@@ -88,7 +96,7 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
       <div className={baseClass}>
         {/* Clean geometric patterns */}
         <motion.svg
-          className="absolute top-16 right-20 w-40 h-40 text-border"
+          className="absolute right-20 top-16 h-40 w-40 text-border"
           initial={{ opacity: 0.3 }}
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
@@ -103,7 +111,7 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
         </motion.svg>
 
         <motion.svg
-          className="absolute bottom-24 left-16 w-32 h-32 text-border"
+          className="absolute bottom-24 left-16 h-32 w-32 text-border"
           initial={{ rotate: 0 }}
           animate={{ rotate: 360 }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
@@ -120,7 +128,7 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
         </motion.svg>
 
         <motion.svg
-          className="absolute top-1/2 left-4 w-24 h-24 text-border/50"
+          className="text-border/50 absolute left-4 top-1/2 h-24 w-24"
           initial={{ scale: 1 }}
           animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -133,7 +141,7 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
         </motion.svg>
 
         <motion.svg
-          className="absolute bottom-1/3 right-12 w-28 h-28 text-border/50"
+          className="text-border/50 absolute bottom-1/3 right-12 h-28 w-28"
           initial={{ rotate: 0 }}
           animate={{ rotate: -180 }}
           transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
@@ -142,16 +150,38 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
           stroke="currentColor"
           strokeWidth="1.5"
         >
-          <rect x="25" y="25" width="50" height="50" transform="rotate(45 50 50)" />
-          <rect x="35" y="35" width="30" height="30" transform="rotate(45 50 50)" />
+          <rect
+            x="25"
+            y="25"
+            width="50"
+            height="50"
+            transform="rotate(45 50 50)"
+          />
+          <rect
+            x="35"
+            y="35"
+            width="30"
+            height="30"
+            transform="rotate(45 50 50)"
+          />
         </motion.svg>
 
         {/* Grid overlay */}
         <div className="absolute inset-0 opacity-[0.02]">
-          <svg className="w-full h-full" viewBox="0 0 100 100" fill="none">
+          <svg className="h-full w-full" viewBox="0 0 100 100" fill="none">
             <defs>
-              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="currentColor" strokeWidth="0.5"/>
+              <pattern
+                id="grid"
+                width="10"
+                height="10"
+                patternUnits="userSpaceOnUse"
+              >
+                <path
+                  d="M 10 0 L 0 0 0 10"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="0.5"
+                />
               </pattern>
             </defs>
             <rect width="100" height="100" fill="url(#grid)" />
@@ -165,12 +195,12 @@ export function BackgroundShapes({ variant = "gradient", className = "" }: Backg
     return (
       <div className={baseClass}>
         {/* Subtle static background elements - no floating SVGs */}
-        <div className="absolute top-1/4 right-1/4 w-32 h-32 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/3 left-1/4 w-24 h-24 bg-accent/5 rounded-full blur-2xl" />
-        
+        <div className="bg-primary/5 absolute right-1/4 top-1/4 h-32 w-32 rounded-full blur-3xl" />
+        <div className="bg-accent/5 absolute bottom-1/3 left-1/4 h-24 w-24 rounded-full blur-2xl" />
+
         {/* Clean geometric accents */}
-        <div className="absolute top-0 left-1/5 w-px h-full bg-gradient-to-b from-transparent via-primary/8 to-transparent" />
-        <div className="absolute top-0 right-1/4 w-px h-full bg-gradient-to-b from-transparent via-accent/6 to-transparent" />
+        <div className="left-1/5 via-primary/8 absolute top-0 h-full w-px bg-gradient-to-b from-transparent to-transparent" />
+        <div className="via-accent/6 absolute right-1/4 top-0 h-full w-px bg-gradient-to-b from-transparent to-transparent" />
       </div>
     );
   }

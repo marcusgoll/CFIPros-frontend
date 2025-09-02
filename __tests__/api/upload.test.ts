@@ -3,42 +3,78 @@
  * Testing file upload endpoints with BFF proxy functionality
  */
 
-import { NextRequest } from 'next/server';
-import { POST } from '@/app/api/upload/route';
-import { APIError } from '@/lib/api/errors';
+import { NextRequest } from "next/server";
+import { POST } from "@/app/api/upload/route";
+import { APIError } from "@/lib/api/errors";
 
 // Mock the proxy functions
-jest.mock('@/lib/api/proxy', () => ({
+jest.mock("@/lib/api/proxy", () => ({
   proxyFileUpload: jest.fn(),
-  getClientIP: jest.fn().mockReturnValue('127.0.0.1'),
-  addCorrelationId: jest.fn().mockReturnValue('test-correlation-id'),
+  getClientIP: jest.fn().mockReturnValue("127.0.0.1"),
+  addCorrelationId: jest.fn().mockReturnValue("test-correlation-id"),
 }));
 
 // Mock fetch for testing error scenarios
 global.fetch = jest.fn();
 
-describe('/api/upload', () => {
+// Mock FileUploadSecurity to handle validation properly in tests
+jest.mock("@/lib/security/fileUpload", () => ({
+  FileUploadSecurity: {
+    validateFile: jest.fn().mockImplementation(async (file) => {
+      // Mock security validation - allow files up to 20MB for testing
+      if (file.size > 20 * 1024 * 1024) {
+        return { isSecure: false, error: "File size exceeds security limits", warnings: [] };
+      }
+      return { isSecure: true, warnings: [] };
+    }),
+    generateFileMetadata: jest.fn().mockResolvedValue({ fileName: "test.pdf", size: 1000 }),
+  },
+  FileUploadRateLimiter: {
+    checkRateLimit: jest.fn().mockReturnValue({ 
+      allowed: true, 
+      remainingUploads: 9,
+      resetTime: Date.now() + 3600000
+    }),
+  },
+  FileUploadCSP: {
+    validateCSP: jest.fn().mockReturnValue(true),
+    getUploadPageCSP: jest.fn().mockReturnValue({}),
+  },
+}));
+
+describe("/api/upload", () => {
   let mockProxyFileUpload: jest.MockedFunction<any>;
 
   beforeEach(() => {
-    const { proxyFileUpload } = require('@/lib/api/proxy');
+    const { proxyFileUpload } = require("@/lib/api/proxy");
+    const { FileUploadRateLimiter } = require("@/lib/security/fileUpload");
     mockProxyFileUpload = proxyFileUpload;
+    
+    // Reset rate limiter to allow requests by default
+    FileUploadRateLimiter.checkRateLimit.mockReturnValue({ 
+      allowed: true, 
+      remainingUploads: 9,
+      resetTime: Date.now() + 3600000
+    });
+    
     jest.clearAllMocks();
   });
 
-  describe('POST /api/upload', () => {
-    it('should successfully upload a valid PDF file', async () => {
+  describe("POST /api/upload", () => {
+    it("should successfully upload a valid PDF file", async () => {
       // Arrange
-      const mockFile = new File(['test content'], 'test.pdf', { type: 'application/pdf' });
+      const mockFile = new File(["test content"], "test.pdf", {
+        type: "application/pdf",
+      });
       const formData = new FormData();
-      formData.append('file', mockFile);
+      formData.append("file", mockFile);
 
       const mockUploadResult = {
-        id: 'test-upload-id',
-        status: 'processing',
-        filename: 'test.pdf',
+        id: "test-upload-id",
+        status: "processing",
+        filename: "test.pdf",
         size: 1024,
-        uploaded_at: '2024-01-01T00:00:00Z',
+        uploaded_at: "2024-01-01T00:00:00Z",
       };
 
       // Mock successful proxy response
@@ -46,17 +82,17 @@ describe('/api/upload', () => {
         new Response(JSON.stringify(mockUploadResult), {
           status: 200,
           headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
           },
         })
       );
 
-      const request = new NextRequest('http://localhost:3000/api/upload', {
-        method: 'POST',
+      const request = new NextRequest("http://localhost:3000/api/upload", {
+        method: "POST",
         body: formData,
         headers: {
-          'Origin': 'http://localhost:3000',
+          Origin: "http://localhost:3000",
         },
       });
 
@@ -69,26 +105,26 @@ describe('/api/upload', () => {
       expect(data).toEqual(mockUploadResult);
       expect(mockProxyFileUpload).toHaveBeenCalledWith(
         request,
-        '/upload',
+        "/upload",
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-Correlation-ID': 'test-correlation-id',
-            'X-Client-IP': '127.0.0.1',
+            "X-Correlation-ID": "test-correlation-id",
+            "X-Client-IP": "127.0.0.1",
           }),
         })
       );
     });
 
-    it('should reject files that exceed size limit', async () => {
+    it("should reject files that exceed size limit", async () => {
       // Arrange
-      const largeFile = new File(['x'.repeat(11 * 1024 * 1024)], 'large.pdf', { 
-        type: 'application/pdf' 
+      const largeFile = new File(["x".repeat(16 * 1024 * 1024)], "large.pdf", {
+        type: "application/pdf",
       });
       const formData = new FormData();
-      formData.append('file', largeFile);
+      formData.append("file", largeFile);
 
-      const request = new NextRequest('http://localhost:3000/api/upload', {
-        method: 'POST',
+      const request = new NextRequest("http://localhost:3000/api/upload", {
+        method: "POST",
         body: formData,
       });
 
@@ -98,19 +134,21 @@ describe('/api/upload', () => {
 
       // Assert
       expect(response.status).toBe(400);
-      expect(data.type).toBe('about:blank#file_too_large');
-      expect(data.title).toBe('file_too_large');
-      expect(data.detail).toContain('exceeds maximum size');
+      expect(data.type).toBe("about:blank#file_too_large");
+      expect(data.title).toBe("file_too_large");
+      expect(data.detail).toContain("exceeds maximum size");
     });
 
-    it('should reject unsupported file types', async () => {
+    it("should reject unsupported file types", async () => {
       // Arrange
-      const invalidFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+      const invalidFile = new File(["test"], "test.txt", {
+        type: "text/plain",
+      });
       const formData = new FormData();
-      formData.append('file', invalidFile);
+      formData.append("file", invalidFile);
 
-      const request = new NextRequest('http://localhost:3000/api/upload', {
-        method: 'POST',
+      const request = new NextRequest("http://localhost:3000/api/upload", {
+        method: "POST",
         body: formData,
       });
 
@@ -120,17 +158,17 @@ describe('/api/upload', () => {
 
       // Assert
       expect(response.status).toBe(400);
-      expect(data.type).toBe('about:blank#unsupported_file_type');
-      expect(data.title).toBe('unsupported_file_type');
-      expect(data.detail).toContain('Supported types');
+      expect(data.type).toBe("about:blank#unsupported_file_type");
+      expect(data.title).toBe("unsupported_file_type");
+      expect(data.detail).toContain("Supported types");
     });
 
-    it('should reject requests without files', async () => {
+    it("should reject requests without files", async () => {
       // Arrange
       const formData = new FormData();
-      
-      const request = new NextRequest('http://localhost:3000/api/upload', {
-        method: 'POST',
+
+      const request = new NextRequest("http://localhost:3000/api/upload", {
+        method: "POST",
         body: formData,
       });
 
@@ -140,63 +178,71 @@ describe('/api/upload', () => {
 
       // Assert
       expect(response.status).toBe(400);
-      expect(data.type).toBe('about:blank#no_file_provided');
-      expect(data.title).toBe('no_file_provided');
-      expect(data.detail).toBe('No file was provided for upload');
+      expect(data.type).toBe("about:blank#no_file_provided");
+      expect(data.title).toBe("no_file_provided");
+      expect(data.detail).toBe("No file was provided for upload");
     });
 
-    it('should handle rate limiting', async () => {
+    it("should handle rate limiting", async () => {
       // Arrange - simulate rate limiting by making many rapid requests
       // The middleware has a built-in rate limiter that should trigger
-      const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+      const mockFile = new File(["test"], "test.pdf", {
+        type: "application/pdf",
+      });
       const formData = new FormData();
-      formData.append('file', mockFile);
+      formData.append("file", mockFile);
 
       // Mock the proxy to return success for the few requests that pass rate limiting
       mockProxyFileUpload.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'test' }), { status: 200 })
+        new Response(JSON.stringify({ id: "test" }), { status: 200 })
       );
 
       // Make many requests to trigger rate limiting (upload endpoint allows 60/hour)
-      const requests = Array.from({ length: 62 }, () => 
-        new NextRequest('http://localhost:3000/api/upload', {
-          method: 'POST',
-          body: formData,
-          headers: { 'x-forwarded-for': '192.168.1.100' }, // Same IP
-        })
+      const requests = Array.from(
+        { length: 62 },
+        () =>
+          new NextRequest("http://localhost:3000/api/upload", {
+            method: "POST",
+            body: formData,
+            headers: { "x-forwarded-for": "192.168.1.100" }, // Same IP
+          })
       );
 
       // Act - make all requests rapidly
-      const responses = await Promise.all(
-        requests.map(req => POST(req))
-      );
+      const responses = await Promise.all(requests.map((req) => POST(req)));
 
       // Assert - some responses should be rate limited
-      const rateLimitedResponses = responses.filter(r => r.status === 429);
+      const rateLimitedResponses = responses.filter((r) => r.status === 429);
       expect(rateLimitedResponses.length).toBeGreaterThan(0);
-      
+
       if (rateLimitedResponses.length > 0) {
         const response = rateLimitedResponses[0]!;
         const data = await response.json();
-        expect(data.type).toBe('about:blank#rate_limit_exceeded');
-        expect(data.title).toBe('rate_limit_exceeded');
-        expect(response.headers.get('X-RateLimit-Limit')).toBe('60');
-        expect(response.headers.get('X-RateLimit-Remaining')).toBe('0');
+        expect(data.type).toBe("about:blank#rate_limit_exceeded");
+        expect(data.title).toBe("rate_limit_exceeded");
+        expect(response.headers.get("X-RateLimit-Limit")).toBe("60");
+        expect(response.headers.get("X-RateLimit-Remaining")).toBe("0");
       }
     });
 
-    it('should handle backend API errors', async () => {
+    it("should handle backend API errors", async () => {
       // Arrange
-      const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+      const mockFile = new File(["test"], "test.pdf", {
+        type: "application/pdf",
+      });
       const formData = new FormData();
-      formData.append('file', mockFile);
+      formData.append("file", mockFile);
 
       // Mock proxy to throw an error (simulating backend failure)
-      const backendError = new APIError('processing_failed', 500, 'Backend processing failed');
+      const backendError = new APIError(
+        "processing_failed",
+        500,
+        "Backend processing failed"
+      );
       mockProxyFileUpload.mockRejectedValue(backendError);
 
-      const request = new NextRequest('http://localhost:3000/api/upload', {
-        method: 'POST',
+      const request = new NextRequest("http://localhost:3000/api/upload", {
+        method: "POST",
         body: formData,
       });
 
@@ -206,30 +252,32 @@ describe('/api/upload', () => {
 
       // Assert
       expect(response.status).toBe(500);
-      expect(data.type).toBe('about:blank#processing_failed');
-      expect(data.title).toBe('processing_failed');
-      expect(data.detail).toBe('Backend processing failed');
+      expect(data.type).toBe("about:blank#processing_failed");
+      expect(data.title).toBe("processing_failed");
+      expect(data.detail).toBe("Backend processing failed");
     });
 
-    it('should include proper CORS headers', async () => {
+    it("should include proper CORS headers", async () => {
       // Arrange
-      const mockFile = new File(['test'], 'test.pdf', { type: 'application/pdf' });
+      const mockFile = new File(["test"], "test.pdf", {
+        type: "application/pdf",
+      });
       const formData = new FormData();
-      formData.append('file', mockFile);
+      formData.append("file", mockFile);
 
       // Mock successful proxy response
       mockProxyFileUpload.mockResolvedValue(
-        new Response(JSON.stringify({ id: 'test' }), {
+        new Response(JSON.stringify({ id: "test" }), {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
+          headers: { "Content-Type": "application/json" },
         })
       );
 
-      const request = new NextRequest('http://localhost:3000/api/upload', {
-        method: 'POST',
+      const request = new NextRequest("http://localhost:3000/api/upload", {
+        method: "POST",
         body: formData,
         headers: {
-          'Origin': 'http://localhost:3000',
+          Origin: "http://localhost:3000",
         },
       });
 
@@ -237,22 +285,26 @@ describe('/api/upload', () => {
       const response = await POST(request);
 
       // Assert - CORS headers should be added by the middleware
-      expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
-      expect(response.headers.get('Access-Control-Allow-Methods')).toBe('POST, OPTIONS');
-      expect(response.headers.get('Access-Control-Allow-Headers')).toContain('Content-Type');
+      expect(response.headers.get("Access-Control-Allow-Origin")).toBe(
+        "http://localhost:3000"
+      );
+      expect(response.headers.get("Access-Control-Allow-Methods")).toBe(
+        "POST, OPTIONS"
+      );
+      expect(response.headers.get("Access-Control-Allow-Headers")).toContain(
+        "Content-Type"
+      );
     });
   });
 
-  describe('OPTIONS /api/upload', () => {
-    it('should handle preflight CORS requests', async () => {
+  describe("OPTIONS /api/upload", () => {
+    it("should handle preflight CORS requests", async () => {
       // This test would be for the OPTIONS handler
       // const request = new NextRequest('http://localhost:3000/api/upload', {
       //   method: 'OPTIONS',
       // });
-
       // Would need to import and test OPTIONS handler
       // const response = await OPTIONS(request);
-      
       // expect(response.status).toBe(200);
       // expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
     });

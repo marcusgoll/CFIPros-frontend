@@ -76,8 +76,11 @@ export default function CFIProsHomePage() {
   if (!isMounted) {
     return (
       <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
-        <main id="main" className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <main
+          id="main"
+          className="flex min-h-screen items-center justify-center"
+        >
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary"></div>
         </main>
       </div>
     );
@@ -86,9 +89,9 @@ export default function CFIProsHomePage() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <main id="main">
-        <HeroVersionC 
-          opacity={isMounted ? opacity : 1} 
-          scale={isMounted ? scale : 1} 
+        <HeroVersionC
+          opacity={isMounted ? opacity : 1}
+          scale={isMounted ? scale : 1}
         />
 
         {/* Feature Spotlight Menu */}
@@ -96,7 +99,9 @@ export default function CFIProsHomePage() {
           <div className="mx-auto max-w-7xl px-4 md:px-6">
             <motion.div
               initial={reducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
-              whileInView={reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+              whileInView={
+                reducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }
+              }
               viewport={{ once: true }}
               transition={{ delay: reducedMotion ? 0 : 0.2 }}
             >
@@ -121,7 +126,7 @@ export default function CFIProsHomePage() {
               featureName={getFeatureName(selectedFeature)}
               screenshotUrl={
                 FEATURE_SCREENSHOTS[selectedFeature] ??
-                FEATURE_SCREENSHOTS['upload'] ??
+                FEATURE_SCREENSHOTS["upload"] ??
                 ""
               }
               onPlayClick={(featureId) => {
@@ -135,7 +140,7 @@ export default function CFIProsHomePage() {
           </div>
         </section>
 
-        <BenefitZipperList 
+        <BenefitZipperList
           onSectionView={(sectionId) => {
             trackEvent("benefit_section_view", {
               section: sectionId,
@@ -165,4 +170,3 @@ export default function CFIProsHomePage() {
     </div>
   );
 }
- 

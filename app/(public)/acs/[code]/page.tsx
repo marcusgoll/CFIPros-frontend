@@ -1,7 +1,13 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, AlertCircle, BookOpen, Target } from "lucide-react";
-import { Button, Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui";
 import { notFound } from "next/navigation";
 
 // Mock data - will be replaced with API call
@@ -12,22 +18,24 @@ const mockACSData = {
     area: "Preflight Preparation",
     task: "Weather Information",
     element: "Weather reports and forecasts",
-    officialText: "The applicant demonstrates understanding of weather information by explaining weather reports, forecasts, and weather charts, including the use of weather services and sources.",
-    summary: "This ACS code covers the essential knowledge required for interpreting weather information during preflight preparation. Pilots must demonstrate proficiency in reading METARs, TAFs, weather charts, and understanding various weather phenomena that affect flight safety.",
+    officialText:
+      "The applicant demonstrates understanding of weather information by explaining weather reports, forecasts, and weather charts, including the use of weather services and sources.",
+    summary:
+      "This ACS code covers the essential knowledge required for interpreting weather information during preflight preparation. Pilots must demonstrate proficiency in reading METARs, TAFs, weather charts, and understanding various weather phenomena that affect flight safety.",
     commonPitfalls: [
       "Misinterpreting TAF validity periods and amendment indicators",
       "Confusing MSL and AGL cloud base reporting in METARs",
       "Not recognizing significant weather abbreviations and symbols",
       "Failing to identify frontal passages and associated weather changes",
-      "Overlooking NOTAMs related to weather equipment outages"
+      "Overlooking NOTAMs related to weather equipment outages",
     ],
     relatedCodes: ["PA.I.B.K1", "PA.I.B.K3", "PA.I.C.K1"],
     studyResources: [
       "FAA-AC-00-6B Aviation Weather",
       "FAA-AC-00-45H Aviation Weather Services",
-      "NOAA Aviation Weather Center"
-    ]
-  }
+      "NOAA Aviation Weather Center",
+    ],
+  },
 };
 
 type Props = {
@@ -37,7 +45,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params;
   const acsData = mockACSData[code as keyof typeof mockACSData];
-  
+
   if (!acsData) {
     return {
       title: "ACS Code Not Found",
@@ -45,7 +53,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const title = `ACS ${acsData.code}: ${acsData.title}`;
-  const description = acsData.summary || `Learn about ACS code ${acsData.code} - ${acsData.title}. Part of ${acsData.area} covering ${acsData.task}.`;
+  const description =
+    acsData.summary ||
+    `Learn about ACS code ${acsData.code} - ${acsData.title}. Part of ${acsData.area} covering ${acsData.task}.`;
 
   return {
     title,
@@ -57,7 +67,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       acsData.task,
       "pilot training",
       "aviation standards",
-      "checkride preparation"
+      "checkride preparation",
     ].filter(Boolean),
     openGraph: {
       title,
@@ -115,27 +125,27 @@ export default async function ACSDetailPage({ params }: Props) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "LearningResource",
-    "name": `ACS ${acsData.code}: ${acsData.title}`,
-    "description": acsData.summary,
-    "identifier": acsData.code,
-    "teaches": acsData.title,
-    "educationalLevel": "Professional Certification",
-    "learningResourceType": "Reference Material",
-    "isPartOf": {
+    name: `ACS ${acsData.code}: ${acsData.title}`,
+    description: acsData.summary,
+    identifier: acsData.code,
+    teaches: acsData.title,
+    educationalLevel: "Professional Certification",
+    learningResourceType: "Reference Material",
+    isPartOf: {
       "@type": "Course",
-      "name": "Airman Certification Standards",
-      "description": "FAA Airman Certification Standards for Pilots"
+      name: "Airman Certification Standards",
+      description: "FAA Airman Certification Standards for Pilots",
     },
-    "about": {
+    about: {
       "@type": "Thing",
-      "name": acsData.area,
-      "description": acsData.task
+      name: acsData.area,
+      description: acsData.task,
     },
-    "provider": {
+    provider: {
       "@type": "Organization",
-      "name": "CFIPros",
-      "url": "https://cfipros.com"
-    }
+      name: "CFIPros",
+      url: "https://cfipros.com",
+    },
   };
 
   return (
@@ -144,10 +154,10 @@ export default async function ACSDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      
+
       <div className="min-h-screen bg-gray-50">
         {/* Breadcrumb */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="border-b border-gray-200 bg-white">
           <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
             <nav className="flex items-center space-x-2 text-sm">
               <Link href="/" className="text-gray-500 hover:text-gray-700">
@@ -158,7 +168,7 @@ export default async function ACSDetailPage({ params }: Props) {
                 ACS Codes
               </Link>
               <span className="text-gray-400">/</span>
-              <span className="text-gray-900 font-medium">{acsData.code}</span>
+              <span className="font-medium text-gray-900">{acsData.code}</span>
             </nav>
           </div>
         </div>
@@ -172,13 +182,13 @@ export default async function ACSDetailPage({ params }: Props) {
               <div className="mb-8">
                 <Link href="/acs">
                   <Button variant="ghost" size="sm" className="mb-4">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to ACS Codes
                   </Button>
                 </Link>
-                
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="rounded-lg bg-primary-600 px-4 py-2 text-lg font-bold text-white">
+
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="bg-primary-600 rounded-lg px-4 py-2 text-lg font-bold text-white">
                     {acsData.code}
                   </div>
                   <div className="flex-1">
@@ -189,10 +199,10 @@ export default async function ACSDetailPage({ params }: Props) {
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <span className="inline-flex items-center rounded-md bg-primary-100 px-3 py-1 text-sm font-medium text-primary-800">
+                  <span className="bg-primary-100 text-primary-800 inline-flex items-center rounded-md px-3 py-1 text-sm font-medium">
                     {acsData.area}
                   </span>
-                  <span className="inline-flex items-center rounded-md bg-secondary-100 px-3 py-1 text-sm font-medium text-secondary-800">
+                  <span className="bg-secondary-100 text-secondary-800 inline-flex items-center rounded-md px-3 py-1 text-sm font-medium">
                     {acsData.task}
                   </span>
                   {acsData.element && (
@@ -207,12 +217,12 @@ export default async function ACSDetailPage({ params }: Props) {
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5 text-primary-600" />
+                    <BookOpen className="text-primary-600 h-5 w-5" />
                     Summary
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 leading-relaxed">
+                  <p className="leading-relaxed text-gray-700">
                     {acsData.summary}
                   </p>
                 </CardContent>
@@ -225,8 +235,8 @@ export default async function ACSDetailPage({ params }: Props) {
                     <CardTitle>Official Standard</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-primary-500">
-                      <p className="text-gray-700 italic">
+                    <div className="border-primary-500 rounded-lg border-l-4 bg-gray-50 p-4">
+                      <p className="italic text-gray-700">
                         {acsData.officialText}
                       </p>
                     </div>
@@ -238,7 +248,7 @@ export default async function ACSDetailPage({ params }: Props) {
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-warning-600" />
+                    <AlertCircle className="text-warning-600 h-5 w-5" />
                     Common Pitfalls
                   </CardTitle>
                 </CardHeader>
@@ -258,7 +268,7 @@ export default async function ACSDetailPage({ params }: Props) {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5 text-success-600" />
+                    <Target className="text-success-600 h-5 w-5" />
                     Study Resources
                   </CardTitle>
                 </CardHeader>
@@ -278,18 +288,17 @@ export default async function ACSDetailPage({ params }: Props) {
             {/* Sidebar */}
             <div className="lg:col-span-1">
               {/* CTA Card */}
-              <Card className="mb-6 border-primary-200 bg-primary-50">
+              <Card className="border-primary-200 bg-primary-50 mb-6">
                 <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  <h3 className="mb-3 text-lg font-semibold text-gray-900">
                     Master This Topic
                   </h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Get personalized study plans and premium lessons for this ACS code.
+                  <p className="mb-4 text-sm text-gray-600">
+                    Get personalized study plans and premium lessons for this
+                    ACS code.
                   </p>
                   <Link href="/auth/register" className="block">
-                    <Button className="w-full">
-                      Start Learning
-                    </Button>
+                    <Button className="w-full">Start Learning</Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -306,9 +315,9 @@ export default async function ACSDetailPage({ params }: Props) {
                         <Link
                           key={relatedCode}
                           href={`/acs/${relatedCode}`}
-                          className="block rounded-lg border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50 transition-colors"
+                          className="block rounded-lg border border-gray-200 px-3 py-2 text-sm transition-colors hover:bg-gray-50"
                         >
-                          <span className="font-medium text-primary-600">
+                          <span className="text-primary-600 font-medium">
                             {relatedCode}
                           </span>
                         </Link>

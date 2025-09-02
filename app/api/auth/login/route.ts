@@ -3,11 +3,11 @@
  * Handle user authentication and token generation
  */
 
-import { NextRequest } from 'next/server';
-import { withAPIMiddleware, createOptionsHandler } from '@/lib/api/middleware';
-import { validateRequest } from '@/lib/api/validation';
-import { proxyRequest, getClientIP } from '@/lib/api/proxy';
-import { CommonErrors, handleAPIError } from '@/lib/api/errors';
+import { NextRequest } from "next/server";
+import { withAPIMiddleware, createOptionsHandler } from "@/lib/api/middleware";
+import { validateRequest } from "@/lib/api/validation";
+import { proxyRequest, getClientIP } from "@/lib/api/proxy";
+import { CommonErrors, handleAPIError } from "@/lib/api/errors";
 
 async function loginHandler(request: NextRequest) {
   const clientIP = getClientIP(request);
@@ -20,23 +20,23 @@ async function loginHandler(request: NextRequest) {
   }
 
   // Proxy request to backend
-  const response = await proxyRequest(request, '/auth/login', {
+  const response = await proxyRequest(request, "/auth/login", {
     headers: {
-      'X-Client-IP': clientIP,
+      "X-Client-IP": clientIP,
     },
   });
 
   // Add security headers for auth endpoints
-  response.headers.set('Cache-Control', 'no-store'); // Never cache auth responses
-  response.headers.set('Pragma', 'no-cache');
-  
+  response.headers.set("Cache-Control", "no-store"); // Never cache auth responses
+  response.headers.set("Pragma", "no-cache");
+
   return response;
 }
 
 export const POST = withAPIMiddleware(loginHandler, {
-  endpoint: 'auth',
+  endpoint: "auth",
   cors: true,
-  methods: ['POST', 'OPTIONS']
+  methods: ["POST", "OPTIONS"],
 });
 
-export const OPTIONS = createOptionsHandler(['POST', 'OPTIONS']);
+export const OPTIONS = createOptionsHandler(["POST", "OPTIONS"]);

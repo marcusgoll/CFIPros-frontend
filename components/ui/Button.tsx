@@ -23,14 +23,20 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref
   ) => {
-    const baseStyles = "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
-    
+    const baseStyles =
+      "inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+
     const variants = {
-      primary: "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary",
-      secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-secondary",
-      outline: "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-primary",
-      ghost: "text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-primary",
-      danger: "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive",
+      primary:
+        "bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-primary",
+      secondary:
+        "bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-secondary",
+      outline:
+        "border border-input bg-background text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-primary",
+      ghost:
+        "text-foreground hover:bg-accent hover:text-accent-foreground focus:ring-primary",
+      danger:
+        "bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive",
     };
 
     const sizes = {
@@ -41,12 +47,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button
-        className={cn(
-          baseStyles,
-          variants[variant],
-          sizes[size],
-          className
-        )}
+        className={cn(baseStyles, variants[variant], sizes[size], className)}
         ref={ref}
         disabled={disabled || loading}
         {...props}

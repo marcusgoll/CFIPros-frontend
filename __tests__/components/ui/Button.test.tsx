@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/Button";
 describe("Button Component", () => {
   it("renders button with text", () => {
     render(<Button>Click me</Button>);
-    expect(screen.getByRole("button", { name: "Click me" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Click me" })
+    ).toBeInTheDocument();
   });
 
   it("applies variant styles correctly", () => {
@@ -42,18 +44,22 @@ describe("Button Component", () => {
   it("handles click events", () => {
     const handleClick = jest.fn();
     render(<Button onClick={handleClick}>Click me</Button>);
-    
+
     fireEvent.click(screen.getByRole("button"));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
   it("is disabled when disabled prop is true", () => {
     const handleClick = jest.fn();
-    render(<Button disabled onClick={handleClick}>Disabled</Button>);
-    
+    render(
+      <Button disabled onClick={handleClick}>
+        Disabled
+      </Button>
+    );
+
     const button = screen.getByRole("button");
     expect(button).toBeDisabled();
-    
+
     fireEvent.click(button);
     expect(handleClick).not.toHaveBeenCalled();
   });

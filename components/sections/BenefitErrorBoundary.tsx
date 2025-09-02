@@ -11,26 +11,29 @@ interface BoundaryFallbackProps {
   retry: () => void;
 }
 
-const MockupErrorFallback: React.FC<BoundaryFallbackProps> = ({ error, retry }) => (
-  <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-6 h-80 flex flex-col items-center justify-center text-center">
-    <AlertTriangle className="h-12 w-12 text-red-500 mb-4" />
-    <h3 className="text-lg font-semibold text-red-800 mb-2">
+const MockupErrorFallback: React.FC<BoundaryFallbackProps> = ({
+  error,
+  retry,
+}) => (
+  <div className="flex h-80 flex-col items-center justify-center rounded-lg bg-gradient-to-br from-red-50 to-red-100 p-6 text-center">
+    <AlertTriangle className="mb-4 h-12 w-12 text-red-500" />
+    <h3 className="mb-2 text-lg font-semibold text-red-800">
       Demo Unavailable
     </h3>
-    <p className="text-red-600 text-sm mb-4 max-w-xs">
+    <p className="mb-4 max-w-xs text-sm text-red-600">
       We're having trouble loading this feature demonstration.
     </p>
     <button
       onClick={retry}
-      className="flex items-center gap-2 px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
+      className="flex items-center gap-2 rounded-lg bg-red-100 px-4 py-2 text-red-700 transition-colors hover:bg-red-200"
     >
       <RefreshCw className="h-4 w-4" />
       Try Again
     </button>
-    {process.env.NODE_ENV === 'development' && (
+    {process.env.NODE_ENV === "development" && (
       <details className="mt-4 text-xs text-red-600">
         <summary className="cursor-pointer">Error Details</summary>
-        <pre className="mt-2 p-2 bg-red-50 rounded text-left overflow-auto">
+        <pre className="mt-2 overflow-auto rounded bg-red-50 p-2 text-left">
           {error?.message}
         </pre>
       </details>
@@ -38,27 +41,32 @@ const MockupErrorFallback: React.FC<BoundaryFallbackProps> = ({ error, retry }) 
   </div>
 );
 
-const SectionErrorFallback: React.FC<BoundaryFallbackProps> = ({ error, retry }) => (
-  <div className="py-20 bg-gradient-to-b from-background to-muted/20">
+const SectionErrorFallback: React.FC<BoundaryFallbackProps> = ({
+  error,
+  retry,
+}) => (
+  <div className="to-muted/20 bg-gradient-to-b from-background py-20">
     <div className="mx-auto max-w-7xl px-4 md:px-6">
       <div className="text-center">
-        <AlertTriangle className="h-16 w-16 text-orange-500 mx-auto mb-6" />
-        <h2 className="text-2xl font-bold mb-4">Features Section Unavailable</h2>
-        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-          We're experiencing technical difficulties loading the features showcase.
-          Please try refreshing the page.
+        <AlertTriangle className="mx-auto mb-6 h-16 w-16 text-orange-500" />
+        <h2 className="mb-4 text-2xl font-bold">
+          Features Section Unavailable
+        </h2>
+        <p className="mx-auto mb-6 max-w-md text-muted-foreground">
+          We're experiencing technical difficulties loading the features
+          showcase. Please try refreshing the page.
         </p>
         <button
           onClick={retry}
-          className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg mx-auto hover:bg-primary/90 transition-colors"
+          className="hover:bg-primary/90 mx-auto flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-white transition-colors"
         >
           <RefreshCw className="h-5 w-5" />
           Reload Features
         </button>
-        {process.env.NODE_ENV === 'development' && (
+        {process.env.NODE_ENV === "development" && (
           <details className="mt-6 text-sm text-muted-foreground">
             <summary className="cursor-pointer">Technical Details</summary>
-            <pre className="mt-3 p-3 bg-muted rounded text-left overflow-auto max-w-2xl mx-auto">
+            <pre className="mx-auto mt-3 max-w-2xl overflow-auto rounded bg-muted p-3 text-left">
               {error?.stack}
             </pre>
           </details>
@@ -73,9 +81,9 @@ interface MockupWrapperProps {
   sectionTitle?: string;
 }
 
-export const MockupErrorBoundary: React.FC<MockupWrapperProps> = ({ 
-  children, 
-  sectionTitle = "Feature Demo" 
+export const MockupErrorBoundary: React.FC<MockupWrapperProps> = ({
+  children,
+  sectionTitle = "Feature Demo",
 }) => {
   return (
     <ErrorBoundary
@@ -83,15 +91,15 @@ export const MockupErrorBoundary: React.FC<MockupWrapperProps> = ({
       onError={(error, errorInfo) => {
         logError(`Mockup error in ${sectionTitle}:`, error, errorInfo);
         // In production, send to monitoring service with sanitized data
-        if (typeof window !== 'undefined' && window.gtag) {
+        if (typeof window !== "undefined" && window.gtag) {
           const sanitizedMessage = sanitizeErrorMessage(error.message);
-          window.gtag('event', 'exception', {
+          window.gtag("event", "exception", {
             description: `Mockup error: ${sanitizedMessage}`,
             fatal: false,
             custom_parameters: {
               section: sectionTitle,
-              component: 'MockupErrorBoundary'
-            }
+              component: "MockupErrorBoundary",
+            },
           });
         }
       }}
@@ -105,22 +113,24 @@ interface BenefitSectionWrapperProps {
   children: React.ReactNode;
 }
 
-export const BenefitErrorBoundary: React.FC<BenefitSectionWrapperProps> = ({ children }) => {
+export const BenefitErrorBoundary: React.FC<BenefitSectionWrapperProps> = ({
+  children,
+}) => {
   return (
     <ErrorBoundary
       fallback={SectionErrorFallback}
       onError={(error, errorInfo) => {
-        logError('BenefitZipperList section error:', error, errorInfo);
+        logError("BenefitZipperList section error:", error, errorInfo);
         // In production, send to monitoring service with sanitized data
-        if (typeof window !== 'undefined' && window.gtag) {
+        if (typeof window !== "undefined" && window.gtag) {
           const sanitizedMessage = sanitizeErrorMessage(error.message);
-          window.gtag('event', 'exception', {
+          window.gtag("event", "exception", {
             description: `BenefitZipper section error: ${sanitizedMessage}`,
             fatal: false,
             custom_parameters: {
-              component: 'BenefitZipperList',
-              errorBoundary: 'SectionLevel'
-            }
+              component: "BenefitZipperList",
+              errorBoundary: "SectionLevel",
+            },
           });
         }
       }}

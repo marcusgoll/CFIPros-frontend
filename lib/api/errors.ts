@@ -3,9 +3,9 @@
  * Following RFC 7807 Problem Details for HTTP APIs
  */
 
-import { NextResponse } from 'next/server';
-import { logError } from '@/lib/utils/logger';
-import type { ProblemDetails, BackendErrorResponse } from '@/lib/types';
+import { NextResponse } from "next/server";
+import { logError } from "@/lib/utils/logger";
+import type { ProblemDetails, BackendErrorResponse } from "@/lib/types";
 
 export class APIError extends Error {
   public readonly code: string;
@@ -13,14 +13,9 @@ export class APIError extends Error {
   public readonly detail: string;
   public readonly instance?: string | undefined;
 
-  constructor(
-    code: string,
-    status: number,
-    detail: string,
-    instance?: string
-  ) {
+  constructor(code: string, status: number, detail: string, instance?: string) {
     super(detail);
-    this.name = 'APIError';
+    this.name = "APIError";
     this.code = code;
     this.status = status;
     this.detail = detail;
@@ -37,25 +32,28 @@ export class APIError extends Error {
       status: this.status,
       detail: this.detail,
     };
-    
+
     if (this.instance) {
       result.instance = this.instance;
     }
-    
+
     return result;
   }
 
   /**
    * Create APIError from backend response
    */
-  static fromBackendError(backendError: BackendErrorResponse, fallbackStatus = 500): APIError {
+  static fromBackendError(
+    backendError: BackendErrorResponse,
+    fallbackStatus = 500
+  ): APIError {
     if (backendError?.type && backendError?.title && backendError?.detail) {
       // Backend already returned Problem Details format
       const code = backendError.title;
       const status = backendError.status || fallbackStatus;
       const detail = backendError.detail;
       const instance = backendError.instance;
-      
+
       return new APIError(code, status, detail, instance);
     }
 
@@ -69,8 +67,9 @@ export class APIError extends Error {
     }
 
     // Unknown error format
-    const message = backendError?.message || backendError?.detail || 'Unknown error occurred';
-    return new APIError('internal_error', 500, message);
+    const message =
+      backendError?.message || backendError?.detail || "Unknown error occurred";
+    return new APIError("internal_error", 500, message);
   }
 }
 
@@ -80,31 +79,31 @@ export class APIError extends Error {
 export function handleAPIError(error: Error | APIError): NextResponse {
   if (error instanceof APIError) {
     const problemDetails = error.toProblemDetails();
-    
+
     return NextResponse.json(problemDetails, {
       status: error.status,
       headers: {
-        'Content-Type': 'application/problem+json',
-        'X-Error-Code': error.code,
+        "Content-Type": "application/problem+json",
+        "X-Error-Code": error.code,
       },
     });
   }
 
   // Generic error handling
-  logError('Unhandled API error:', error);
-  
+  logError("Unhandled API error:", error);
+
   const problemDetails = {
-    type: 'about:blank#internal_error',
-    title: 'internal_error',
+    type: "about:blank#internal_error",
+    title: "internal_error",
     status: 500,
-    detail: 'An internal server error occurred',
+    detail: "An internal server error occurred",
   };
 
   return NextResponse.json(problemDetails, {
     status: 500,
     headers: {
-      'Content-Type': 'application/problem+json',
-      'X-Error-Code': 'internal_error',
+      "Content-Type": "application/problem+json",
+      "X-Error-Code": "internal_error",
     },
   });
 }
@@ -114,56 +113,59 @@ export function handleAPIError(error: Error | APIError): NextResponse {
  */
 export const CommonErrors = {
   // Authentication & Authorization
-  UNAUTHORIZED: (detail = 'Authentication required') => 
-    new APIError('unauthorized', 401, detail),
-  
-  FORBIDDEN: (detail = 'Access forbidden') => 
-    new APIError('forbidden', 403, detail),
+  UNAUTHORIZED: (detail = "Authentication required") =>
+    new APIError("unauthorized", 401, detail),
+
+  FORBIDDEN: (detail = "Access forbidden") =>
+    new APIError("forbidden", 403, detail),
 
   // Validation
-  VALIDATION_ERROR: (detail: string) => 
-    new APIError('validation_error', 400, detail),
+  VALIDATION_ERROR: (detail: string) =>
+    new APIError("validation_error", 400, detail),
 
-  INVALID_REQUEST: (detail: string) => 
-    new APIError('invalid_request', 400, detail),
+  INVALID_REQUEST: (detail: string) =>
+    new APIError("invalid_request", 400, detail),
 
-  INVALID_RESULT_ID: (detail = 'Invalid result ID format') =>
-    new APIError('invalid_result_id', 400, detail),
+  INVALID_RESULT_ID: (detail = "Invalid result ID format") =>
+    new APIError("invalid_result_id", 400, detail),
+
+  METHOD_NOT_ALLOWED: (detail = "Method not allowed") =>
+    new APIError("method_not_allowed", 405, detail),
 
   // Rate Limiting
-  RATE_LIMIT_EXCEEDED: (detail = 'Rate limit exceeded') => 
-    new APIError('rate_limit_exceeded', 429, detail),
+  RATE_LIMIT_EXCEEDED: (detail = "Rate limit exceeded") =>
+    new APIError("rate_limit_exceeded", 429, detail),
 
   // File Upload
-  FILE_TOO_LARGE: (detail = 'File exceeds maximum size limit') => 
-    new APIError('file_too_large', 400, detail),
+  FILE_TOO_LARGE: (detail = "File exceeds maximum size limit") =>
+    new APIError("file_too_large", 400, detail),
 
-  UNSUPPORTED_FILE_TYPE: (detail = 'Unsupported file type') => 
-    new APIError('unsupported_file_type', 400, detail),
+  UNSUPPORTED_FILE_TYPE: (detail = "Unsupported file type") =>
+    new APIError("unsupported_file_type", 400, detail),
 
-  NO_FILE_PROVIDED: (detail = 'No file was provided for upload') => 
-    new APIError('no_file_provided', 400, detail),
+  NO_FILE_PROVIDED: (detail = "No file was provided for upload") =>
+    new APIError("no_file_provided", 400, detail),
 
   // Resource Access
-  RESOURCE_NOT_FOUND: (resource: string, id: string) => 
-    new APIError('resource_not_found', 404, `${resource} ${id} not found`),
+  RESOURCE_NOT_FOUND: (resource: string, id: string) =>
+    new APIError("resource_not_found", 404, `${resource} ${id} not found`),
 
-  RESULT_NOT_FOUND: (resultId: string) => 
-    new APIError('result_not_found', 404, `Result ${resultId} not found`),
+  RESULT_NOT_FOUND: (resultId: string) =>
+    new APIError("result_not_found", 404, `Result ${resultId} not found`),
 
   // Backend Integration
-  BACKEND_ERROR: (detail = 'Backend service error') => 
-    new APIError('backend_error', 502, detail),
+  BACKEND_ERROR: (detail = "Backend service error") =>
+    new APIError("backend_error", 502, detail),
 
-  REQUEST_TIMEOUT: (detail = 'Backend request timed out') => 
-    new APIError('request_timeout', 504, detail),
+  REQUEST_TIMEOUT: (detail = "Backend request timed out") =>
+    new APIError("request_timeout", 504, detail),
 
-  PROCESSING_FAILED: (detail = 'Processing failed') => 
-    new APIError('processing_failed', 500, detail),
+  PROCESSING_FAILED: (detail = "Processing failed") =>
+    new APIError("processing_failed", 500, detail),
 
   // Generic
-  INTERNAL_ERROR: (detail = 'Internal server error') => 
-    new APIError('internal_error', 500, detail),
+  INTERNAL_ERROR: (detail = "Internal server error") =>
+    new APIError("internal_error", 500, detail),
 } as const;
 
 /**
@@ -179,12 +181,18 @@ export function createRateLimitErrorResponse(
   );
 
   const response = handleAPIError(error);
-  
+
   // Add rate limit headers
-  response.headers.set('X-RateLimit-Limit', limit.toString());
-  response.headers.set('X-RateLimit-Remaining', remaining.toString());
-  response.headers.set('X-RateLimit-Reset', Math.ceil(resetTime / 1000).toString());
-  response.headers.set('Retry-After', Math.ceil((resetTime - Date.now()) / 1000).toString());
+  response.headers.set("X-RateLimit-Limit", limit.toString());
+  response.headers.set("X-RateLimit-Remaining", remaining.toString());
+  response.headers.set(
+    "X-RateLimit-Reset",
+    Math.ceil(resetTime / 1000).toString()
+  );
+  response.headers.set(
+    "Retry-After",
+    Math.ceil((resetTime - Date.now()) / 1000).toString()
+  );
 
   return response;
 }
@@ -193,11 +201,11 @@ export function createRateLimitErrorResponse(
  * Add security headers to response
  */
 export function addSecurityHeaders(response: NextResponse): NextResponse {
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-XSS-Protection', '1; mode=block');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
   return response;
 }
 
@@ -205,30 +213,36 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
  * Add CORS headers to response with proper origin validation
  */
 export function addCORSHeaders(
-  response: NextResponse, 
-  request?: import('next/server').NextRequest,
-  methods = 'GET, POST, OPTIONS'
+  response: NextResponse,
+  request?: import("next/server").NextRequest,
+  methods = "GET, POST, OPTIONS"
 ): NextResponse {
-  const allowedOrigins = process.env['ALLOWED_ORIGINS']?.split(',') || [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://cfipros.com',
-    'https://www.cfipros.com'
+  const allowedOrigins = process.env["ALLOWED_ORIGINS"]?.split(",") || [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://cfipros.com",
+    "https://www.cfipros.com",
   ];
-  
-  const origin = request?.headers.get('origin');
-  
+
+  const origin = request?.headers.get("origin");
+
   if (origin && allowedOrigins.includes(origin)) {
-    response.headers.set('Access-Control-Allow-Origin', origin);
-  } else if (!origin && process.env.NODE_ENV === 'development') {
+    response.headers.set("Access-Control-Allow-Origin", origin);
+  } else if (!origin && process.env.NODE_ENV === "development") {
     // Allow requests without origin in development (e.g., Postman, curl)
-    response.headers.set('Access-Control-Allow-Origin', allowedOrigins[0] as string);
+    response.headers.set(
+      "Access-Control-Allow-Origin",
+      allowedOrigins[0] as string
+    );
   }
-  
-  response.headers.set('Access-Control-Allow-Methods', methods);
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Correlation-ID');
-  response.headers.set('Access-Control-Allow-Credentials', 'true');
-  response.headers.set('Access-Control-Max-Age', '86400');
-  
+
+  response.headers.set("Access-Control-Allow-Methods", methods);
+  response.headers.set(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Correlation-ID"
+  );
+  response.headers.set("Access-Control-Allow-Credentials", "true");
+  response.headers.set("Access-Control-Max-Age", "86400");
+
   return response;
 }

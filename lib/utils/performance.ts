@@ -3,7 +3,7 @@
  * Provides tools for measuring and monitoring application performance
  */
 
-import React from 'react';
+import React from "react";
 
 // Performance observer for measuring web vitals
 export interface PerformanceMetric {
@@ -31,7 +31,7 @@ export class PerformanceTracker {
   }
 
   private initializeObservers(): void {
-    if (typeof window === 'undefined' || !('PerformanceObserver' in window)) {
+    if (typeof window === "undefined" || !("PerformanceObserver" in window)) {
       return;
     }
 
@@ -39,13 +39,16 @@ export class PerformanceTracker {
       // Observe layout shifts (CLS)
       const clsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.entryType === 'layout-shift') {
-            const layoutShift = entry as PerformanceEntry & { value: number; hadRecentInput?: boolean };
+          if (entry.entryType === "layout-shift") {
+            const layoutShift = entry as PerformanceEntry & {
+              value: number;
+              hadRecentInput?: boolean;
+            };
             if (!layoutShift.hadRecentInput) {
               this.recordMetric({
-                name: 'CLS',
+                name: "CLS",
                 value: layoutShift.value,
-                unit: 'score',
+                unit: "score",
                 timestamp: Date.now(),
               });
             }
@@ -53,57 +56,60 @@ export class PerformanceTracker {
         }
       });
 
-      clsObserver.observe({ entryTypes: ['layout-shift'] });
+      clsObserver.observe({ entryTypes: ["layout-shift"] });
       this.observers.push(clsObserver);
 
       // Observe largest contentful paint (LCP)
       const lcpObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.entryType === 'largest-contentful-paint') {
+          if (entry.entryType === "largest-contentful-paint") {
             this.recordMetric({
-              name: 'LCP',
+              name: "LCP",
               value: entry.startTime,
-              unit: 'ms',
+              unit: "ms",
               timestamp: Date.now(),
             });
           }
         }
       });
 
-      lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+      lcpObserver.observe({ entryTypes: ["largest-contentful-paint"] });
       this.observers.push(lcpObserver);
 
       // Observe first input delay (FID)
       const fidObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (entry.entryType === 'first-input') {
-            const firstInput = entry as PerformanceEntry & { processingStart: number };
+          if (entry.entryType === "first-input") {
+            const firstInput = entry as PerformanceEntry & {
+              processingStart: number;
+            };
             this.recordMetric({
-              name: 'FID',
+              name: "FID",
               value: firstInput.processingStart - entry.startTime,
-              unit: 'ms',
+              unit: "ms",
               timestamp: Date.now(),
             });
           }
         }
       });
 
-      fidObserver.observe({ entryTypes: ['first-input'] });
+      fidObserver.observe({ entryTypes: ["first-input"] });
       this.observers.push(fidObserver);
-
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.warn('Failed to initialize performance observers:', error);
+      console.warn("Failed to initialize performance observers:", error);
     }
   }
 
   public recordMetric(metric: PerformanceMetric): void {
     this.metrics.push(metric);
-    
+
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       // eslint-disable-next-line no-console
-      console.log(`Performance: ${metric.name} = ${metric.value}${metric.unit}`);
+      console.log(
+        `Performance: ${metric.name} = ${metric.value}${metric.unit}`
+      );
     }
   }
 
@@ -112,7 +118,7 @@ export class PerformanceTracker {
   }
 
   public getMetricsByName(name: string): PerformanceMetric[] {
-    return this.metrics.filter(metric => metric.name === name);
+    return this.metrics.filter((metric) => metric.name === name);
   }
 
   public clearMetrics(): void {
@@ -120,7 +126,7 @@ export class PerformanceTracker {
   }
 
   public disconnect(): void {
-    this.observers.forEach(observer => observer.disconnect());
+    this.observers.forEach((observer) => observer.disconnect());
     this.observers = [];
   }
 }
@@ -138,7 +144,7 @@ export function measurePerformance<T>(
     tracker.recordMetric({
       name,
       value: end - start,
-      unit: 'ms',
+      unit: "ms",
       timestamp: Date.now(),
     });
     return result;
@@ -146,14 +152,14 @@ export function measurePerformance<T>(
 
   try {
     const result = fn();
-    
+
     if (result instanceof Promise) {
-      return result.then(finish).catch(error => {
+      return result.then(finish).catch((error) => {
         finish(error);
         throw error;
       });
     }
-    
+
     return finish(result);
   } catch (error) {
     finish(error as T);
@@ -166,14 +172,14 @@ export function measureWebVitals(): void {
   const tracker = PerformanceTracker.getInstance();
 
   // Measure First Contentful Paint (FCP)
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const fcpObserver = new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        if (entry.name === 'first-contentful-paint') {
+        if (entry.name === "first-contentful-paint") {
           tracker.recordMetric({
-            name: 'FCP',
+            name: "FCP",
             value: entry.startTime,
-            unit: 'ms',
+            unit: "ms",
             timestamp: Date.now(),
           });
         }
@@ -181,20 +187,21 @@ export function measureWebVitals(): void {
     });
 
     try {
-      fcpObserver.observe({ entryTypes: ['paint'] });
+      fcpObserver.observe({ entryTypes: ["paint"] });
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.warn('Failed to observe paint entries:', error);
+      console.warn("Failed to observe paint entries:", error);
     }
 
     // Measure Time to Interactive (TTI) approximation
-    window.addEventListener('load', () => {
+    window.addEventListener("load", () => {
       setTimeout(() => {
-        const loadTime = performance.timing.loadEventEnd - performance.timing.navigationStart;
+        const loadTime =
+          performance.timing.loadEventEnd - performance.timing.navigationStart;
         tracker.recordMetric({
-          name: 'Load Time',
+          name: "Load Time",
           value: loadTime,
-          unit: 'ms',
+          unit: "ms",
           timestamp: Date.now(),
         });
       }, 0);
@@ -204,14 +211,16 @@ export function measureWebVitals(): void {
 
 // Memory usage monitoring
 export function measureMemoryUsage(): void {
-  if (typeof window !== 'undefined' && 'memory' in performance) {
-    const memory = (performance as Performance & { memory?: { usedJSHeapSize: number } }).memory;
+  if (typeof window !== "undefined" && "memory" in performance) {
+    const memory = (
+      performance as Performance & { memory?: { usedJSHeapSize: number } }
+    ).memory;
     const tracker = PerformanceTracker.getInstance();
-    
+
     tracker.recordMetric({
-      name: 'Memory Used',
-      value: Math.round(((memory?.usedJSHeapSize ?? 0) / 1024) / 1024),
-      unit: 'MB',
+      name: "Memory Used",
+      value: Math.round((memory?.usedJSHeapSize ?? 0) / 1024 / 1024),
+      unit: "MB",
       timestamp: Date.now(),
     });
 
@@ -221,35 +230,42 @@ export function measureMemoryUsage(): void {
 
 // Bundle size reporting
 export function reportBundleSize(): void {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const tracker = PerformanceTracker.getInstance();
-    
+
     // Get navigation timing data
-    const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+    const navigation = performance.getEntriesByType(
+      "navigation"
+    )[0] as PerformanceNavigationTiming;
     if (navigation) {
       tracker.recordMetric({
-        name: 'DOM Content Loaded',
-        value: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
-        unit: 'ms',
+        name: "DOM Content Loaded",
+        value:
+          navigation.domContentLoadedEventEnd -
+          navigation.domContentLoadedEventStart,
+        unit: "ms",
         timestamp: Date.now(),
       });
 
       tracker.recordMetric({
-        name: 'Load Complete',
+        name: "Load Complete",
         value: navigation.loadEventEnd - navigation.loadEventStart,
-        unit: 'ms',
+        unit: "ms",
         timestamp: Date.now(),
       });
     }
 
     // Get resource timing data
-    const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
-    const jsResources = resources.filter(resource => 
-      resource.name.includes('.js') && !resource.name.includes('node_modules')
+    const resources = performance.getEntriesByType(
+      "resource"
+    ) as PerformanceResourceTiming[];
+    const jsResources = resources.filter(
+      (resource) =>
+        resource.name.includes(".js") && !resource.name.includes("node_modules")
     );
 
     let totalJSSize = 0;
-    jsResources.forEach(resource => {
+    jsResources.forEach((resource) => {
       if (resource.transferSize) {
         totalJSSize += resource.transferSize;
       }
@@ -257,9 +273,9 @@ export function reportBundleSize(): void {
 
     if (totalJSSize > 0) {
       tracker.recordMetric({
-        name: 'Total JS Bundle Size',
+        name: "Total JS Bundle Size",
         value: Math.round(totalJSSize / 1024),
-        unit: 'KB',
+        unit: "KB",
         timestamp: Date.now(),
       });
     }
@@ -274,13 +290,13 @@ export function generatePerformanceReport(): {
 } {
   const tracker = PerformanceTracker.getInstance();
   const metrics = tracker.getMetrics();
-  
+
   const webVitals: Record<string, number> = {};
   const customMetrics: Record<string, number> = {};
-  
-  const vitalMetrics = ['FCP', 'LCP', 'FID', 'CLS'];
-  
-  metrics.forEach(metric => {
+
+  const vitalMetrics = ["FCP", "LCP", "FID", "CLS"];
+
+  metrics.forEach((metric) => {
     if (vitalMetrics.includes(metric.name)) {
       webVitals[metric.name] = metric.value;
     } else {
@@ -289,8 +305,8 @@ export function generatePerformanceReport(): {
   });
 
   // Generate summary
-  let summary = 'Performance Summary:\n';
-  
+  let summary = "Performance Summary:\n";
+
   // Web Vitals thresholds
   const thresholds = {
     FCP: { good: 1800, poor: 3000 },
@@ -302,11 +318,11 @@ export function generatePerformanceReport(): {
   Object.entries(webVitals).forEach(([name, value]) => {
     const threshold = thresholds[name as keyof typeof thresholds];
     if (threshold) {
-      let status = 'Good';
+      let status = "Good";
       if (value > threshold.poor) {
-        status = 'Poor';
+        status = "Poor";
       } else if (value > threshold.good) {
-        status = 'Needs Improvement';
+        status = "Needs Improvement";
       }
       summary += `- ${name}: ${value} (${status})\n`;
     }
@@ -317,12 +333,12 @@ export function generatePerformanceReport(): {
 
 // Initialize performance monitoring
 export function initializePerformanceMonitoring(): void {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     // Start tracking web vitals
     measureWebVitals();
-    
+
     // Report bundle size after load
-    window.addEventListener('load', () => {
+    window.addEventListener("load", () => {
       setTimeout(() => {
         reportBundleSize();
         measureMemoryUsage();
@@ -355,7 +371,7 @@ export function withPerformanceMonitoring<P extends object>(
         tracker.recordMetric({
           name: `${componentName} Render Time`,
           value: end - start,
-          unit: 'ms',
+          unit: "ms",
           timestamp: Date.now(),
         });
       };

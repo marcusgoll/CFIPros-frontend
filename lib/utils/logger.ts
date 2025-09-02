@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 // Lightweight dev-only logger to avoid no-console lint warnings in production builds
 
-export const isDev = process.env.NODE_ENV !== 'production';
+export const isDev = process.env.NODE_ENV !== "production";
 
 export function logError(...args: unknown[]): void {
   if (isDev) {
