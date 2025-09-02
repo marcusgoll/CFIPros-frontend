@@ -8,6 +8,24 @@ encoding: UTF-8
 
 Coordinates spec creation, task execution, and quality validation for API contract-driven development across distributed repositories.
 
+## Inputs
+
+### Option A: Feature Description
+
+```yaml
+feature_name: string
+requirements: string
+```
+
+### Option B: External Brief (API Architect)
+
+```yaml
+api_contract: OpenAPI specification
+backend_brief: Implementation instructions for backend repo
+frontend_brief: Implementation instructions for frontend repo
+integration_tests: Contract test definitions
+```
+
 ## Core Instructions Used
 
 - `@.agent-os/instructions/core/create-spec.md` - Creates spec with API contract
@@ -18,6 +36,7 @@ Coordinates spec creation, task execution, and quality validation for API contra
 ## Sub-Agents Used
 
 Essential sub-agents:
+
 - **test-runner** - Runs tests, lint, types, coverage
 - **project-manager** - Tracks tasks and creates recaps
 - **senior-code-reviewer** - Validates contract compliance and quality
@@ -35,7 +54,7 @@ quality:
 api:
   contract_path: api-contracts/openapi.yaml
   contract_tests_in: spec.md
-  
+
 git:
   branch_prefix: feature/
   base_branch: main
@@ -43,6 +62,18 @@ git:
 ```
 
 ## Workflow
+
+```yaml
+trigger: User provides API contract and briefs
+output: Spec created from brief
+```
+
+0. **Process External Brief** (when provided)
+   - Accept API contract (OpenAPI spec)
+   - Store in api-contracts/openapi.yaml
+   - Extract requirements for spec.md
+   - Parse contract tests
+   - Output: Spec folder with contract
 
 ### Phase 1: Specification
 
@@ -114,56 +145,70 @@ output: PR-ready code with quality validation
 Each phase must pass before proceeding:
 
 ### Spec Quality Gate
+
 - [ ] API contract defined (openapi.yaml)
 - [ ] Contract tests included in spec.md
 - [ ] Acceptance criteria clear
 
 ### Task Quality Gate
+
 - [ ] All tasks reference API contract
 - [ ] Quality subtasks included (lint, type, test)
 - [ ] Tasks properly scoped
 
 ### Execution Quality Gate
+
 - [ ] Contract tests passing
 - [ ] Lint: 0 errors
 - [ ] Types: 0 errors
 - [ ] Coverage: ≥80%
 
 ### Completion Quality Gate
+
 - [ ] All tasks marked complete
 - [ ] Full test suite passing
 - [ ] API contract validated
 - [ ] Recap document created
+- [ ] Update @.agent-os/docs/api-contract as single source of api truth.
 
 ## Simple Commands
 
 ### Start New Feature
+
 ```
 Create spec for [feature name]
 ```
+
 → Runs Phase 1: create-spec.md
 
 ### Plan Implementation
+
 ```
 Create tasks for current spec
 ```
+
 → Runs Phase 2: create-tasks.md
 
 ### Begin Development
+
 ```
 Execute tasks
 ```
+
 → Runs Phase 3: execute-tasks.md with quality gates
 
 ### Finalize Feature
+
 ```
 Complete feature
 ```
+
 → Runs Phase 4: complete-tasks.md with validation
 
 ## Error Handling
 
 ### Quality Gate Failures
+
 ```yaml
 on_lint_error:
   - Fix issues
@@ -182,6 +227,7 @@ on_contract_violation:
 ```
 
 ### Blocking Issues
+
 ```yaml
 on_blocker:
   - Document in tasks.md with ⚠️
@@ -192,6 +238,7 @@ on_blocker:
 ## Outputs
 
 ### Per Feature
+
 ```
 .agent-os/
 ├── specs/
@@ -211,25 +258,29 @@ on_blocker:
 The following are handled elsewhere, not in this orchestrator:
 
 ### Handled by CI/CD
+
 - Build and deployment
 - Environment promotion
 - Release tagging
 - Changelog generation
 
 ### Handled by Git Platform
+
 - PR creation and review
 - Branch protection
 - Merge policies
 - Code review assignments
 
 ### Handled by Separate Processes
+
 - Roadmap updates (manual)
 - Standards updates (as needed)
 - Cross-repo coordination (manual)
 
 ## Usage Examples
 
-### Example 1: Simple Feature
+### Example 1: Simple Feature (Internal)
+
 ```
 User: Create spec for user login
 Claude: [Creates spec with API contract]
@@ -252,7 +303,36 @@ Claude: [Validates and commits]
 → Feature ready for review
 ```
 
-### Example 2: With Quality Issues
+### Example 2: External Brief (API Architect)
+
+```
+User: Process this backend brief for ACS Code Directory:
+[Provides API contract + backend/frontend briefs]
+
+Claude: [Creates spec from brief]
+→ Stores contract in api-contracts/openapi.yaml
+→ Extracts requirements to spec.md
+→ Includes contract tests
+
+User: Create tasks
+Claude: [Generates tasks from contract]
+→ Backend tasks: 5 endpoints, DB queries
+→ Integration tasks: Contract validation
+
+User: Execute tasks
+Claude: [Implements per brief instructions]
+→ Note: Backend and Frontend repos work in parallel
+→ Backend: FastAPI endpoints with Supabase
+
+User: Complete feature
+Claude: [Full validation and PR]
+→ Contract compliance verified
+→ Quality gates passed
+→ PRs created in both repos
+```
+
+### Example 3: With Quality Issues
+
 ```
 User: Execute tasks
 Claude: [Creates branch: feature/user-auth]

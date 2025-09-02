@@ -93,7 +93,7 @@ async function extractHandler(request: NextRequest) {
     // Proxy to backend v1.2 batch endpoint using the already-read formData
     const response = await proxyFileUploadWithFormData(
       validation.data!,
-      "/v1/aktr",
+      "/v1/extractor/batch/extract",
       {
         headers: {
           "X-Correlation-ID": correlationId,

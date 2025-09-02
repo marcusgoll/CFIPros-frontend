@@ -47,21 +47,32 @@ export function ConsentManager({ batchId, className }: ConsentManagerProps) {
       // Fetch consent records
       const consentResponse = await fetch(`/api/batches/${batchId}/consent`);
       if (!consentResponse.ok) {
-        throw new Error(
-          `Failed to fetch consent records: ${consentResponse.status}`
-        );
+        // Handle 404 gracefully - consent data may not exist yet
+        if (consentResponse.status === 404) {
+          setConsentRecords([]);
+        } else {
+          throw new Error(
+            `Failed to fetch consent records: ${consentResponse.status}`
+          );
+        }
+      } else {
+        const consentData = await consentResponse.json();
+        setConsentRecords(consentData.records || []);
       }
-      const consentData = await consentResponse.json();
 
       // Fetch audit logs
       const auditResponse = await fetch(`/api/batches/${batchId}/audit`);
       if (!auditResponse.ok) {
-        throw new Error(`Failed to fetch audit logs: ${auditResponse.status}`);
+        // Handle 404 gracefully - audit data may not exist yet
+        if (auditResponse.status === 404) {
+          setAuditLogs([]);
+        } else {
+          throw new Error(`Failed to fetch audit logs: ${auditResponse.status}`);
+        }
+      } else {
+        const auditData = await auditResponse.json();
+        setAuditLogs(auditData.entries || []);
       }
-      const auditData = await auditResponse.json();
-
-      setConsentRecords(consentData.records || []);
-      setAuditLogs(auditData.entries || []);
     } catch (err) {
       setError(
         err instanceof Error
@@ -75,7 +86,7 @@ export function ConsentManager({ batchId, className }: ConsentManagerProps) {
 
   useEffect(() => {
     fetchConsentAndAuditData();
-  }, [batchId, fetchConsentAndAuditData]);
+  }, [batchId]); // Removed fetchConsentAndAuditData from dependencies to prevent infinite loop
 
   const revokeConsent = async (consentId: string) => {
     try {

@@ -33,14 +33,14 @@ This will test:
 
 - Basic connectivity to your backend
 - Health check endpoints (if available)
-- File upload endpoint (`POST /v1/aktr`)
+- File upload endpoint (`POST /v1/extractor/batch/extract`)
 - Batch status endpoint (`GET /v1/batches/{batchId}`)
 
 ## API Endpoints Implemented
 
 ### Core Batch Processing
 
-- `POST /v1/aktr` - Upload AKTR files for batch processing
+- `POST /v1/extractor/batch/extract` - Upload AKTR files for batch processing
 - `GET /v1/batches/{batchId}` - Get batch status and progress
 - `GET /v1/batches/{batchId}/export?format={pdf|csv|json}` - Export results
 
@@ -60,7 +60,7 @@ This will test:
 
 ## Expected API Response Formats
 
-### Batch Upload Response (`POST /v1/aktr`)
+### Batch Upload Response (`POST /v1/extractor/batch/extract`)
 
 ```json
 {
@@ -124,7 +124,7 @@ Your backend should return RFC7807-compliant errors:
   "title": "File validation failed",
   "detail": "File size exceeds 15MB limit",
   "status": 400,
-  "instance": "/v1/aktr"
+  "instance": "/v1/extractor/batch/extract"
 }
 ```
 

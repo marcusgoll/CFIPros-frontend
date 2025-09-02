@@ -15,20 +15,49 @@ import {
   Loader2,
 } from "lucide-react";
 
+interface ACSCode {
+  code: string;
+  frequency: number;
+  percentage: number;
+}
+
+interface WeakArea {
+  area: string;
+  frequency: number;
+  percentage: number;
+}
+
 interface BatchStatus {
-  batchId: string;
-  status: "pending" | "processing" | "complete" | "failed";
-  progress: number;
-  filesProcessed: number;
-  totalFiles: number;
-  createdAt: string;
-  completedAt?: string;
-  error?: string;
-  extractionResults?: {
-    extractionId: string;
-    timestamp: string;
-    filesCount: number;
-  }[];
+  batch_id: string;
+  total_files: number;
+  successful_files: number;
+  failed_files: number;
+  processing_time_ms: number;
+  status: "pending" | "processing" | "completed" | "failed";
+  created_at: string;
+  summary_data: {
+    batch_id: string;
+    created_at: string;
+    total_files: number;
+    code_frequency: ACSCode[];
+    common_weak_areas: WeakArea[];
+    exam_distribution: Record<string, number>;
+    processing_time_ms: number;
+    score_distribution: {
+      max: number;
+      min: number;
+      mean: number;
+      median: number;
+      std_dev: number;
+    };
+    study_recommendations: string[];
+    total_successful_files: number;
+    confidence_distribution: {
+      low: number;
+      medium: number;
+      high: number;
+    };
+  };
 }
 
 interface ExportFormat {
@@ -103,7 +132,7 @@ export default function BatchStatusPage() {
   }, [batchId, batchStatus?.status]);
 
   const handleExport = async (format: ExportFormat) => {
-    if (!batchStatus || batchStatus.status !== "complete") {
+    if (!batchStatus || batchStatus.status !== "completed") {
       return;
     }
 
@@ -121,7 +150,7 @@ export default function BatchStatusPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `batch-${batchId}-results${format.extension}`;
+      link.download = `batch-${batchStatus.batch_id}-results${format.extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -178,7 +207,7 @@ export default function BatchStatusPage() {
 
   const getStatusIcon = () => {
     switch (batchStatus.status) {
-      case "complete":
+      case "completed":
         return <CheckCircle2 className="h-6 w-6 text-green-500" />;
       case "failed":
         return <AlertCircle className="h-6 w-6 text-red-500" />;
@@ -191,7 +220,7 @@ export default function BatchStatusPage() {
 
   const getStatusText = () => {
     switch (batchStatus.status) {
-      case "complete":
+      case "completed":
         return "Processing Complete";
       case "failed":
         return "Processing Failed";
@@ -210,7 +239,7 @@ export default function BatchStatusPage() {
           <h1 className="text-3xl font-bold text-gray-900 sm:text-4xl">
             Batch Processing Status
           </h1>
-          <p className="mt-4 text-lg text-gray-600">Batch ID: {batchId}</p>
+          <p className="mt-4 text-lg text-gray-600">Batch ID: {batchStatus?.batch_id || batchId}</p>
         </div>
 
         {/* Status Card */}
@@ -222,7 +251,7 @@ export default function BatchStatusPage() {
                 {getStatusText()}
               </h2>
             </div>
-            {batchStatus.status === "complete" && (
+            {batchStatus.status === "completed" && (
               <Button
                 variant="outline"
                 size="sm"
@@ -242,25 +271,25 @@ export default function BatchStatusPage() {
               <div className="mb-2 flex justify-between text-sm text-gray-600">
                 <span>Progress</span>
                 <span>
-                  {batchStatus.filesProcessed} of {batchStatus.totalFiles} files
+                  {batchStatus.successful_files} of {batchStatus.total_files} files
                 </span>
               </div>
               <div className="h-2 w-full rounded-full bg-gray-200">
                 <div
                   className="h-2 rounded-full bg-primary transition-all duration-300"
-                  style={{ width: `${batchStatus.progress}%` }}
+                  style={{ width: `${Math.round((batchStatus.successful_files / batchStatus.total_files) * 100)}%` }}
                 ></div>
               </div>
               <p className="mt-2 text-sm text-gray-500">
-                {batchStatus.progress}% complete
+                {Math.round((batchStatus.successful_files / batchStatus.total_files) * 100)}% complete
               </p>
             </div>
           )}
 
           {/* Error Message */}
-          {batchStatus.status === "failed" && batchStatus.error && (
+          {batchStatus.status === "failed" && (
             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-red-700">{batchStatus.error}</p>
+              <p className="text-red-700">Processing failed. Please try again.</p>
             </div>
           )}
 
@@ -269,29 +298,119 @@ export default function BatchStatusPage() {
             <div className="rounded-lg bg-gray-50 p-4">
               <FileText className="mx-auto mb-2 h-8 w-8 text-gray-400" />
               <p className="text-2xl font-semibold text-gray-900">
-                {batchStatus.totalFiles}
+                {batchStatus.total_files}
               </p>
               <p className="text-sm text-gray-600">Total Files</p>
             </div>
             <div className="rounded-lg bg-gray-50 p-4">
               <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-400" />
               <p className="text-2xl font-semibold text-gray-900">
-                {batchStatus.filesProcessed}
+                {batchStatus.successful_files}
               </p>
               <p className="text-sm text-gray-600">Processed</p>
             </div>
             <div className="rounded-lg bg-gray-50 p-4">
               <Clock className="mx-auto mb-2 h-8 w-8 text-blue-400" />
               <p className="text-2xl font-semibold text-gray-900">
-                {new Date(batchStatus.createdAt).toLocaleDateString()}
+                {new Date(batchStatus.created_at).toLocaleDateString()}
               </p>
               <p className="text-sm text-gray-600">Started</p>
             </div>
           </div>
         </div>
 
+        {/* Extraction Results */}
+        {batchStatus.status === "completed" && batchStatus.summary_data && (
+          <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
+            <h3 className="mb-6 text-lg font-semibold text-gray-900">
+              Analysis Results
+            </h3>
+            
+            {/* Score Summary */}
+            {batchStatus.summary_data.score_distribution && (
+              <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-blue-600">
+                    {batchStatus.summary_data.score_distribution.mean.toFixed(1)}
+                  </p>
+                  <p className="text-sm text-gray-600">Average Score</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-600">
+                    {batchStatus.summary_data.score_distribution.max}
+                  </p>
+                  <p className="text-sm text-gray-600">Highest Score</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-orange-600">
+                    {batchStatus.summary_data.score_distribution.min}
+                  </p>
+                  <p className="text-sm text-gray-600">Lowest Score</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-purple-600">
+                    {batchStatus.summary_data.code_frequency.length}
+                  </p>
+                  <p className="text-sm text-gray-600">ACS Codes</p>
+                </div>
+              </div>
+            )}
+
+            {/* Study Recommendations */}
+            {batchStatus.summary_data.study_recommendations && batchStatus.summary_data.study_recommendations.length > 0 && (
+              <div className="mb-6">
+                <h4 className="mb-3 font-medium text-gray-900">Study Recommendations</h4>
+                <ul className="space-y-2">
+                  {batchStatus.summary_data.study_recommendations.map((recommendation, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="mr-2 mt-1.5 h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0"></span>
+                      <span className="text-sm text-gray-700">{recommendation}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Weak Areas */}
+            {batchStatus.summary_data.common_weak_areas && batchStatus.summary_data.common_weak_areas.length > 0 && (
+              <div className="mb-6">
+                <h4 className="mb-3 font-medium text-gray-900">Areas Needing Improvement</h4>
+                <div className="grid gap-3">
+                  {batchStatus.summary_data.common_weak_areas.slice(0, 5).map((area, index) => (
+                    <div key={index} className="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 p-3">
+                      <span className="text-sm font-medium text-gray-900">{area.area}</span>
+                      <span className="text-sm text-red-600">{area.percentage.toFixed(1)}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ACS Codes */}
+            {batchStatus.summary_data.code_frequency && batchStatus.summary_data.code_frequency.length > 0 && (
+              <div>
+                <h4 className="mb-3 font-medium text-gray-900">
+                  ACS Codes Found ({batchStatus.summary_data.code_frequency.length})
+                </h4>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                  {batchStatus.summary_data.code_frequency.slice(0, 12).map((code, index) => (
+                    <div key={index} className="rounded border bg-gray-50 px-2 py-1 text-center">
+                      <span className="text-xs font-mono text-gray-800">{code.code}</span>
+                    </div>
+                  ))}
+                  {batchStatus.summary_data.code_frequency.length > 12 && (
+                    <div className="rounded border bg-gray-100 px-2 py-1 text-center">
+                      <span className="text-xs text-gray-600">+{batchStatus.summary_data.code_frequency.length - 12} more</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Export Options */}
-        {batchStatus.status === "complete" && (
+        {batchStatus.status === "completed" && (
           <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6 shadow-sm sm:p-8">
             <h3 className="mb-6 text-lg font-semibold text-gray-900">
               Export Results
@@ -318,12 +437,12 @@ export default function BatchStatusPage() {
         )}
 
         {/* Sharing and Cohorts */}
-        {batchStatus.status === "complete" && (
-          <BatchSharing batchId={batchId} className="mb-8" />
+        {batchStatus.status === "completed" && (
+          <BatchSharing batchId={batchStatus.batch_id} className="mb-8" />
         )}
 
         {/* Consent and Audit Trail */}
-        <ConsentManager batchId={batchId} />
+        <ConsentManager batchId={batchStatus.batch_id} />
       </div>
     </div>
   );

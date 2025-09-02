@@ -7,33 +7,50 @@ import { NextRequest } from "next/server";
 import { describe, it, expect, jest, beforeEach, afterEach } from "@jest/globals";
 
 // Mock dependencies
+const mockRateLimiter = {
+  check: jest.fn().mockResolvedValue({ success: true, limit: 60, reset: Date.now() + 3600000 }),
+};
+jest.mock("@/lib/api/rateLimiter", () => ({
+  rateLimiter: mockRateLimiter,
+}));
+
 jest.mock("@/lib/api/middleware", () => ({
   withAPIMiddleware: jest.fn((handler) => handler),
   createOptionsHandler: jest.fn(() => () => new Response("OK")),
 }));
 
+const mockFileUpload = jest.fn();
 jest.mock("@/lib/api/validation", () => ({
   validateRequest: {
-    fileUpload: jest.fn(),
+    fileUpload: mockFileUpload,
   },
 }));
 
+const mockProxyFileUploadWithFormDataWithFormData = jest.fn();
 jest.mock("@/lib/api/proxy", () => ({
-  proxyFileUpload: jest.fn(),
+  proxyFileUploadWithFormData: mockProxyFileUploadWithFormDataWithFormData,
   getClientIP: jest.fn(() => "192.168.1.1"),
   addCorrelationId: jest.fn(() => "test-correlation-id"),
 }));
 
+const mockCheckRateLimit = jest.fn();
 jest.mock("@/lib/security/fileUpload", () => ({
   FileUploadRateLimiter: {
-    checkRateLimit: jest.fn(),
+    checkRateLimit: mockCheckRateLimit,
   },
 }));
 
+const mockTrackEvent = jest.fn();
 jest.mock("@/lib/analytics/telemetry", () => ({
-  trackEvent: jest.fn(),
+  trackEvent: mockTrackEvent,
 }));
 
+const mockHandleAPIError = jest.fn((error) =>
+  Response.json(
+    { error: error.type, message: error.message },
+    { status: 400 }
+  )
+);
 jest.mock("@/lib/api/errors", () => ({
   CommonErrors: {
     RATE_LIMIT_EXCEEDED: jest.fn((msg) => ({
@@ -59,12 +76,7 @@ jest.mock("@/lib/api/errors", () => ({
       correlationId: id,
     })),
   },
-  handleAPIError: jest.fn((error) =>
-    Response.json(
-      { error: error.type, message: error.message },
-      { status: 400 }
-    )
-  ),
+  handleAPIError: mockHandleAPIError,
 }));
 
 import { validateRequest } from "@/lib/api/validation";
@@ -80,8 +92,7 @@ describe("/api/extractor/extract", () => {
 
   describe("Rate Limiting", () => {
     it("blocks requests when rate limit exceeded", async () => {
-      const mockRateLimit = FileUploadRateLimiter.checkRateLimit as jest.MockedFunction<typeof FileUploadRateLimiter.checkRateLimit>
-      mockRateLimit.mockReturnValue({
+      mockCheckRateLimit.mockReturnValue({
         allowed: false,
         remainingUploads: 0,
         resetTime: Date.now() + 3600000,
@@ -97,26 +108,23 @@ describe("/api/extractor/extract", () => {
 
       const response = await POST(request);
 
-      expect(mockRateLimit).toHaveBeenCalledWith("192.168.1.1", 20, 3600000);
-      expect(handleAPIError).toHaveBeenCalled();
+      expect(mockCheckRateLimit).toHaveBeenCalledWith("192.168.1.1", 20, 3600000);
+      expect(mockHandleAPIError).toHaveBeenCalled();
     });
 
     it("allows requests within rate limit", async () => {
-      const mockRateLimit = FileUploadRateLimiter.checkRateLimit as jest.MockedFunction<typeof FileUploadRateLimiter.checkRateLimit>
-      mockRateLimit.mockReturnValue({
+      mockCheckRateLimit.mockReturnValue({
         allowed: true,
         remainingUploads: 10,
         resetTime: Date.now() + 3600000,
       });
 
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      mockValidation.mockResolvedValue({
+      mockFileUpload.mockResolvedValue({
         isValid: true,
         files: [new File(["test"], "test.pdf", { type: "application/pdf" })],
       });
 
-      const mockProxy = proxyFileUpload as jest.Mock;
-      mockProxy.mockResolvedValue(
+      mockProxyFileUploadWithFormData.mockResolvedValue(
         new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: new Headers(),
@@ -133,15 +141,14 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(mockRateLimit).toHaveBeenCalledWith("192.168.1.1", 20, 3600000);
-      expect(mockValidation).toHaveBeenCalled();
+      expect(mockCheckRateLimit).toHaveBeenCalledWith("192.168.1.1", 20, 3600000);
+      expect(mockFileUpload).toHaveBeenCalled();
     });
   });
 
   describe("File Validation", () => {
     beforeEach(() => {
-      const mockRateLimit = FileUploadRateLimiter.checkRateLimit as jest.MockedFunction<typeof FileUploadRateLimiter.checkRateLimit>
-      mockRateLimit.mockReturnValue({
+            mockCheckRateLimit.mockReturnValue({
         allowed: true,
         remainingUploads: 10,
         resetTime: Date.now() + 3600000,
@@ -149,8 +156,7 @@ describe("/api/extractor/extract", () => {
     });
 
     it("rejects requests with no files", async () => {
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      mockValidation.mockResolvedValue({
+            mockFileUpload.mockResolvedValue({
         isValid: false,
         error: "No files provided",
       });
@@ -165,16 +171,15 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(handleAPIError).toHaveBeenCalled();
-      expect(trackEvent).toHaveBeenCalledWith(
+      expect(mockHandleAPIError).toHaveBeenCalled();
+      expect(mockTrackEvent).toHaveBeenCalledWith(
         "extractor_validation_error",
         expect.any(Object)
       );
     });
 
     it("rejects files that exceed size limit", async () => {
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      mockValidation.mockResolvedValue({
+            mockFileUpload.mockResolvedValue({
         isValid: false,
         error: "File exceeds maximum size of 10MB",
       });
@@ -189,16 +194,15 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(handleAPIError).toHaveBeenCalled();
-      expect(trackEvent).toHaveBeenCalledWith(
+      expect(mockHandleAPIError).toHaveBeenCalled();
+      expect(mockTrackEvent).toHaveBeenCalledWith(
         "extractor_validation_error",
         expect.any(Object)
       );
     });
 
     it("rejects unsupported file types", async () => {
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      mockValidation.mockResolvedValue({
+            mockFileUpload.mockResolvedValue({
         isValid: false,
         error: "Unsupported file type: text/plain",
       });
@@ -213,16 +217,15 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(handleAPIError).toHaveBeenCalled();
-      expect(trackEvent).toHaveBeenCalledWith(
+      expect(mockHandleAPIError).toHaveBeenCalled();
+      expect(mockTrackEvent).toHaveBeenCalledWith(
         "extractor_validation_error",
         expect.any(Object)
       );
     });
 
     it("rejects more than 5 files", async () => {
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      mockValidation.mockResolvedValue({
+            mockFileUpload.mockResolvedValue({
         isValid: false,
         error: "Maximum 6 files provided, but only 5 allowed",
       });
@@ -237,27 +240,25 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(handleAPIError).toHaveBeenCalled();
-      expect(trackEvent).toHaveBeenCalledWith(
+      expect(mockHandleAPIError).toHaveBeenCalled();
+      expect(mockTrackEvent).toHaveBeenCalledWith(
         "extractor_validation_error",
         expect.any(Object)
       );
     });
 
     it("accepts valid files", async () => {
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      const testFiles = [
+            const testFiles = [
         new File(["test1"], "test1.pdf", { type: "application/pdf" }),
         new File(["test2"], "test2.jpg", { type: "image/jpeg" }),
       ];
 
-      mockValidation.mockResolvedValue({
+      mockFileUpload.mockResolvedValue({
         isValid: true,
         files: testFiles,
       });
 
-      const mockProxy = proxyFileUpload as jest.Mock;
-      mockProxy.mockResolvedValue(
+            mockProxyFileUploadWithFormData.mockResolvedValue(
         new Response(
           JSON.stringify({
             success: true,
@@ -280,7 +281,7 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(mockValidation).toHaveBeenCalledWith(
+      expect(mockFileUpload).toHaveBeenCalledWith(
         request,
         expect.objectContaining({
           maxFiles: 5,
@@ -289,7 +290,7 @@ describe("/api/extractor/extract", () => {
           requiredField: "files",
         })
       );
-      expect(trackEvent).toHaveBeenCalledWith(
+      expect(mockTrackEvent).toHaveBeenCalledWith(
         "extractor_upload_started",
         expect.any(Object)
       );
@@ -298,23 +299,20 @@ describe("/api/extractor/extract", () => {
 
   describe("Proxy Integration", () => {
     beforeEach(() => {
-      const mockRateLimit = FileUploadRateLimiter.checkRateLimit as jest.MockedFunction<typeof FileUploadRateLimiter.checkRateLimit>
-      mockRateLimit.mockReturnValue({
+            mockCheckRateLimit.mockReturnValue({
         allowed: true,
         remainingUploads: 10,
         resetTime: Date.now() + 3600000,
       });
 
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      mockValidation.mockResolvedValue({
+            mockFileUpload.mockResolvedValue({
         isValid: true,
         files: [new File(["test"], "test.pdf", { type: "application/pdf" })],
       });
     });
 
     it("successfully proxies valid requests to backend", async () => {
-      const mockProxy = proxyFileUpload as jest.Mock;
-      const mockResponse = new Response(
+            const mockResponse = new Response(
         JSON.stringify({
           success: true,
           report_id: "rpt_123456",
@@ -326,7 +324,7 @@ describe("/api/extractor/extract", () => {
         }
       );
 
-      mockProxy.mockResolvedValue(mockResponse);
+      mockProxyFileUploadWithFormData.mockResolvedValue(mockResponse);
 
       const request = new NextRequest(
         "http://localhost/api/extractor/extract",
@@ -338,7 +336,7 @@ describe("/api/extractor/extract", () => {
 
       const response = await POST(request);
 
-      expect(mockProxy).toHaveBeenCalledWith(request, "/v1/extract", {
+      expect(mockProxyFileUploadWithFormData).toHaveBeenCalledWith(request, "/v1/extract", {
         headers: expect.objectContaining({
           "X-Correlation-ID": "test-correlation-id",
           "X-Client-IP": "192.168.1.1",
@@ -346,15 +344,14 @@ describe("/api/extractor/extract", () => {
         }),
       });
 
-      expect(trackEvent).toHaveBeenCalledWith(
+      expect(mockTrackEvent).toHaveBeenCalledWith(
         "extractor_upload_success",
         expect.any(Object)
       );
     });
 
     it("handles backend service errors gracefully", async () => {
-      const mockProxy = proxyFileUpload as jest.Mock;
-      mockProxy.mockRejectedValue(new Error("Backend service unavailable"));
+            mockProxyFileUploadWithFormData.mockRejectedValue(new Error("Backend service unavailable"));
 
       const request = new NextRequest(
         "http://localhost/api/extractor/extract",
@@ -366,21 +363,20 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(trackEvent).toHaveBeenCalledWith(
+      expect(mockTrackEvent).toHaveBeenCalledWith(
         "extractor_upload_failed",
         expect.any(Object)
       );
-      expect(handleAPIError).toHaveBeenCalled();
+      expect(mockHandleAPIError).toHaveBeenCalled();
     });
 
     it("includes proper headers in successful responses", async () => {
-      const mockProxy = proxyFileUpload as jest.Mock;
-      const mockResponse = new Response(JSON.stringify({ success: true }), {
+            const mockResponse = new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: new Headers(),
       });
 
-      mockProxy.mockResolvedValue(mockResponse);
+      mockProxyFileUploadWithFormData.mockResolvedValue(mockResponse);
 
       const request = new NextRequest(
         "http://localhost/api/extractor/extract",
@@ -403,8 +399,7 @@ describe("/api/extractor/extract", () => {
 
   describe("Analytics Tracking", () => {
     beforeEach(() => {
-      const mockRateLimit = FileUploadRateLimiter.checkRateLimit as jest.MockedFunction<typeof FileUploadRateLimiter.checkRateLimit>
-      mockRateLimit.mockReturnValue({
+            mockCheckRateLimit.mockReturnValue({
         allowed: true,
         remainingUploads: 10,
         resetTime: Date.now() + 3600000,
@@ -412,8 +407,7 @@ describe("/api/extractor/extract", () => {
     });
 
     it("tracks upload start events", async () => {
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      mockValidation.mockResolvedValue({
+            mockFileUpload.mockResolvedValue({
         isValid: true,
         files: [
           new File(["test1"], "test1.pdf", { type: "application/pdf" }),
@@ -421,8 +415,7 @@ describe("/api/extractor/extract", () => {
         ],
       });
 
-      const mockProxy = proxyFileUpload as jest.Mock;
-      mockProxy.mockResolvedValue(
+            mockProxyFileUploadWithFormData.mockResolvedValue(
         new Response("{}", { status: 200, headers: new Headers() })
       );
 
@@ -436,7 +429,7 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(trackEvent).toHaveBeenCalledWith("extractor_upload_started", {
+      expect(mockTrackEvent).toHaveBeenCalledWith("extractor_upload_started", {
         file_count: 2,
         correlation_id: "test-correlation-id",
         client_ip: "192.168.1...",
@@ -444,8 +437,7 @@ describe("/api/extractor/extract", () => {
     });
 
     it("tracks validation errors", async () => {
-      const mockValidation = validateRequest.fileUpload as jest.Mock;
-      mockValidation.mockResolvedValue({
+            mockFileUpload.mockResolvedValue({
         isValid: false,
         error: "File too large",
       });
@@ -460,7 +452,7 @@ describe("/api/extractor/extract", () => {
 
       await POST(request);
 
-      expect(trackEvent).toHaveBeenCalledWith("extractor_validation_error", {
+      expect(mockTrackEvent).toHaveBeenCalledWith("extractor_validation_error", {
         error: "File too large",
         correlation_id: "test-correlation-id",
         client_ip: "192.168.1.1",

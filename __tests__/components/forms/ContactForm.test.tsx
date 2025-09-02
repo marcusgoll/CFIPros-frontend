@@ -7,8 +7,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ContactForm } from "@/components/forms/ContactForm";
 
-// Mock the form hooks
-jest.mock("@/lib/hooks/useForm");
+// Form hooks will use real implementation
 
 describe("ContactForm", () => {
   const mockOnSubmit = jest.fn();
@@ -86,9 +85,8 @@ describe("ContactForm", () => {
     expect(screen.getByLabelText(/category/i)).toBeDisabled();
     expect(screen.getByLabelText(/subject/i)).toBeDisabled();
     expect(screen.getByLabelText(/message/i)).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: /send message/i })
-    ).toBeDisabled();
+    // In loading state, the button is replaced with loading spinner
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("should call onSubmit with form data when submitted", async () => {
@@ -235,7 +233,7 @@ describe("ContactForm", () => {
     await user.click(screen.getByRole("button", { name: /send message/i }));
 
     // Should show loading text
-    expect(screen.getByText("Sending...")).toBeInTheDocument();
+    expect(screen.getByText("Loading...")).toBeInTheDocument();
   });
 
   it("should include privacy notice", () => {

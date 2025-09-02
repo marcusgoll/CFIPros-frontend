@@ -3,11 +3,11 @@
  * Maps to backend /v1/batches/{batchId}/consent endpoint for consent management
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { withAPIMiddleware, createOptionsHandler } from "@/lib/api/middleware";
 import { validateRequest } from "@/lib/api/validation";
 import { proxyRequest, getClientIP, addCorrelationId } from "@/lib/api/proxy";
-import { CommonErrors, handleAPIError } from "@/lib/api/errors";
+import { CommonErrors, handleAPIError, APIError } from "@/lib/api/errors";
 import { trackEvent } from "@/lib/analytics/telemetry";
 
 async function consentHandler(
@@ -100,13 +100,39 @@ async function consentHandler(
     }
 
     // Proxy to backend consent endpoint
-    const response = await proxyRequest(request, `/v1/batches/${batchId}/consent`, {
-      headers: {
-        "X-Correlation-ID": correlationId,
-        "X-Client-IP": clientIP,
-        "X-Service": "acs-extractor-v1.2",
-      },
-    });
+    let response;
+    try {
+      response = await proxyRequest(request, `/v1/batches/${batchId}/consent`, {
+        headers: {
+          "X-Correlation-ID": correlationId,
+          "X-Client-IP": clientIP,
+          "X-Service": "acs-extractor-v1.2",
+        },
+      });
+    } catch (error) {
+      // Handle 404 specifically for consent data (may not exist yet)
+      if (error instanceof APIError && error.status === 404) {
+        // Return empty consent data for 404s instead of error
+        const emptyResponse = NextResponse.json(
+          { 
+            records: [],
+            total: 0,
+            message: "No consent records found for this batch" 
+          },
+          { 
+            status: 200,
+            headers: {
+              'Access-Control-Allow-Origin': '*',
+              'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+              'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
+            }
+          }
+        );
+        return emptyResponse;
+      }
+      // Re-throw other errors
+      throw error;
+    }
 
     // Track successful consent operation
     if (response.status >= 200 && response.status < 300) {
@@ -153,36 +179,33 @@ export async function GET(
   request: NextRequest,
   context: { params: Promise<{ batchId: string | string[] | undefined }> }
 ) {
-  const wrapped = withAPIMiddleware(consentHandler, {
+  return withAPIMiddleware(consentHandler, {
     endpoint: "batch-consent",
     cors: true,
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
-  });
-  return wrapped(request, context);
+  })(request, context);
 }
 
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ batchId: string | string[] | undefined }> }
 ) {
-  const wrapped = withAPIMiddleware(consentHandler, {
+  return withAPIMiddleware(consentHandler, {
     endpoint: "batch-consent",
     cors: true,
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
-  });
-  return wrapped(request, context);
+  })(request, context);
 }
 
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ batchId: string | string[] | undefined }> }
 ) {
-  const wrapped = withAPIMiddleware(consentHandler, {
+  return withAPIMiddleware(consentHandler, {
     endpoint: "batch-consent",
     cors: true,
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
-  });
-  return wrapped(request, context);
+  })(request, context);
 }
 
 // OPTIONS handler for CORS preflight

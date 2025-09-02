@@ -19,7 +19,8 @@ describe("TodayCard", () => {
     );
 
     expect(screen.getByText("Today")).toBeInTheDocument();
-    expect(screen.getByText("12 cards due")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("cards due")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /start cards/i })
     ).toBeInTheDocument();
