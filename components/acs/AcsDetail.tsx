@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, FileText, Calendar, Tag } from "lucide-react";
+import { ExternalLink, FileText, Calendar, Tag, BookOpen, Target } from "lucide-react";
 import { Badge } from "@/components/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import type { TAcsCode } from "@/lib/api/acs";
@@ -51,79 +51,53 @@ export default function AcsDetail({ code }: AcsDetailProps) {
         </div>
       </div>
 
-      {/* Metadata Grid */}
+      {/* Professional Information Groups */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Document Information */}
-        {code.document && (
+        {/* Training Information */}
+        {(code.area || code.task) && (
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Document Information
+                <Target className="h-5 w-5" />
+                Training Information
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
+              {code.area && (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Subject Area</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{code.area}</dd>
+                </div>
+              )}
+              
+              {code.task && (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Task</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{code.task}</dd>
+                </div>
+              )}
+              
               <div>
-                <dt className="text-sm font-medium text-gray-500">Document</dt>
-                <dd className="mt-1 text-sm text-gray-900">{code.document.title}</dd>
+                <dt className="text-sm font-medium text-gray-500">Competency Type</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  <Badge className={getTypeColorClasses(code.type)}>
+                    {formatCodeType(code.type)}
+                  </Badge>
+                </dd>
               </div>
-              
-              {code.document.revision && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Revision</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{code.document.revision}</dd>
-                </div>
-              )}
-              
-              {code.document.publicationDate && (
-                <div>
-                  <dt className="text-sm font-medium text-gray-500">Publication Date</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
-                    {new Date(code.document.publicationDate).toLocaleDateString()}
-                  </dd>
-                </div>
-              )}
-              
-              {code.document.sourceUrl && (
-                <div>
-                  <a
-                    href={code.document.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    View Source Document
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </div>
-              )}
             </CardContent>
           </Card>
         )}
 
-        {/* Code Details */}
+        {/* Administrative Details */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5" />
-              Code Details
+              <Calendar className="h-5 w-5" />
+              Administrative Details
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {code.area && (
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Area</dt>
-                <dd className="mt-1 text-sm text-gray-900">{code.area}</dd>
-              </div>
-            )}
-            
-            {code.task && (
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Task</dt>
-                <dd className="mt-1 text-sm text-gray-900">{code.task}</dd>
-              </div>
-            )}
-            
             {code.version && (
               <div>
                 <dt className="text-sm font-medium text-gray-500">Version</dt>
@@ -140,62 +114,166 @@ export default function AcsDetail({ code }: AcsDetailProps) {
               </div>
             )}
             
-            {code.sourcePdfUrl && code.pageNumber && (
-              <div>
-                <dt className="text-sm font-medium text-gray-500">Source Reference</dt>
-                <dd className="mt-1 text-sm text-gray-900">
-                  <a
-                    href={code.sourcePdfUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
-                  >
-                    Page {code.pageNumber}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </dd>
-              </div>
-            )}
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+              <dd className="mt-1 text-sm text-gray-900">
+                {new Date(code.updatedAt).toLocaleDateString()}
+              </dd>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Tags and Synonyms */}
-      {(code.tags && code.tags.length > 0) || (code.synonyms && code.synonyms.length > 0) && (
-        <div className="space-y-4">
-          {code.tags && code.tags.length > 0 && (
-            <div>
-              <h3 className="mb-3 text-lg font-semibold text-gray-900">Tags</h3>
-              <div className="flex flex-wrap gap-2">
-                {code.tags.map((tag, index) => (
-                  <Badge key={index} variant="outline" className="text-sm">
-                    {tag}
-                  </Badge>
-                ))}
+      {/* Source Document Integration */}
+      {(code.document || code.sourcePdfUrl) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Source Documentation
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {code.document && (
+              <div className="space-y-3">
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Document Name</dt>
+                  <dd className="mt-1 text-base font-medium text-gray-900">{code.document.title}</dd>
+                </div>
+                
+                {code.document.revision && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Revision</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{code.document.revision}</dd>
+                  </div>
+                )}
+                
+                {code.document.publicationDate && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Publication Date</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {new Date(code.document.publicationDate).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </dd>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )}
 
-          {code.synonyms && code.synonyms.length > 0 && (
-            <div>
-              <h3 className="mb-3 text-lg font-semibold text-gray-900">Alternative Terms</h3>
-              <div className="flex flex-wrap gap-2">
-                {code.synonyms.map((synonym, index) => (
-                  <Badge key={index} variant="secondary" className="text-sm">
-                    {synonym}
-                  </Badge>
-                ))}
+            {/* Page Reference with PDF Link */}
+            {code.pageNumber && (
+              <div className="rounded-lg bg-blue-50 p-4">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <dt className="text-sm font-medium text-blue-900">Page Reference</dt>
+                    <dd className="mt-1 text-lg font-semibold text-blue-900">
+                      Page {code.pageNumber}
+                    </dd>
+                  </div>
+                  {code.sourcePdfUrl && (
+                    <a
+                      href={code.sourcePdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      <FileText className="h-4 w-4" />
+                      View PDF
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  )}
+                </div>
               </div>
+            )}
+
+            {/* Additional Document Links */}
+            <div className="flex flex-wrap gap-2">
+              {code.document?.sourceUrl && (
+                <a
+                  href={code.document.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  Official Document
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+              
+              {code.sourcePdfUrl && !code.pageNumber && (
+                <a
+                  href={code.sourcePdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+                >
+                  <FileText className="h-4 w-4" />
+                  Source PDF
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* Last Updated */}
-      <div className="border-t pt-6">
-        <div className="flex items-center gap-2 text-sm text-gray-500">
-          <Calendar className="h-4 w-4" />
-          Last updated: {new Date(code.updatedAt).toLocaleDateString()}
+      {/* Knowledge Discovery */}
+      {(code.tags && code.tags.length > 0) || (code.synonyms && code.synonyms.length > 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5" />
+              Knowledge Discovery
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {code.tags && code.tags.length > 0 && (
+              <div>
+                <h4 className="mb-3 text-sm font-medium text-gray-900">Related Topics</h4>
+                <div className="flex flex-wrap gap-2">
+                  {code.tags.map((tag, index) => (
+                    <Badge key={index} variant="outline" className="text-sm hover:bg-blue-50 hover:border-blue-200">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {code.synonyms && code.synonyms.length > 0 && (
+              <div>
+                <h4 className="mb-3 text-sm font-medium text-gray-900">Alternative Terms</h4>
+                <div className="flex flex-wrap gap-2">
+                  {code.synonyms.map((synonym, index) => (
+                    <Badge key={index} variant="secondary" className="text-sm hover:bg-gray-200">
+                      {synonym}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Print-Friendly Footer */}
+      <div className="border-t pt-6 print:block">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Calendar className="h-4 w-4" />
+            Last updated: {new Date(code.updatedAt).toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </div>
+          
+          <div className="hidden text-sm text-gray-500 print:block">
+            Source: CFIPros ACS Database - https://cfipros.com/acs-database/{code.slug}
+          </div>
         </div>
       </div>
     </div>

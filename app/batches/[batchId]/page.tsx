@@ -2,9 +2,11 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { BatchSharing } from "@/components/forms/BatchSharing";
 import { ConsentManager } from "@/components/forms/ConsentManager";
+import { createSlugFromCode } from "@/lib/api/acs";
 import {
   AlertCircle,
   CheckCircle2,
@@ -13,6 +15,8 @@ import {
   Share2,
   FileText,
   Loader2,
+  ExternalLink,
+  BookOpen,
 } from "lucide-react";
 
 interface ACSCode {
@@ -386,23 +390,58 @@ export default function BatchStatusPage() {
               </div>
             )}
 
-            {/* ACS Codes */}
+            {/* ACS Codes with Database Links */}
             {batchStatus.summary_data.code_frequency && batchStatus.summary_data.code_frequency.length > 0 && (
               <div>
-                <h4 className="mb-3 font-medium text-gray-900">
-                  ACS Codes Found ({batchStatus.summary_data.code_frequency.length})
-                </h4>
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="font-medium text-gray-900">
+                    ACS Codes Found ({batchStatus.summary_data.code_frequency.length})
+                  </h4>
+                  <Link
+                    href="/acs-database"
+                    className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800"
+                  >
+                    <BookOpen className="h-4 w-4" />
+                    <span>Browse ACS Database</span>
+                    <ExternalLink className="h-3 w-3" />
+                  </Link>
+                </div>
+                
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-                  {batchStatus.summary_data.code_frequency.slice(0, 12).map((code, index) => (
-                    <div key={index} className="rounded border bg-gray-50 px-2 py-1 text-center">
-                      <span className="text-xs font-mono text-gray-800">{code.code}</span>
-                    </div>
-                  ))}
+                  {batchStatus.summary_data.code_frequency.slice(0, 12).map((code, index) => {
+                    const slug = createSlugFromCode(code.code);
+                    return (
+                      <Link
+                        key={index}
+                        href={`/acs-database/${slug}`}
+                        className="group rounded border bg-gray-50 px-2 py-1 text-center transition-colors hover:bg-blue-50 hover:border-blue-200"
+                      >
+                        <div className="flex flex-col items-center space-y-1">
+                          <span className="text-xs font-mono text-gray-800 group-hover:text-blue-800">
+                            {code.code}
+                          </span>
+                          <div className="flex items-center space-x-1 text-xs text-gray-500 group-hover:text-blue-600">
+                            <span>{code.frequency}x</span>
+                            <ExternalLink className="h-2.5 w-2.5" />
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
                   {batchStatus.summary_data.code_frequency.length > 12 && (
                     <div className="rounded border bg-gray-100 px-2 py-1 text-center">
-                      <span className="text-xs text-gray-600">+{batchStatus.summary_data.code_frequency.length - 12} more</span>
+                      <span className="text-xs text-gray-600">
+                        +{batchStatus.summary_data.code_frequency.length - 12} more
+                      </span>
                     </div>
                   )}
+                </div>
+                
+                <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                  <p className="text-xs text-blue-800">
+                    💡 <strong>Tip:</strong> Click any ACS code above to view detailed standards, 
+                    study materials, and generate targeted study plans in our ACS Database.
+                  </p>
                 </div>
               </div>
             )}

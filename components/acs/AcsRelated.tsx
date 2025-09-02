@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { fetchAcsCodeRelated, type AcsCode } from "@/lib/api/acs";
+import { Badge } from "@/components/ui";
 
 interface AcsRelatedProps {
   codeOrSlug: string;
@@ -89,14 +90,28 @@ export default function AcsRelated({
         {displayCodes.slice(0, 6).map((related) => (
           <Link
             key={related.code}
-            href={`/acs/${related.slug}`}
-            className="block rounded-lg border p-3 transition-colors hover:bg-gray-50"
+            href={`/acs-database/${related.slug}`}
+            className="group block rounded-lg border p-4 transition-all duration-200 hover:bg-gray-50 hover:border-blue-200 hover:shadow-sm"
           >
-            <div className="font-medium text-blue-600 hover:text-blue-800">
-              {related.code}
-            </div>
-            <div className="text-sm text-gray-600 line-clamp-2">
-              {related.title || related.description}
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="font-mono text-sm font-medium text-blue-600 group-hover:text-blue-800">
+                  {related.code}
+                </div>
+                <div className="mt-1 text-sm text-gray-900 line-clamp-2 group-hover:text-gray-700">
+                  {related.title || related.description}
+                </div>
+                {related.type && (
+                  <div className="mt-2">
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs"
+                    >
+                      {formatCodeType(related.type)}
+                    </Badge>
+                  </div>
+                )}
+              </div>
             </div>
           </Link>
         ))}
@@ -105,7 +120,7 @@ export default function AcsRelated({
       {displayCodes.length > 6 && (
         <div className="mt-4 text-center">
           <Link
-            href={`/acs?related=${encodeURIComponent(codeOrSlug)}`}
+            href={`/acs-database?related=${encodeURIComponent(codeOrSlug)}`}
             className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
           >
             View all related codes
@@ -114,4 +129,17 @@ export default function AcsRelated({
       )}
     </div>
   );
+}
+
+function formatCodeType(type: "knowledge" | "skill" | "risk_management"): string {
+  switch (type) {
+    case "knowledge":
+      return "Knowledge";
+    case "skill":
+      return "Skill";
+    case "risk_management":
+      return "Risk Management";
+    default:
+      return type;
+  }
 }

@@ -219,7 +219,7 @@ export default async function AcsDetailPage({ params }: Props) {
                 {/* Related Codes */}
                 <AcsRelated 
                   codeOrSlug={acsCode.slug}
-                  relatedCodes={acsCode.related}
+                  relatedCodes={acsCode.related || []}
                 />
 
                 {/* Quick Navigation */}

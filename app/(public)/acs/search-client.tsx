@@ -7,7 +7,7 @@ import AcsFilters from "@/components/acs/AcsFilters";
 import AcsList from "@/components/acs/AcsList";
 import { 
   fetchAcsCodes, 
-  type AcsCode, 
+  type TAcsCode, 
   type AcsSearchParams,
   type AcsSearchResponse 
 } from "@/lib/api/acs";
@@ -17,21 +17,19 @@ export default function AcsSearchClient() {
   const searchParams = useSearchParams();
   
   // State management
-  const [codes, setCodes] = useState<AcsCode[]>([]);
+  const [codes, setCodes] = useState<TAcsCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
 
   // Parse filters from URL params
   const filters = useMemo((): Partial<AcsSearchParams> => ({
-    query: searchParams.get("q") || "",
-    document: searchParams.get("doc") || "",
+    q: searchParams.get("q") || "",
+    doc: searchParams.get("doc") || "",
     area: searchParams.get("area") || "",
     task: searchParams.get("task") || "",
-    knowledge_level: searchParams.get("knowledge") || "",
-    risk_level: searchParams.get("risk") || "",
-    page: parseInt(searchParams.get("page") || "1"),
     limit: parseInt(searchParams.get("limit") || "20"),
+    offset: (parseInt(searchParams.get("page") || "1") - 1) * parseInt(searchParams.get("limit") || "20"),
   }), [searchParams]);
 
   // Update URL with new filters
@@ -47,14 +45,12 @@ export default function AcsSearchClient() {
       }
     });
 
-    // Reset page when changing filters (except when explicitly setting page)
-    if (!newFilters.page && (
-      newFilters.query !== undefined ||
-      newFilters.document !== undefined ||
+    // Reset page when changing filters (except when explicitly setting offset)
+    if (!newFilters.offset && (
+      newFilters.q !== undefined ||
+      newFilters.doc !== undefined ||
       newFilters.area !== undefined ||
-      newFilters.task !== undefined ||
-      newFilters.knowledge_level !== undefined ||
-      newFilters.risk_level !== undefined
+      newFilters.task !== undefined
     )) {
       params.delete("page");
     }
@@ -77,7 +73,7 @@ export default function AcsSearchClient() {
         include: ["document", "related"]
       });
 
-      setCodes(result.results);
+      setCodes(result.items);
       setTotalCount(result.count);
     } catch (err) {
       // Remove console.error for production
@@ -98,8 +94,8 @@ export default function AcsSearchClient() {
   const handleSearch = useCallback((query: string) => {
     const newFilters: Partial<AcsSearchParams> = {
       ...filters,
-      query,
-      page: 1, // Reset to first page
+      q: query,
+      offset: 0, // Reset to first page
     };
     updateFilters(newFilters);
   }, [filters, updateFilters]);
@@ -109,13 +105,13 @@ export default function AcsSearchClient() {
     updateFilters({
       ...filters,
       ...newFilters,
-      page: 1, // Reset to first page
+      offset: 0, // Reset to first page
     });
   }, [filters, updateFilters]);
 
   // Handle pagination
   const handlePageChange = useCallback((page: number) => {
-    updateFilters({ page });
+    updateFilters({ offset: (page - 1) * (filters.limit || 20) });
   }, [updateFilters]);
 
   return (
@@ -140,7 +136,7 @@ export default function AcsSearchClient() {
         <div className="mb-8">
           <AcsSearch
             onSearch={handleSearch}
-            defaultValue={filters.query || ""}
+            defaultValue={filters.q || ""}
             placeholder="Search ACS codes, descriptions, or areas..."
           />
         </div>

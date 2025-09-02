@@ -54,9 +54,6 @@ export const AcsCodeListResponse = z.object({
 
 export type TAcsCodeListResponse = z.infer<typeof AcsCodeListResponse>;
 
-// Search response type alias for backward compatibility
-export type AcsSearchResponse = TAcsCodeListResponse;
-
 export const AcsDocumentListResponse = z.object({
   items: z.array(AcsDocument),
   limit: z.number(),
