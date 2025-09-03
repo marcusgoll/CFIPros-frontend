@@ -111,6 +111,7 @@ test-data/
 **/CLAUDE.md
 **/*claude*.md
 **/*CLAUDE*.md
+CLAUDE-*.md
 
 # Business configuration files
 config/production.ts
