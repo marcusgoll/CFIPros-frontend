@@ -5,20 +5,6 @@ import { useUser, useOrganization } from '@clerk/nextjs';
 import { useAuthAPI, type User, type Organization } from '@/lib/api/clerk-client';
 
 /**
- * Basic auth hook that provides authentication status
- * This is the primary hook used throughout the application
- */
-export function useAuth() {
-  const { isSignedIn, isLoaded, userId } = useUser();
-  
-  return {
-    isAuthenticated: isSignedIn,
-    isLoading: !isLoaded,
-    userId,
-  };
-}
-
-/**
  * Hook to get current user data from the API
  * Combines Clerk user info with our backend user data
  */

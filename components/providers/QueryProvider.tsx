@@ -18,7 +18,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
           // Don't retry on auth errors (401/403)
           if (error && typeof error === 'object' && 'status' in error) {
             const status = (error as { status: number }).status;
-            if (status === 401 || status === 403) return false;
+            if (status === 401 || status === 403) {
+              return false;
+            }
           }
           return failureCount < 3;
         },
@@ -30,7 +32,9 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
         retry: (failureCount, error) => {
           if (error && typeof error === 'object' && 'message' in error) {
             const message = (error as { message: string }).message;
-            if (/network/i.test(message) && failureCount < 1) return true;
+            if (/network/i.test(message) && failureCount < 1) {
+              return true;
+            }
           }
           return false;
         },

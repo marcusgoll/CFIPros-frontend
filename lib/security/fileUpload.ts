@@ -27,7 +27,7 @@ export interface FileMetadata {
  */
 export class FileUploadSecurity {
   // Magic bytes for common file types to verify actual file content
-  // @ts-ignore - Unused but kept for future file type validation
+  // @ts-expect-error - Unused but kept for future file type validation
   private static readonly MAGIC_BYTES: Record<string, Uint8Array[]> = {
     "application/pdf": [
       new Uint8Array([0x25, 0x50, 0x44, 0x46]), // %PDF
@@ -455,7 +455,7 @@ export class FileUploadSecurity {
   /**
    * Helper: Read file bytes
    */
-  // @ts-ignore - Unused but kept for future security features
+  // @ts-expect-error - Unused but kept for future security features
   private static async readFileBytes(
     file: File,
     bytes: number
@@ -482,7 +482,7 @@ export class FileUploadSecurity {
   /**
    * Helper: Compare byte arrays
    */
-  // @ts-ignore - Unused but kept for future security features
+  // @ts-expect-error - Unused but kept for future security features
   private static compareBytes(
     fileBytes: Uint8Array,
     signature: Uint8Array
