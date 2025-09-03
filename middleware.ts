@@ -1,10 +1,61 @@
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export function middleware(_request: NextRequest) {
-  // Create response with security headers
-  const response = NextResponse.next();
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/about',
+  '/pricing',
+  '/contact',
+  '/features',
+  '/api/webhooks(.*)',
+  '/api/health',
+]);
+
+// Define protected routes that require authentication
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/profile(.*)',
+  '/settings(.*)',
+  '/study-plan(.*)',
+  '/reports(.*)',
+  '/analytics(.*)',
+  '/admin(.*)',
+  '/api/auth(.*)',
+  '/api/user(.*)',
+]);
+
+export default clerkMiddleware(async (auth, request: NextRequest) => {
+  const { userId } = await auth();
+  const { pathname } = request.nextUrl;
+
+  // Create response for security headers
+  let response: NextResponse;
+
+  // Handle authentication logic
+  if (!userId && isProtectedRoute(request)) {
+    // Redirect unauthenticated users to sign-in
+    const signInUrl = new URL('/sign-in', request.url);
+    signInUrl.searchParams.set('redirect_url', request.url);
+    response = NextResponse.redirect(signInUrl);
+  } else if (userId && (pathname === '/sign-in' || pathname === '/sign-up')) {
+    // Redirect authenticated users away from auth pages
+    response = NextResponse.redirect(new URL('/dashboard', request.url));
+  } else {
+    // Allow the request to continue
+    response = NextResponse.next();
+  }
+
+  // Add comprehensive security headers to all responses
+  addSecurityHeaders(response);
   
+  return response;
+});
+
+function addSecurityHeaders(response: NextResponse) {
   // Add comprehensive security headers
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -28,8 +79,6 @@ export function middleware(_request: NextRequest) {
       "frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev",
     ].join("; ")
   );
-  
-  return response;
 }
 
 export const config = {
