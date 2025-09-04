@@ -209,9 +209,9 @@ export class FileUploadSecurity {
     const mimeType = file.type.toLowerCase();
     // MIME-specific signature checks (robust)
     if (mimeType === "application/pdf") {
-      // PDFs start with "%PDF" — read as text for reliability in JSDOM
-      const headerText = await this.readFileAsText(file, 8);
-      if (!headerText.startsWith("%PDF")) {
+      // PDFs start with "%PDF" — use text reading for Jest compatibility
+      const headerText = await this.readFileAsText(file, 4);
+      if (headerText !== "%PDF") {
         // Debugging aid for test environment
         try {
           // eslint-disable-next-line no-console
@@ -479,26 +479,6 @@ export class FileUploadSecurity {
     return blob.text();
   }
 
-  /**
-   * Helper: Compare byte arrays
-   */
-  // @ts-expect-error - Unused but kept for future security features
-  private static compareBytes(
-    fileBytes: Uint8Array,
-    signature: Uint8Array
-  ): boolean {
-    if (fileBytes.length < signature.length) {
-      return false;
-    }
-
-    for (let i = 0; i < signature.length; i++) {
-      if (fileBytes[i] !== signature[i]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
 
   /**
    * Validate file upload with user authentication context
