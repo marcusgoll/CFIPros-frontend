@@ -1,5 +1,52 @@
 import "@testing-library/jest-dom";
 
+// Custom Jest matchers for better assertions
+expect.extend({
+  toBeValidFile(received) {
+    const pass = received && 
+                 received instanceof File && 
+                 received.name && 
+                 received.size >= 0;
+    
+    return {
+      message: () =>
+        pass
+          ? `Expected ${received} not to be a valid File object`
+          : `Expected ${received} to be a valid File object with name and size`,
+      pass,
+    };
+  },
+  
+  toHaveValidationError(received, field) {
+    const pass = received && 
+                 received.errors && 
+                 received.errors[field];
+    
+    return {
+      message: () =>
+        pass
+          ? `Expected form not to have validation error for field "${field}"`
+          : `Expected form to have validation error for field "${field}"`,
+      pass,
+    };
+  },
+  
+  toBeSecureResponse(received) {
+    const pass = received &&
+                 received.headers &&
+                 received.headers.get('x-content-type-options') === 'nosniff' &&
+                 received.headers.get('x-frame-options');
+    
+    return {
+      message: () =>
+        pass
+          ? `Expected response not to have security headers`
+          : `Expected response to have required security headers`,
+      pass,
+    };
+  }
+});
+
 // Add fetch polyfill for integration tests
 if (!globalThis.fetch) {
   globalThis.fetch = async (url, options = {}) => {
@@ -179,9 +226,107 @@ if (!global.AbortSignal) {
   };
 }
 
+// Mock Clerk authentication
+jest.mock("@clerk/nextjs", () => ({
+  auth: jest.fn(() => ({
+    userId: "test_user_123",
+    sessionId: "test_session_123",
+    getToken: jest.fn().mockResolvedValue("test_token_123"),
+  })),
+  useAuth: jest.fn(() => ({
+    isLoaded: true,
+    isSignedIn: true,
+    userId: "test_user_123",
+    sessionId: "test_session_123",
+    getToken: jest.fn().mockResolvedValue("test_token_123"),
+    signOut: jest.fn(),
+  })),
+  useUser: jest.fn(() => ({
+    isLoaded: true,
+    isSignedIn: true,
+    user: {
+      id: "test_user_123",
+      firstName: "Test",
+      lastName: "User",
+      emailAddresses: [{ emailAddress: "test@example.com" }],
+    },
+  })),
+  ClerkProvider: ({ children }) => children,
+  SignInButton: ({ children }) => children,
+  SignUpButton: ({ children }) => children,
+  UserButton: () => <div data-testid="user-button">User Menu</div>,
+  RedirectToSignIn: () => <div data-testid="redirect-to-signin">Redirecting...</div>,
+  currentUser: jest.fn().mockResolvedValue({
+    id: "test_user_123",
+    firstName: "Test",
+    lastName: "User",
+    emailAddresses: [{ emailAddress: "test@example.com" }],
+  }),
+}));
+
+// Mock Clerk middleware
+jest.mock("@clerk/nextjs/server", () => ({
+  authMiddleware: jest.fn((config) => {
+    return (req) => {
+      // Mock authenticated request
+      req.auth = {
+        userId: "test_user_123",
+        sessionId: "test_session_123",
+        getToken: jest.fn().mockResolvedValue("test_token_123"),
+      };
+      return new Response(null, { status: 200 });
+    };
+  }),
+  clerkMiddleware: jest.fn((config) => {
+    return (req) => {
+      req.auth = {
+        userId: "test_user_123",
+        sessionId: "test_session_123",
+        getToken: jest.fn().mockResolvedValue("test_token_123"),
+      };
+      return new Response(null, { status: 200 });
+    };
+  }),
+  currentUser: jest.fn().mockResolvedValue({
+    id: "test_user_123",
+    firstName: "Test",
+    lastName: "User",
+    emailAddresses: [{ emailAddress: "test@example.com" }],
+  }),
+}));
+
 // Set production API URL for integration tests
 if (!process.env.BACKEND_API_URL) {
   process.env.BACKEND_API_URL = 'https://api.cfipros.com';
+}
+
+// Mock FileUploadRateLimiter
+jest.mock("./lib/api/rateLimiter", () => ({
+  FileUploadRateLimiter: {
+    checkRateLimit: jest.fn(() => ({
+      allowed: true,
+      remainingUploads: 15,
+      resetTime: Date.now() + 60000,
+    })),
+  },
+}));
+
+// Mock rate limiter modules that tests might import
+global.FileUploadRateLimiter = {
+  checkRateLimit: jest.fn(() => ({
+    allowed: true,
+    remainingUploads: 15,
+    resetTime: Date.now() + 60000,
+  })),
+};
+
+// Set Clerk environment variables for tests
+if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_testing_key';
+}
+
+if (!process.env.CLERK_SECRET_KEY) {
+  process.env.CLERK_SECRET_KEY = 'sk_test_testing_key';
 }
 
 global.Headers = class MockHeaders {
