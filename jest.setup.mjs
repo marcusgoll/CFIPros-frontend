@@ -1,5 +1,13 @@
 import "@testing-library/jest-dom";
 
+// Add fetch polyfill for integration tests
+if (!globalThis.fetch) {
+  globalThis.fetch = async (url, options = {}) => {
+    const { default: fetch } = await import('node-fetch');
+    return fetch(url, options);
+  };
+}
+
 // Mock next/router
 jest.mock("next/router", () => ({
   useRouter() {
@@ -98,6 +106,7 @@ jest.mock("next/server", () => ({
         status: init?.status || 200,
         headers,
         json: jest.fn().mockResolvedValue(data),
+        text: jest.fn().mockResolvedValue(JSON.stringify(data)),
         ok: (init?.status || 200) >= 200 && (init?.status || 200) < 300,
       };
     }),
@@ -129,6 +138,51 @@ global.Response = class MockResponse {
     return Promise.resolve(this.body);
   }
 };
+
+// Mock AbortSignal for Node.js test environment
+if (!global.AbortSignal) {
+  global.AbortSignal = class MockAbortSignal {
+    static timeout(ms) {
+      const signal = new MockAbortSignal();
+      signal.aborted = false;
+      setTimeout(() => {
+        signal.aborted = true;
+        if (signal.onabort) signal.onabort();
+      }, ms);
+      return signal;
+    }
+    
+    constructor() {
+      this.aborted = false;
+      this.onabort = null;
+    }
+    
+    addEventListener(type, listener) {
+      if (type === 'abort') {
+        this.onabort = listener;
+      }
+    }
+    
+    removeEventListener(type, listener) {
+      if (type === 'abort') {
+        this.onabort = null;
+      }
+    }
+  };
+} else if (!AbortSignal.timeout) {
+  AbortSignal.timeout = (ms) => {
+    const signal = new AbortSignal();
+    setTimeout(() => {
+      if (signal.onabort) signal.onabort();
+    }, ms);
+    return signal;
+  };
+}
+
+// Set production API URL for integration tests
+if (!process.env.BACKEND_API_URL) {
+  process.env.BACKEND_API_URL = 'https://api.cfipros.com';
+}
 
 global.Headers = class MockHeaders {
   constructor(init) {

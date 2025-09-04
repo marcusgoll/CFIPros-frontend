@@ -105,7 +105,8 @@ export function AktrToAcsUploader() {
         // Track success
         trackUploadCompleted(files, Date.now() - startedAt);
 
-        return { batchId: result.batchId };
+        // Backend returns batch_id (with underscore), frontend expects batchId (camelCase)
+        return { batchId: result.batch_id };
       } catch (error) {
         clearInterval(progressInterval);
 

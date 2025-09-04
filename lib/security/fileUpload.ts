@@ -1,25 +1,24 @@
-/**
- * File Upload Security Module
- * Implements comprehensive security measures for file uploads
- */
+import { z } from "zod";
 
-import crypto from "crypto";
-import { config } from "@/lib/config";
+// Zod schema for file validation
+export const FileUploadSchema = z
+  .object({
+    name: z.string().min(1, "Filename is required"),
+    size: z.number().min(1, "File size must be greater than 0"),
+    type: z.enum(["application/pdf", "image/jpeg", "image/png"], {
+      errorMap: () => ({ message: "Only PDF, JPEG, and PNG files are allowed" }),
+    }),
+  })
+  .refine((file) => file.size <= 15 * 1024 * 1024, {
+    message: "File size must be 15MB or smaller",
+    path: ["size"],
+  });
 
-export interface FileSecurityResult {
+export type FileValidationResult = {
   isSecure: boolean;
   error?: string;
   warnings?: string[];
-}
-
-export interface FileMetadata {
-  originalName: string;
-  sanitizedName: string;
-  mimeType: string;
-  extension: string;
-  size: number;
-  hash?: string;
-}
+};
 
 /**
  * File Upload Security Validator
@@ -38,414 +37,323 @@ export class FileUploadSecurity {
       new Uint8Array([0xff, 0xd8, 0xff, 0xee]),
     ],
     "image/png": [
-      new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    ],
-    "image/webp": [
-      new Uint8Array([0x52, 0x49, 0x46, 0x46]), // RIFF header
+      new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), // PNG signature
     ],
   };
 
-  // Dangerous patterns in file content
-  private static readonly DANGEROUS_PATTERNS = [
-    /<script[\s>]/gi, // JavaScript
-    /<iframe[\s>]/gi, // Iframes
-    /javascript:/gi, // JavaScript protocol
-    /on\w+\s*=/gi, // Event handlers
-    /<embed[\s>]/gi, // Embedded content
-    /<object[\s>]/gi, // Objects
-    /\.exe$/i, // Executables
-    /\.dll$/i, // Dynamic libraries
-    /\.scr$/i, // Screensavers (can be malicious)
-    /\.bat$/i, // Batch files
-    /\.cmd$/i, // Command files
-    /\.com$/i, // COM files
-    /\.pif$/i, // Program information files
-    /\.vbs$/i, // VBScript
-    /\.js$/i, // JavaScript files
-    /\.jar$/i, // Java archives
-    /\.zip$/i, // Compressed files (could contain malware)
-    /\.rar$/i, // RAR archives
+  // File size limits (in bytes)
+  private static readonly MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+  private static readonly MIN_FILE_SIZE = 100; // 100 bytes
+
+  // Security patterns to detect in file content
+  private static readonly SECURITY_PATTERNS = [
+    // JavaScript execution patterns
+    /\/JS|\/JavaScript|\/Action|\/OpenAction/gi,
+    // Form submission patterns
+    /\/SubmitForm|\/ImportData|\/Launch/gi,
+    // External resource patterns
+    /\/URI|\/URL|\/GoTo/gi,
   ];
 
   /**
-   * Perform comprehensive security validation on uploaded file
+   * Main validation entry point
    */
-  static async validateFile(file: File): Promise<FileSecurityResult> {
-    const warnings: string[] = [];
-
-    // 1. Basic validations
-    const basicCheck = this.performBasicValidations(file);
-    if (!basicCheck.isSecure) {
-      return basicCheck;
-    }
-
-    // 2. Additional security checks (including double extensions)
-    const additionalChecks = this.performAdditionalSecurityChecks(file);
-    if (!additionalChecks.isSecure) {
-      return additionalChecks;
-    }
-    if (additionalChecks.warnings) {
-      warnings.push(...additionalChecks.warnings);
-    }
-
-    // 3. Verify MIME type matches file extension
-    const mimeCheck = this.verifyMimeTypeConsistency(file);
-    if (!mimeCheck.isSecure) {
-      return mimeCheck;
-    }
-
-    // 4. Check magic bytes (file signature)
-    const magicBytesCheck = await this.verifyMagicBytes(file);
-    if (!magicBytesCheck.isSecure) {
-      return magicBytesCheck;
-    }
-    if (magicBytesCheck.warnings) {
-      warnings.push(...magicBytesCheck.warnings);
-    }
-
-    // 5. Scan for dangerous patterns
-    const patternCheck = await this.scanForDangerousPatterns(file);
-    if (!patternCheck.isSecure) {
-      return patternCheck;
-    }
-
-    const result: FileSecurityResult = {
-      isSecure: true,
+  static async validateFile(file: File): Promise<FileValidationResult> {
+    const result: FileValidationResult = {
+      isSecure: false,
+      warnings: [],
     };
 
-    if (warnings.length > 0) {
-      result.warnings = warnings;
-    }
+    try {
+      // 1. Basic metadata validation
+      const metadataValidation = this.validateMetadata(file);
+      if (!metadataValidation.isSecure) {
+        return metadataValidation;
+      }
 
-    return result;
+      // 2. File signature validation (magic bytes)
+      const signatureValidation = await this.verifyMagicBytes(file);
+      if (!signatureValidation.isSecure) {
+        return signatureValidation;
+      }
+
+      // 3. Content scanning for security threats
+      const contentValidation = await this.scanFileContent(file);
+      if (!contentValidation.isSecure) {
+        return contentValidation;
+      }
+
+      // 4. Advanced PDF security checks
+      if (file.type === "application/pdf") {
+        const pdfValidation = await this.validatePDFSecurity(file);
+        if (!pdfValidation.isSecure) {
+          return pdfValidation;
+        }
+        // Merge warnings
+        if (pdfValidation.warnings) {
+          result.warnings = [...(result.warnings || []), ...pdfValidation.warnings];
+        }
+      }
+
+      result.isSecure = true;
+      return result;
+    } catch (err) {
+      return {
+        isSecure: false,
+        error: `File validation failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+      };
+    }
   }
 
   /**
-   * Basic file validations
+   * Validate file metadata (name, size, type)
    */
-  private static performBasicValidations(file: File): FileSecurityResult {
-    // Check if file exists
-    if (!file) {
-      return {
-        isSecure: false,
-        error: "No file provided",
-      };
-    }
-
-    // Check file size
-    if (file.size === 0) {
-      return {
-        isSecure: false,
-        error: "File is empty",
-      };
-    }
-
-    if (file.size > config.fileUpload.maxSize) {
-      return {
-        isSecure: false,
-        error: `File size exceeds maximum allowed size of ${config.fileUpload.maxSize / 1024 / 1024}MB`,
-      };
-    }
-
-    // Check filename length
-    if (file.name.length > 255) {
-      return {
-        isSecure: false,
-        error: "Filename is too long (max 255 characters)",
-      };
-    }
-
-    // Check for null bytes in filename
-    if (file.name.includes("\0")) {
-      return {
-        isSecure: false,
-        error: "Filename contains null bytes",
-      };
-    }
-
-    return { isSecure: true };
-  }
-
-  /**
-   * Verify MIME type matches file extension
-   */
-  private static verifyMimeTypeConsistency(file: File): FileSecurityResult {
-    const extension = this.getFileExtension(file.name);
-    const mimeType = file.type.toLowerCase();
-
-    // Map of extensions to expected MIME types
-    const extensionMimeMap: Record<string, string[]> = {
-      ".pdf": ["application/pdf"],
-      ".jpg": ["image/jpeg", "image/jpg"],
-      ".jpeg": ["image/jpeg", "image/jpg"],
-      ".png": ["image/png"],
-      ".webp": ["image/webp"],
-    };
-
-    const expectedMimeTypes = extensionMimeMap[extension];
-    if (!expectedMimeTypes) {
-      return {
-        isSecure: false,
-        error: `Unsupported file extension: ${extension}`,
-      };
-    }
-
-    if (!expectedMimeTypes.includes(mimeType)) {
-      return {
-        isSecure: false,
-        error: `MIME type mismatch: extension ${extension} does not match type ${mimeType}`,
-      };
-    }
-
-    return { isSecure: true };
-  }
-
-  /**
-   * Verify file magic bytes (file signature)
-   */
-  private static async verifyMagicBytes(
-    file: File
-  ): Promise<FileSecurityResult> {
-    const mimeType = file.type.toLowerCase();
-    // MIME-specific signature checks (robust)
-    if (mimeType === "application/pdf") {
-      // PDFs start with "%PDF" — use text reading for Jest compatibility
-      const headerText = await this.readFileAsText(file, 4);
-      if (headerText !== "%PDF") {
-        // Debugging aid for test environment
-        try {
-          // eslint-disable-next-line no-console
-          console.error("[FileUploadSecurity] PDF header mismatch:", JSON.stringify(headerText));
-        } catch {}
+  private static validateMetadata(file: File): FileValidationResult {
+    try {
+      FileUploadSchema.parse(file);
+      return { isSecure: true };
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const issues = error.issues.map((issue) => issue.message).join(", ");
         return {
           isSecure: false,
-          error:
-            "File signature does not match declared type (possible file type spoofing)",
+          error: issues,
         };
       }
-    } else if (mimeType === "image/jpeg") {
-      // Accept based on type; detailed byte check can be environment-sensitive
-      return { isSecure: true };
-    } else if (mimeType === "image/png") {
-      // Accept based on type; detailed byte check can be environment-sensitive
-      return { isSecure: true };
-    } else if (mimeType === "image/webp") {
-      // Skip strict check; warn unsupported
       return {
-        isSecure: true,
-        warnings: [
-          "File signature verification not available for this file type",
-        ],
-      };
-    } else {
-      // No signature check for this type
-      return {
-        isSecure: true,
-        warnings: [
-          "File signature verification not available for this file type",
-        ],
+        isSecure: false,
+        error: "Invalid file metadata",
       };
     }
-
-    return { isSecure: true };
   }
 
   /**
-   * Scan file content for dangerous patterns
+   * Verify file magic bytes match declared MIME type
    */
-  private static async scanForDangerousPatterns(
-    file: File
-  ): Promise<FileSecurityResult> {
-    // Only scan text-based portions of files
-    if (file.type.startsWith("image/")) {
-      // For images, check filename only
-      const hasUnsafeFilename = this.DANGEROUS_PATTERNS.some((pattern) =>
-        pattern.test(file.name)
-      );
-
-      if (hasUnsafeFilename) {
-        return {
-          isSecure: false,
-          error: "Filename contains potentially dangerous patterns",
-        };
+  private static async verifyMagicBytes(file: File): Promise<FileValidationResult> {
+    try {
+      const buffer = await file.slice(0, 16).arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      
+      // Convert first few bytes to string for basic validation
+      const headerText = Array.from(bytes.slice(0, 4)).join(",");
+      
+      switch (file.type) {
+        case "application/pdf":
+          // Check for PDF signature: %PDF
+          if (bytes[0] === 0x25 && bytes[1] === 0x50 && bytes[2] === 0x44 && bytes[3] === 0x46) {
+            return { isSecure: true };
+          }
+          break;
+          
+        case "image/jpeg":
+          // Check for JPEG signature: FF D8 FF
+          if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+            return { isSecure: true };
+          }
+          break;
+          
+        case "image/png":
+          // Check for PNG signature: 89 50 4E 47
+          if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+            return { isSecure: true };
+          }
+          break;
+          
+        default:
+          return {
+            isSecure: false,
+            error: `Unsupported file type: ${file.type}`,
+          };
       }
+      
+      // If we get here, magic bytes don't match
+      try {
+        // eslint-disable-next-line no-console
+        console.error("[FileUploadSecurity] PDF header mismatch:", JSON.stringify(headerText));
+      } catch {}
+      return {
+        isSecure: false,
+        error: "File signature does not match declared type (possible file type spoofing)",
+      };
+    } catch (err) {
+      return {
+        isSecure: false,
+        error: `Unable to verify file signature: ${err instanceof Error ? err.message : "Unknown error"}`,
+      };
     }
+  }
 
-    // For PDFs, we could scan for embedded JavaScript (simplified check)
-    if (file.type === "application/pdf") {
-      const content = await this.readFileAsText(file, 1024 * 10); // Read first 10KB
+  /**
+   * Helper: Read file as text
+   */
+  private static async readFileAsText(file: File, bytes: number): Promise<string> {
+    const buffer = await file.slice(0, bytes).arrayBuffer();
+    return new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+  }
+
+  /**
+   * Scan file content for security threats
+   */
+  private static async scanFileContent(file: File): Promise<FileValidationResult> {
+    try {
+      // For performance, only scan first 64KB of file
+      const scanSize = Math.min(file.size, 64 * 1024);
+      const buffer = await file.slice(0, scanSize).arrayBuffer();
+      const content = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+
+      // Scan for security patterns
+      for (const pattern of this.SECURITY_PATTERNS) {
+        if (pattern.test(content)) {
+          return {
+            isSecure: false,
+            error: "File contains potentially dangerous content",
+          };
+        }
+      }
+
+      return { isSecure: true };
+    } catch {
+      // If we can't decode the content, it's likely a binary file - that's OK
+      return { isSecure: true };
+    }
+  }
+
+  /**
+   * Advanced PDF security validation
+   */
+  private static async validatePDFSecurity(file: File): Promise<FileValidationResult> {
+    try {
+      // Read more of the PDF for analysis
+      const scanSize = Math.min(file.size, 256 * 1024); // 256KB
+      const buffer = await file.slice(0, scanSize).arrayBuffer();
+      const content = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+
+      const warnings: string[] = [];
 
       // Check for JavaScript in PDF
-      if (/\/JavaScript|\/JS\s|\/OpenAction/i.test(content)) {
+      if (/\/JS\s*[\[<(]|\/JavaScript\s*[\[<(]/gi.test(content)) {
         return {
           isSecure: false,
-          error: "PDF contains potentially dangerous JavaScript or actions",
+          error: "PDF contains potentially dangerous JavaScript",
         };
       }
-    }
 
-    return { isSecure: true };
-  }
-
-  /**
-   * Additional security checks
-   */
-  private static performAdditionalSecurityChecks(
-    file: File
-  ): FileSecurityResult {
-    const warnings: string[] = [];
-
-    // Check for double extensions (before other validations)
-    const filename = file.name.toLowerCase();
-    const doubleExtPattern = /\.[a-z]{2,4}\.[a-z]{2,4}$/;
-    if (doubleExtPattern.test(filename)) {
-      return {
-        isSecure: false,
-        error: "File has suspicious double extension",
-      };
-    }
-
-    // Check for special characters that might cause issues
-    const suspiciousChars = /[<>:"|?*\x00-\x1f]/;
-    if (suspiciousChars.test(file.name)) {
-      warnings.push(
-        "Filename contains special characters that may cause issues"
-      );
-    }
-
-    // Check for very long extensions
-    const extension = this.getFileExtension(file.name);
-    if (extension.length > 10) {
-      return {
-        isSecure: false,
-        error: "File extension is suspiciously long",
-      };
-    }
-
-    // Check for hidden files (starting with dot)
-    if (file.name.startsWith(".")) {
-      warnings.push("Hidden file detected");
-    }
-
-    const result: FileSecurityResult = {
-      isSecure: true,
-    };
-
-    if (warnings.length > 0) {
-      result.warnings = warnings;
-    }
-
-    return result;
-  }
-
-  /**
-   * Generate secure file metadata
-   */
-  static async generateFileMetadata(file: File): Promise<FileMetadata> {
-    const sanitizedName = this.sanitizeFileName(file.name);
-    const extension = this.getFileExtension(file.name);
-
-    // Generate file hash for integrity checking
-    const hash = await this.generateFileHash(file);
-
-    return {
-      originalName: file.name,
-      sanitizedName,
-      mimeType: file.type,
-      extension,
-      size: file.size,
-      hash,
-    };
-  }
-
-  /**
-   * Sanitize filename for safe storage
-   */
-  static sanitizeFileName(filename: string): string {
-    // Remove path components
-    const basename = filename.split(/[/\\]/).pop() || filename;
-
-    // Replace unsafe characters with underscores
-    let sanitized = basename.replace(/[^a-zA-Z0-9._-]/g, "_");
-
-    // Remove multiple dots (keep only last one for extension)
-    sanitized = sanitized.replace(/\.{2,}/g, ".");
-
-    // Ensure filename doesn't start with dot
-    if (sanitized.startsWith(".")) {
-      sanitized = "_" + sanitized.substring(1);
-    }
-
-    // Get extension before adding timestamp
-    const extension = this.getFileExtension(sanitized);
-    const nameWithoutExt = sanitized.substring(
-      0,
-      sanitized.lastIndexOf(".") >= 0
-        ? sanitized.lastIndexOf(".")
-        : sanitized.length
-    );
-
-    // Limit base name length
-    let finalName = nameWithoutExt;
-    if (finalName.length > 50) {
-      finalName = finalName.substring(0, 50);
-    }
-
-    // Add timestamp for uniqueness
-    const timestamp = Date.now();
-
-    return extension
-      ? `${finalName}_${timestamp}${extension}`
-      : `${finalName}_${timestamp}`;
-  }
-
-  /**
-   * Generate SHA-256 hash of file content
-   */
-  private static async generateFileHash(file: File): Promise<string> {
-    try {
-      let buffer: ArrayBuffer;
-
-      // Try to use arrayBuffer if available (browser)
-      if (typeof (file as File & { arrayBuffer?: () => Promise<ArrayBuffer> }).arrayBuffer === "function") {
-        buffer = await (file as File & { arrayBuffer: () => Promise<ArrayBuffer> }).arrayBuffer();
-      } else {
-        // Fallback for Node.js test environment
-        buffer = await this.fileToArrayBuffer(file);
+      // Check for embedded actions
+      if (/\/Action\s*[\[<(]|\/OpenAction\s*[\[<(]/gi.test(content)) {
+        warnings.push("PDF contains actions (may auto-execute)");
       }
 
-      const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
-    } catch {
-      // Fallback to simple hash for testing based on file size only
-      // In real scenarios, this should be actual content-based hash
-      return "test-hash-" + file.size.toString(16).padStart(8, "0");
+      // Check for forms
+      if (/\/AcroForm\s*[\[<(]|\/XFA\s*[\[<(]/gi.test(content)) {
+        warnings.push("PDF contains forms");
+      }
+
+      // Check for external references
+      if (/\/URI\s*[\[<(]|\/URL\s*[\[<(]/gi.test(content)) {
+        warnings.push("PDF contains external references");
+      }
+
+      // Check for embedded files
+      if (/\/EmbeddedFile\s*[\[<(]/gi.test(content)) {
+        warnings.push("PDF contains embedded files");
+      }
+
+      return {
+        isSecure: true,
+        warnings: warnings.length > 0 ? warnings : undefined,
+      };
+    } catch (err) {
+      return {
+        isSecure: false,
+        error: `PDF security validation failed: ${err instanceof Error ? err.message : "Unknown error"}`,
+      };
     }
   }
 
   /**
-   * Convert File to ArrayBuffer for Node.js compatibility
+   * Validate file array (for batch uploads)
    */
-  private static async fileToArrayBuffer(file: File): Promise<ArrayBuffer> {
-    // Prefer built-in arrayBuffer if available
-    if (typeof (file as File & { arrayBuffer?: () => Promise<ArrayBuffer> }).arrayBuffer === "function") {
-      return (file as File & { arrayBuffer: () => Promise<ArrayBuffer> }).arrayBuffer();
+  static async validateFiles(files: File[]): Promise<{
+    isValid: boolean;
+    results: FileValidationResult[];
+    error?: string;
+  }> {
+    if (files.length === 0) {
+      return {
+        isValid: false,
+        results: [],
+        error: "At least one file is required",
+      };
     }
-    const blob = file.slice(0, file.size);
-    if (typeof (blob as Blob & { arrayBuffer?: () => Promise<ArrayBuffer> }).arrayBuffer === "function") {
-      return (blob as Blob & { arrayBuffer: () => Promise<ArrayBuffer> }).arrayBuffer();
+
+    if (files.length > 5) {
+      return {
+        isValid: false,
+        results: [],
+        error: "Maximum 5 files allowed",
+      };
     }
-    // Last-resort fallback for tests
-    const uint8Array = new Uint8Array(file.size);
-    for (let i = 0; i < file.size; i++) {
-      uint8Array[i] = i % 256;
+
+    // Calculate total size
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+    const maxTotalSize = 50 * 1024 * 1024; // 50MB total
+
+    if (totalSize > maxTotalSize) {
+      return {
+        isValid: false,
+        results: [],
+        error: "Total file size cannot exceed 50MB",
+      };
     }
-    return uint8Array.buffer;
+
+    // Validate each file
+    const results = await Promise.all(
+      files.map((file) => this.validateFile(file))
+    );
+
+    // Check if any files failed validation
+    const hasFailures = results.some((result) => !result.isSecure);
+
+    return {
+      isValid: !hasFailures,
+      results,
+      error: hasFailures
+        ? "One or more files failed security validation"
+        : undefined,
+    };
   }
 
   /**
-   * Helper: Get file extension
+   * Validate single file for upload
+   */
+  static async validateSingleFile(file: File): Promise<{
+    isValid: boolean;
+    result: FileValidationResult;
+  }> {
+    const result = await this.validateFile(file);
+    return {
+      isValid: result.isSecure,
+      result,
+    };
+  }
+
+  /**
+   * Get file type from extension (fallback)
+   */
+  private static getMimeTypeFromExtension(filename: string): string | null {
+    const ext = this.getFileExtension(filename);
+    const mimeMap: Record<string, string> = {
+      ".pdf": "application/pdf",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+    };
+    return mimeMap[ext] || null;
+  }
+
+  /**
+   * Get file extension from filename
    */
   private static getFileExtension(filename: string): string {
     const lastDot = filename.lastIndexOf(".");
@@ -468,15 +376,10 @@ export class FileUploadSecurity {
   }
 
   /**
-   * Helper: Read file as text
+   * Helper: Convert ArrayBuffer to Uint8Array
    */
-  private static async readFileAsText(
-    file: File,
-    bytes?: number
-  ): Promise<string> {
-    // Use Blob.text universally for consistency
-    const blob = bytes ? file.slice(0, bytes) : file;
-    return blob.text();
+  private static bufferToUint8Array(buffer: ArrayBuffer): Uint8Array {
+    return new Uint8Array(buffer);
   }
 
 
@@ -488,7 +391,7 @@ export class FileUploadSecurity {
     file: File,
     userId: string,
     userRole?: string
-  ): Promise<FileSecurityResult & { metadata?: FileMetadata }> {
+  ): Promise<FileValidationResult & { metadata?: any }> {
     // Import logging utility
     const { logInfo, logWarn } = await import("@/lib/utils/logger");
 
@@ -509,8 +412,12 @@ export class FileUploadSecurity {
       return baseValidation;
     }
 
-    // Generate file metadata with user context
-    const metadata = await this.generateFileMetadata(file);
+    // Generate basic file metadata  
+    const metadata = {
+      sanitizedName: this.createSafeFilename(file.name),
+      hash: await this.generateFileHash(file),
+      uploadId: this.generateUploadId(),
+    };
     
     // Log successful validation
     logInfo("File upload validated", {
@@ -569,88 +476,61 @@ export class FileUploadSecurity {
 
     return limits[userRole as keyof typeof limits] || limits.default;
   }
-}
 
-/**
- * Content Security Policy for file uploads
- */
-export class FileUploadCSP {
-  static getUploadPageCSP(): Record<string, string> {
-    return {
-      "Content-Security-Policy": [
-        "default-src 'self'",
-        "script-src 'self' 'unsafe-inline'", // Allow inline scripts for upload progress
-        "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: blob:",
-        "connect-src 'self'",
-        "frame-ancestors 'none'",
-        "form-action 'self'",
-        "base-uri 'self'",
-        "object-src 'none'",
-        "upgrade-insecure-requests",
-      ].join("; "),
-      "X-Content-Type-Options": "nosniff",
-      "X-Frame-Options": "DENY",
-      "X-XSS-Protection": "1; mode=block",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
-    };
-  }
-}
-
-/**
- * Rate limiting specifically for file uploads
- */
-export class FileUploadRateLimiter {
-  private static readonly uploadCounts = new Map<
-    string,
-    { count: number; resetTime: number }
-  >();
-
-  static checkRateLimit(
-    clientId: string,
-    maxUploads: number = 10,
-    windowMs: number = 60 * 60 * 1000 // 1 hour
-  ): { allowed: boolean; remainingUploads: number; resetTime: number } {
-    const now = Date.now();
-    const record = this.uploadCounts.get(clientId);
-
-    if (!record || now > record.resetTime) {
-      // Create new record
-      this.uploadCounts.set(clientId, {
-        count: 1,
-        resetTime: now + windowMs,
-      });
-
-      return {
-        allowed: true,
-        remainingUploads: maxUploads - 1,
-        resetTime: now + windowMs,
-      };
+  /**
+   * Helper: Check if file contains suspicious patterns
+   */
+  private static containsSuspiciousContent(content: string): boolean {
+    // Check for script tags
+    if (/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi.test(content)) {
+      return true;
     }
 
-    if (record.count >= maxUploads) {
-      return {
-        allowed: false,
-        remainingUploads: 0,
-        resetTime: record.resetTime,
-      };
+    // Check for data URLs
+    if (/data:\s*[^;]+;base64/gi.test(content)) {
+      return true;
     }
 
-    record.count++;
+    // Check for embedded executables
+    if (/\.(exe|scr|bat|cmd|com|pif)/gi.test(content)) {
+      return true;
+    }
 
-    return {
-      allowed: true,
-      remainingUploads: maxUploads - record.count,
-      resetTime: record.resetTime,
-    };
+    return false;
   }
 
-  static clearExpiredRecords(): void {
-    const now = Date.now();
-    for (const [clientId, record] of this.uploadCounts.entries()) {
-      if (now > record.resetTime) {
-        this.uploadCounts.delete(clientId);
-      }
+  /**
+   * Create safe filename
+   */
+  static createSafeFilename(originalName: string): string {
+    // Remove any potentially dangerous characters
+    const safeName = originalName
+      .replace(/[^a-zA-Z0-9.-]/g, "_")
+      .replace(/_{2,}/g, "_")
+      .replace(/^_+|_+$/g, "");
+
+    // Ensure it has an extension
+    if (!safeName.includes(".")) {
+      return `${safeName}.unknown`;
     }
+
+    return safeName;
+  }
+
+  /**
+   * Generate unique upload ID
+   */
+  static generateUploadId(): string {
+    return `upload_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  }
+
+  /**
+   * Generate file hash for deduplication and integrity
+   */
+  private static async generateFileHash(file: File): Promise<string> {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 }

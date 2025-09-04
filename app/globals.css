@@ -344,8 +344,85 @@ body {
   body {
     font-size: 12pt;
     line-height: 1.5;
-    color: black;
-    background: white;
+    color: black !important;
+    background: white !important;
+  }
+
+  /* ACS Detail Page Print Styles */
+  .print\:block {
+    display: block !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Print layout adjustments */
+  .print\:break-before-page {
+    page-break-before: always;
+  }
+
+  .print\:break-after-page {
+    page-break-after: always;
+  }
+
+  .print\:break-inside-avoid {
+    page-break-inside: avoid;
+  }
+
+  /* Remove colors for print */
+  .print\:text-black {
+    color: black !important;
+  }
+
+  .print\:bg-white {
+    background-color: white !important;
+  }
+
+  .print\:border-black {
+    border-color: black !important;
+  }
+
+  /* Hide interactive elements */
+  button,
+  .hover\:bg-blue-100,
+  .hover\:bg-gray-100,
+  .hover\:border-blue-200,
+  .group:hover .group-hover\:text-blue-800 {
+    background: white !important;
+    color: black !important;
+    border-color: #ccc !important;
+  }
+
+  /* Ensure cards have borders for print clarity */
+  .rounded-lg {
+    border: 1px solid #ccc !important;
+    border-radius: 4px !important;
+  }
+
+  /* Badge styles for print */
+  .badge,
+  [class*="badge"] {
+    background: white !important;
+    color: black !important;
+    border: 1px solid black !important;
+  }
+
+  /* Links in print */
+  a {
+    color: black !important;
+    text-decoration: underline !important;
+  }
+
+  /* External link icons should be hidden in print */
+  a [class*="ExternalLink"] {
+    display: none !important;
+  }
+
+  /* Print page margins */
+  @page {
+    margin: 0.75in;
+    size: letter;
   }
 }
 

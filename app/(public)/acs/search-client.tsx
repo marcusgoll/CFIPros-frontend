@@ -1,138 +1,171 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { Search, Filter } from "lucide-react";
-import { Input, Button } from "@/components/ui";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import AcsSearch from "@/components/acs/AcsSearch";
+import AcsFilters from "@/components/acs/AcsFilters";
+import AcsList from "@/components/acs/AcsList";
+import { 
+  fetchAcsCodes, 
+  type TAcsCode, 
+  type AcsSearchParams,
+  type AcsSearchResponse 
+} from "@/lib/api/acs";
 
-const areas = [
-  "All Areas",
-  "Preflight Preparation",
-  "Navigation",
-  "Airport Operations",
-  "Takeoffs and Landings",
-];
-const tasks = [
-  "All Tasks",
-  "Pilot Qualifications",
-  "Airworthiness Requirements",
-  "Weather Information",
-  "Navigation Systems and Radar Services",
-];
+export default function AcsSearchClient() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // State management
+  const [codes, setCodes] = useState<TAcsCode[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
 
-interface SearchFilters {
-  query: string;
-  area: string;
-  task: string;
-}
+  // Parse filters from URL params
+  const filters = useMemo((): Partial<AcsSearchParams> => ({
+    q: searchParams.get("q") || "",
+    doc: searchParams.get("doc") || "",
+    area: searchParams.get("area") || "",
+    task: searchParams.get("task") || "",
+    limit: parseInt(searchParams.get("limit") || "20"),
+    offset: (parseInt(searchParams.get("page") || "1") - 1) * parseInt(searchParams.get("limit") || "20"),
+  }), [searchParams]);
 
-interface ACSSearchClientProps {
-  onSearch?: (filters: SearchFilters) => void;
-}
+  // Update URL with new filters
+  const updateFilters = useCallback((newFilters: Partial<AcsSearchParams>) => {
+    const params = new URLSearchParams(searchParams);
+    
+    // Update or remove parameters
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value && value !== "") {
+        params.set(key, String(value));
+      } else {
+        params.delete(key);
+      }
+    });
 
-export default function ACSSearchClient({ onSearch }: ACSSearchClientProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedArea, setSelectedArea] = useState("All Areas");
-  const [selectedTask, setSelectedTask] = useState("All Tasks");
-  const [showFilters, setShowFilters] = useState(false);
-
-  const handleSearch = useCallback(() => {
-    const filters: SearchFilters = {
-      query: searchQuery,
-      area: selectedArea,
-      task: selectedTask,
-    };
-
-    // Call the parent component's search handler if provided
-    if (onSearch) {
-      onSearch(filters);
+    // Reset page when changing filters (except when explicitly setting offset)
+    if (!newFilters.offset && (
+      newFilters.q !== undefined ||
+      newFilters.doc !== undefined ||
+      newFilters.area !== undefined ||
+      newFilters.task !== undefined
+    )) {
+      params.delete("page");
     }
 
-    // For now, we'll also emit a custom event for static pages to potentially listen to
-    window.dispatchEvent(
-      new CustomEvent("acsSearch", {
-        detail: filters,
-      })
-    );
-  }, [searchQuery, selectedArea, selectedTask, onSearch]);
+    // Update URL
+    const newSearch = params.toString();
+    const newUrl = newSearch ? `/acs?${newSearch}` : "/acs";
+    router.replace(newUrl);
+  }, [router, searchParams]);
 
-  // Trigger search when filters change
+  // Search function
+  const searchCodes = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const result: AcsSearchResponse = await fetchAcsCodes({
+        ...filters,
+        // Always include includes for search results
+        include: ["document", "related"]
+      });
+
+      setCodes(result.items);
+      setTotalCount(result.count);
+    } catch (err) {
+      // Remove console.error for production
+      setError(err instanceof Error ? err.message : "Search failed");
+      setCodes([]);
+      setTotalCount(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
+
+  // Initial load and when filters change
   useEffect(() => {
-    const timeoutId = setTimeout(handleSearch, 300); // Debounce
-    return () => clearTimeout(timeoutId);
-  }, [handleSearch]);
+    searchCodes();
+  }, [searchCodes]);
+
+  // Handle search query changes
+  const handleSearch = useCallback((query: string) => {
+    const newFilters: Partial<AcsSearchParams> = {
+      ...filters,
+      q: query,
+      offset: 0, // Reset to first page
+    };
+    updateFilters(newFilters);
+  }, [filters, updateFilters]);
+
+  // Handle filter changes
+  const handleFilterChange = useCallback((newFilters: Partial<AcsSearchParams>) => {
+    updateFilters({
+      ...filters,
+      ...newFilters,
+      offset: 0, // Reset to first page
+    });
+  }, [filters, updateFilters]);
+
+  // Handle pagination
+  const handlePageChange = useCallback((page: number) => {
+    updateFilters({ offset: (page - 1) * (filters.limit || 20) });
+  }, [updateFilters]);
 
   return (
-    <>
-      {/* Search Bar */}
-      <div className="mx-auto mt-8 max-w-2xl">
-        <div className="relative flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Search by code, title, or description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              className="py-3 pl-10 pr-4 text-base"
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="bg-white shadow">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
+              ACS Code Database
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-xl text-gray-600">
+              Search and explore the complete Airman Certification Standards (ACS) code database.
+              Find specific knowledge areas, tasks, and requirements for pilot training.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Search Interface */}
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <AcsSearch
+            onSearch={handleSearch}
+            defaultValue={filters.q || ""}
+            placeholder="Search ACS codes, descriptions, or areas..."
+          />
+        </div>
+
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
+          {/* Filters Sidebar */}
+          <div className="lg:col-span-1">
+            <AcsFilters
+              filters={filters}
+              onFiltersChange={handleFilterChange}
+              loading={loading}
             />
           </div>
-          <Button onClick={handleSearch} className="px-6 py-3">
-            Search
-          </Button>
-        </div>
-      </div>
 
-      {/* Filter Toggle */}
-      <div className="mt-4 flex justify-center">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          {showFilters ? "Hide Filters" : "Show Filters"}
-        </Button>
-      </div>
-
-      {/* Filters */}
-      {showFilters && (
-        <div className="mx-auto mt-6 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Area
-            </label>
-            <select
-              value={selectedArea}
-              onChange={(e) => setSelectedArea(e.target.value)}
-              className="focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1"
-            >
-              {areas.map((area) => (
-                <option key={area} value={area}>
-                  {area}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Task
-            </label>
-            <select
-              value={selectedTask}
-              onChange={(e) => setSelectedTask(e.target.value)}
-              className="focus:border-primary-500 focus:ring-primary-500 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-1"
-            >
-              {tasks.map((task) => (
-                <option key={task} value={task}>
-                  {task}
-                </option>
-              ))}
-            </select>
+          {/* Results */}
+          <div className="lg:col-span-3">
+            <AcsList
+              codes={codes}
+              loading={loading}
+              error={error}
+              totalCount={totalCount}
+              currentPage={filters.page || 1}
+              pageSize={filters.limit || 20}
+              onPageChange={handlePageChange}
+              onRetry={searchCodes}
+            />
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }

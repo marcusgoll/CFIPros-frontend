@@ -1,0 +1,554 @@
+"use client";
+
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { Loader2, Filter, X, Settings } from "lucide-react";
+
+import AcsSearchBar from "@/components/acs/AcsSearchBar";
+import AcsCodeGrid from "@/components/acs/AcsCodeGrid";
+import AcsPagination from "@/components/acs/AcsPagination";
+import AcsFilterSidebar from "@/components/acs/AcsFilterSidebar";
+import AcsErrorBoundary from "@/components/acs/AcsErrorBoundary";
+import AcsPerformanceMonitor from "@/components/acs/AcsPerformanceMonitor";
+import { Button } from "@/components/ui";
+import { fetchAcsCodes, TAcsCodeListResponse, AcsSearchParams, DEFAULT_SEARCH_PARAMS } from "@/lib/api/acs";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useAcsFilters } from "@/hooks/useAcsFilters";
+import { useSearchSuggestions } from "@/hooks/useSearchSuggestions";
+import { useRecentSearches } from "@/hooks/useRecentSearches";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+
+interface DatabaseState {
+  data: TAcsCodeListResponse | null;
+  loading: boolean;
+  error: string | null;
+  allItems: typeof data extends { items: infer I } ? I : never[];
+}
+
+interface ViewSettings {
+  infiniteScroll: boolean;
+  virtualized: boolean;
+  pageSize: number;
+}
+
+export default function AcsDatabaseClient() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  // Filter sidebar state
+  const [filterSidebarOpen, setFilterSidebarOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [viewSettings, setViewSettings] = useState<ViewSettings>({
+    infiniteScroll: false,
+    virtualized: false,
+    pageSize: DEFAULT_SEARCH_PARAMS.limit,
+  });
+  
+  // State management
+  const [state, setState] = useState<DatabaseState>({
+    data: null,
+    loading: false,
+    error: null,
+    allItems: [],
+  });
+  
+  // Hooks for enhanced functionality
+  const {
+    filters,
+    filterOptions,
+    loading: filtersLoading,
+    updateFilters,
+    clearFilters,
+    hasActiveFilters,
+    activeFilterCount,
+    getApiParams,
+    getUrlParams,
+    parseUrlParams,
+  } = useAcsFilters({
+    initialFilters: {
+      docs: searchParams.getAll('doc'),
+      types: searchParams.getAll('type'),
+      areas: searchParams.getAll('area'),
+      tasks: searchParams.getAll('task'),
+      codePrefix: searchParams.get('prefix') || '',
+    },
+  });
+  
+  const { recentSearches, addRecentSearch } = useRecentSearches();
+  
+  const { suggestions } = useSearchSuggestions({
+    query: currentQuery,
+    recentSearches,
+  });
+  
+  // URL state management
+  const currentQuery = searchParams.get("q") || "";
+  const currentPage = parseInt(searchParams.get("page") || "1");
+  const currentLimit = parseInt(searchParams.get("limit") || viewSettings.pageSize.toString());
+  
+  // Check for infinite scroll mode from URL hash
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hash === '#infinite') {
+      setViewSettings(prev => ({ ...prev, infiniteScroll: true }));
+    }
+  }, []);
+  
+  // Debounced search query
+  const debouncedQuery = useDebounce(currentQuery, 300);
+  
+  // Infinite scroll setup
+  const {
+    data: infiniteData,
+    loading: infiniteLoading,
+    hasMore,
+    loadMore,
+    reset: resetInfinite,
+  } = useInfiniteScroll({
+    fetchMore: async (offset, limit) => {
+      const params: AcsSearchParams = {
+        ...(debouncedQuery && { q: debouncedQuery }),
+        ...getApiParams(),
+        limit,
+        offset,
+      };
+      
+      const response = await fetchAcsCodes(params);
+      return {
+        items: response.items,
+        hasMore: response.items.length === limit && offset + limit < response.count,
+        total: response.count,
+      };
+    },
+    pageSize: currentLimit,
+    enabled: viewSettings.infiniteScroll,
+  });
+  
+  // Combined data for display
+  const displayData = useMemo(() => {
+    if (viewSettings.infiniteScroll) {
+      return {
+        items: infiniteData,
+        count: state.data?.count || 0,
+        limit: currentLimit,
+        offset: 0,
+      };
+    }
+    return state.data;
+  }, [viewSettings.infiniteScroll, infiniteData, state.data, currentLimit]);
+  
+  const isLoading = viewSettings.infiniteScroll ? infiniteLoading : state.loading;
+  
+  // Update URL params helper with filter support
+  const updateUrlParams = useCallback((params: Record<string, string | null>) => {
+    const newSearchParams = new URLSearchParams(searchParams);
+    
+    // Handle regular params
+    Object.entries(params).forEach(([key, value]) => {
+      if (value === null || value === "" || (key === "page" && value === "1")) {
+        newSearchParams.delete(key);
+      } else {
+        newSearchParams.set(key, value);
+      }
+    });
+    
+    // Add filter params
+    const filterParams = getUrlParams();
+    filterParams.forEach((value, key) => {
+      if (key !== 'page') { // Don't override page from regular params
+        newSearchParams.delete(key); // Clear existing
+        filterParams.getAll(key).forEach(v => newSearchParams.append(key, v));
+      }
+    });
+    
+    const newUrl = `${pathname}?${newSearchParams.toString()}`;
+    router.push(newUrl, { scroll: false });
+  }, [pathname, router, searchParams, getUrlParams]);
+  
+  // Fetch data function
+  const fetchData = useCallback(async (params: AcsSearchParams) => {
+    if (viewSettings.infiniteScroll) {
+      resetInfinite();
+      return;
+    }
+    
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const response = await fetchAcsCodes(params);
+      setState(prev => ({
+        ...prev,
+        data: response,
+        allItems: response.items,
+        loading: false,
+      }));
+    } catch (error) {
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: error instanceof Error ? error.message : "An error occurred while fetching data",
+      }));
+    }
+  }, [viewSettings.infiniteScroll, resetInfinite]);
+  
+  // Search handler
+  const handleSearch = useCallback((query: string) => {
+    if (query.trim()) {
+      addRecentSearch(query);
+    }
+    updateUrlParams({
+      q: query,
+      page: null, // Reset to first page on new search
+    });
+  }, [updateUrlParams, addRecentSearch]);
+  
+  // Pagination handler
+  const handlePageChange = useCallback((page: number) => {
+    updateUrlParams({
+      page: page.toString(),
+    });
+  }, [updateUrlParams]);
+  
+  // Page size change handler
+  const handlePageSizeChange = useCallback((limit: number) => {
+    setViewSettings(prev => ({ ...prev, pageSize: limit }));
+    updateUrlParams({
+      limit: limit.toString(),
+      page: null, // Reset to first page on page size change
+    });
+  }, [updateUrlParams]);
+  
+  // Filter change handler
+  const handleFiltersChange = useCallback((newFilters: typeof filters) => {
+    updateFilters(newFilters);
+    // Reset to first page when filters change
+    updateUrlParams({ page: null });
+  }, [updateFilters, updateUrlParams]);
+  
+  // Toggle view settings
+  const toggleInfiniteScroll = useCallback(() => {
+    setViewSettings(prev => ({ 
+      ...prev, 
+      infiniteScroll: !prev.infiniteScroll 
+    }));
+    
+    // Update URL hash
+    if (typeof window !== 'undefined') {
+      if (!viewSettings.infiniteScroll) {
+        window.location.hash = 'infinite';
+      } else {
+        window.location.hash = '';
+      }
+    }
+  }, [viewSettings.infiniteScroll]);
+  
+  const toggleVirtualization = useCallback(() => {
+    setViewSettings(prev => ({ 
+      ...prev, 
+      virtualized: !prev.virtualized 
+    }));
+  }, []);
+  
+  // Effect to fetch data when URL parameters or filters change
+  useEffect(() => {
+    const searchParams: AcsSearchParams = {
+      ...(debouncedQuery && { q: debouncedQuery }),
+      ...getApiParams(),
+      limit: currentLimit,
+      offset: (currentPage - 1) * currentLimit,
+    };
+    
+    fetchData(searchParams);
+  }, [debouncedQuery, currentPage, currentLimit, getApiParams, fetchData]);
+  
+  return (
+    <AcsErrorBoundary>
+      <div className="flex min-h-screen bg-gray-50">
+        {/* Filter Sidebar */}
+        <AcsFilterSidebar
+          isOpen={filterSidebarOpen}
+          onToggle={() => setFilterSidebarOpen(!filterSidebarOpen)}
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          availableOptions={filterOptions}
+          loading={filtersLoading}
+          className="border-r border-gray-200 bg-white"
+        />
+        
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col">
+          <div className="py-6 px-4 lg:px-8">
+            {/* Header with controls */}
+            <div className="mb-8">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex items-center gap-4">
+                  {/* Mobile filter toggle */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFilterSidebarOpen(!filterSidebarOpen)}
+                    className="lg:hidden"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <span className="ml-1 bg-blue-600 text-white text-xs rounded-full px-1.5 py-0.5">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
+                  
+                  {/* Desktop filter toggle */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFilterSidebarOpen(!filterSidebarOpen)}
+                    className="hidden lg:flex"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    {filterSidebarOpen ? 'Hide' : 'Show'} Filters
+                    {activeFilterCount > 0 && (
+                      <span className="ml-1 bg-blue-600 text-white text-xs rounded-full px-1.5 py-0.5">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
+                  
+                  {/* Settings toggle */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSettingsOpen(!settingsOpen)}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    View
+                  </Button>
+                </div>
+                
+                {/* Active filters indicator */}
+                {hasActiveFilters && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Active filters:</span>
+                    <div className="flex gap-1">
+                      {filters.docs.length > 0 && (
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                          Docs ({filters.docs.length})
+                        </span>
+                      )}
+                      {filters.types.length > 0 && (
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
+                          Types ({filters.types.length})
+                        </span>
+                      )}
+                      {filters.areas.length > 0 && (
+                        <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">
+                          Areas ({filters.areas.length})
+                        </span>
+                      )}
+                      {filters.tasks.length > 0 && (
+                        <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs">
+                          Tasks ({filters.tasks.length})
+                        </span>
+                      )}
+                      {filters.codePrefix && (
+                        <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs">
+                          Prefix: {filters.codePrefix}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              {/* View Settings Panel */}
+              {settingsOpen && (
+                <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={viewSettings.infiniteScroll}
+                        onChange={toggleInfiniteScroll}
+                        className="mr-2"
+                      />
+                      Infinite Scroll
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={viewSettings.virtualized}
+                        onChange={toggleVirtualization}
+                        className="mr-2"
+                      />
+                      Virtualized Rendering (for large datasets)
+                    </label>
+                  </div>
+                </div>
+              )}
+              
+              {/* Search Section */}
+              <div className="mt-6">
+                <AcsSearchBar
+                  initialQuery={currentQuery}
+                  onSearch={handleSearch}
+                  placeholder="Search by code, title, or description..."
+                  suggestions={suggestions}
+                  recentSearches={recentSearches}
+                  onRecentSearchAdd={addRecentSearch}
+                  showSuggestions={true}
+                />
+              </div>
+            </div>
+            
+            {/* Results Section */}
+            <div className="space-y-6">
+              {/* Results Header */}
+              {displayData && !isLoading && (
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-600">
+                    {viewSettings.infiniteScroll ? (
+                      <>Showing {displayData.items.length} of {displayData.count} results</>
+                    ) : (
+                      <>Showing {displayData.items.length} of {displayData.count} results</>
+                    )}
+                    {debouncedQuery && ` for "${debouncedQuery}"`}
+                    {hasActiveFilters && ` (filtered)`}
+                  </p>
+                  
+                  {/* Page Size Selector */}
+                  {!viewSettings.infiniteScroll && (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">Show:</span>
+                      <select
+                        value={currentLimit}
+                        onChange={(e) => handlePageSizeChange(parseInt(e.target.value))}
+                        className="rounded border-gray-300 py-1 pl-2 pr-8 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      >
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                      </select>
+                      <span className="text-sm text-gray-600">per page</span>
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Loading State */}
+              {isLoading && displayData?.items.length === 0 && (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                  <span className="ml-2 text-gray-600">Loading ACS codes...</span>
+                </div>
+              )}
+              
+              {/* Error State */}
+              {state.error && !isLoading && (
+                <div className="rounded-lg bg-red-50 p-4 text-red-800">
+                  <p className="font-semibold">Error loading ACS codes</p>
+                  <p className="mt-1 text-sm">{state.error}</p>
+                  <button
+                    onClick={() => fetchData({ 
+                      ...(debouncedQuery && { q: debouncedQuery }),
+                      ...getApiParams(),
+                      limit: currentLimit, 
+                      offset: (currentPage - 1) * currentLimit 
+                    })}
+                    className="mt-2 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+              
+              {/* Results Grid */}
+              {displayData && !isLoading && !state.error && (
+                <>
+                  {displayData.items.length > 0 ? (
+                    <AcsCodeGrid 
+                      codes={displayData.items}
+                      searchQuery={debouncedQuery}
+                      virtualized={viewSettings.virtualized}
+                      onLoadMore={viewSettings.infiniteScroll ? loadMore : undefined}
+                      hasMore={hasMore}
+                      loading={viewSettings.infiniteScroll ? infiniteLoading : false}
+                    />
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-lg text-gray-600">No ACS codes found</p>
+                      {(debouncedQuery || hasActiveFilters) && (
+                        <p className="mt-2 text-sm text-gray-500">
+                          Try adjusting your search terms or filters
+                        </p>
+                      )}
+                      <div className="mt-4 space-x-2">
+                        {debouncedQuery && (
+                          <button
+                            onClick={() => handleSearch("")}
+                            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                          >
+                            Clear Search
+                          </button>
+                        )}
+                        {hasActiveFilters && (
+                          <button
+                            onClick={clearFilters}
+                            className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+                          >
+                            Clear Filters
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Pagination */}
+                  {displayData.items.length > 0 && !viewSettings.infiniteScroll && (
+                    <div className="mt-8">
+                      <AcsPagination
+                        currentPage={currentPage}
+                        totalItems={displayData.count}
+                        itemsPerPage={currentLimit}
+                        onPageChange={handlePageChange}
+                        loading={state.loading}
+                        infiniteScroll={{
+                          enabled: false,
+                        }}
+                        onLoadMore={loadMore}
+                        showQuickJump={displayData.count > 200}
+                        showPageSize={true}
+                        onPageSizeChange={handlePageSizeChange}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Performance Monitor (development only) */}
+      {process.env.NODE_ENV === 'development' && (
+        <AcsPerformanceMonitor 
+          showDebugPanel={true}
+          thresholds={{
+            searchResponse: 500,
+            pageLoad: 2000,
+            filterApply: 300,
+          }}
+        />
+      )}
+    </AcsErrorBoundary>
+  );
+}

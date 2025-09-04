@@ -196,7 +196,7 @@ Each phase must pass before proceeding:
 - [ ] API contract validated
 - [ ] Recap document created
 - [ ] Update @.agent-os/docs/api-contract as single source of api truth.
-- [ ] Update @.agent-os/product/roadmap.md in the workflow. # Added missing roadmap update in completion quality gate
+- [ ] Update @.agent-os/product/roadmap.md in the workflow.
 
 ## Simple Commands
 
