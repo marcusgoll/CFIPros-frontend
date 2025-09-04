@@ -391,7 +391,7 @@ export class FileUploadSecurity {
     file: File,
     userId: string,
     userRole?: string
-  ): Promise<FileValidationResult & { metadata?: any }> {
+  ): Promise<FileValidationResult & { metadata?: Record<string, unknown> }> {
     // Import logging utility
     const { logInfo, logWarn } = await import("@/lib/utils/logger");
 

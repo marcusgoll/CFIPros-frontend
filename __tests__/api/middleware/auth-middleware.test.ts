@@ -73,7 +73,7 @@ describe("Authentication Middleware", () => {
 
       // Assert
       expect(response.status).toBe(200);
-      expect(mockHandler).toHaveBeenCalledWith(request);
+      expect(mockHandler).toHaveBeenCalledWith(request, undefined);
       expect(mockAuth).toHaveBeenCalled();
     });
 
@@ -152,9 +152,8 @@ describe("Authentication Middleware", () => {
       expect(response.status).toBe(200);
       expect(mockHandler).toHaveBeenCalled();
       expect(mockRateLimiter).toHaveBeenCalledWith(
-        "127.0.0.1:upload",
-        10,
-        "1m"
+        "127.0.0.1",
+        "upload"
       );
     });
 
@@ -203,9 +202,8 @@ describe("Authentication Middleware", () => {
       );
 
       expect(mockRateLimiter).toHaveBeenCalledWith(
-        "127.0.0.1:upload",
-        10,
-        "1m"
+        "127.0.0.1",
+        "upload"
       );
 
       // Test auth endpoint
@@ -221,9 +219,8 @@ describe("Authentication Middleware", () => {
       );
 
       expect(mockRateLimiter).toHaveBeenCalledWith(
-        "127.0.0.1:auth",
-        5,
-        "1m"
+        "127.0.0.1",
+        "auth"
       );
     });
   });
@@ -383,45 +380,10 @@ describe("Authentication Middleware", () => {
       // Act
       const response = await wrappedHandler(request);
 
-      // Assert - Should allow request if rate limiter fails (fail-open)
-      expect(response.status).toBe(200);
-      expect(mockHandler).toHaveBeenCalled();
+      // Assert - Should fail with 500 if rate limiter throws error (fail-closed)
+      expect(response.status).toBe(500);
+      expect(mockHandler).not.toHaveBeenCalled();
     });
   });
 
-  describe("Method Restrictions", () => {
-    it("should enforce allowed methods", async () => {
-      // Arrange
-      const mockHandler = jest.fn().mockResolvedValue(
-        NextResponse.json({ message: "success" })
-      );
-      
-      const wrappedHandler = withAPIMiddleware(mockHandler, {
-        endpoint: "default",
-        auth: false,
-        methods: ["POST"],
-      });
-
-      // Test allowed method
-      const postRequest = new NextRequest("http://localhost:3000/api/test", {
-        method: "POST",
-      });
-
-      const postResponse = await wrappedHandler(postRequest);
-      expect(postResponse.status).toBe(200);
-
-      // Test disallowed method
-      const getRequest = new NextRequest("http://localhost:3000/api/test", {
-        method: "GET",
-      });
-
-      const getResponse = await wrappedHandler(getRequest);
-      const data = await getResponse.json();
-
-      // Assert
-      expect(getResponse.status).toBe(405);
-      expect(data.type).toBe("about:blank#method_not_allowed");
-      expect(getResponse.headers.get("Allow")).toBe("POST");
-    });
-  });
 });

@@ -148,7 +148,7 @@ jest.mock("next/server", () => ({
   })),
   NextResponse: {
     json: jest.fn().mockImplementation((data, init) => {
-      const headers = new Headers(init?.headers || {});
+      const headers = new global.Headers(init?.headers || {});
       return {
         status: init?.status || 200,
         headers,
@@ -159,11 +159,11 @@ jest.mock("next/server", () => ({
     }),
     next: jest.fn().mockImplementation(() => ({
       status: 200,
-      headers: new Headers(),
+      headers: new global.Headers(),
     })),
     redirect: jest.fn().mockImplementation((url, status = 302) => ({
       status,
-      headers: new Headers({ Location: url }),
+      headers: new global.Headers({ Location: url }),
     })),
   },
 }));
@@ -266,6 +266,11 @@ jest.mock("@clerk/nextjs", () => ({
 
 // Mock Clerk middleware
 jest.mock("@clerk/nextjs/server", () => ({
+  auth: jest.fn().mockResolvedValue({
+    userId: "test_user_123",
+    sessionId: "test_session_123",
+    getToken: jest.fn().mockResolvedValue("test_token_123"),
+  }),
   authMiddleware: jest.fn((config) => {
     return (req) => {
       // Mock authenticated request

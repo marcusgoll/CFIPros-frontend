@@ -177,7 +177,7 @@ describe("API Error Handling", () => {
         type: "about:blank#internal_error",
         title: "internal_error",
         status: 500,
-        detail: "Internal server error",
+        detail: "Something went wrong",
         instance: expect.any(String),
       });
     });
@@ -272,9 +272,10 @@ describe("API Error Handling", () => {
       // Arrange
       const response = NextResponse.json({ message: "test" });
       const origin = "https://cfipros.com";
+      const mockRequest = { headers: { get: () => origin } };
 
       // Act
-      const corsResponse = addCORSHeaders(response, origin);
+      const corsResponse = addCORSHeaders(response, mockRequest);
 
       // Assert
       expect(corsResponse.headers.get("Access-Control-Allow-Origin")).toBe(origin);
@@ -294,9 +295,10 @@ describe("API Error Handling", () => {
       // Arrange
       const response = NextResponse.json({ message: "test" });
       const origin = "http://localhost:3000";
+      const mockRequest = { headers: { get: () => origin } };
 
       // Act
-      const corsResponse = addCORSHeaders(response, origin);
+      const corsResponse = addCORSHeaders(response, mockRequest);
 
       // Assert
       expect(corsResponse.headers.get("Access-Control-Allow-Origin")).toBe(origin);
@@ -306,9 +308,10 @@ describe("API Error Handling", () => {
       // Arrange
       const response = NextResponse.json({ message: "test" });
       const maliciousOrigin = "https://malicious-site.com";
+      const mockRequest = { headers: { get: () => maliciousOrigin } };
 
       // Act
-      const corsResponse = addCORSHeaders(response, maliciousOrigin);
+      const corsResponse = addCORSHeaders(response, mockRequest);
 
       // Assert
       expect(corsResponse.headers.get("Access-Control-Allow-Origin")).toBeNull();
@@ -317,9 +320,10 @@ describe("API Error Handling", () => {
     it("should handle missing origin header", () => {
       // Arrange
       const response = NextResponse.json({ message: "test" });
+      const mockRequest = { headers: { get: () => null } };
 
       // Act
-      const corsResponse = addCORSHeaders(response, null);
+      const corsResponse = addCORSHeaders(response, mockRequest);
 
       // Assert - Should not add CORS headers
       expect(corsResponse.headers.get("Access-Control-Allow-Origin")).toBeNull();

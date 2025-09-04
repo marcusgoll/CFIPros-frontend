@@ -12,8 +12,9 @@ const mockAuth = jest.fn();
 
 jest.mock('@clerk/nextjs/server', () => ({
   clerkMiddleware: jest.fn((handler) => {
-    // Return a function that calls the handler with our mock auth
+    // Return the handler directly, but replace auth calls with our mock
     return async (request: NextRequest) => {
+      // Call handler with mock auth function  
       return await handler(mockAuth, request);
     };
   }),
@@ -62,7 +63,10 @@ describe('Authentication Middleware Protection', () => {
         expect(response.status).toBe(302); // Redirect status
         const location = response.headers.get('location');
         expect(String(location).includes('/sign-in')).toBe(true);
-        expect(location).toContain(encodeURIComponent(`http://localhost:3000${route}`));
+        // Check that the location contains the redirect_url parameter with the expected encoded URL
+        const locationStr = String(location);
+        expect(locationStr).toContain('redirect_url=');
+        expect(locationStr).toContain(encodeURIComponent(`http://localhost:3000${route}`));
       });
 
       it(`should allow authenticated users to access ${route}`, async () => {
@@ -124,7 +128,6 @@ describe('Authentication Middleware Protection', () => {
         mockAuth.mockResolvedValue({ userId: 'user_123' });
         
         const request = new NextRequest(`http://localhost:3000${route}`);
-        
         const response = await middleware(request);
         
         expect(response.status).toBe(302); // Redirect status
