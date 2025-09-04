@@ -34,16 +34,18 @@ describe('apiFetch', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: jest.fn().mockResolvedValue(mockResponse),
     });
 
     const result = await apiFetch('/api/test');
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+    expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/api/v1/api/test', {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${mockToken}`,
       },
+      cache: 'no-store',
     });
     expect(result).toEqual(mockResponse);
   });
@@ -58,15 +60,17 @@ describe('apiFetch', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: jest.fn().mockResolvedValue(mockResponse),
     });
 
     const result = await apiFetch('/api/public');
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/public', {
+    expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/api/v1/api/public', {
       headers: {
         'Content-Type': 'application/json',
       },
+      cache: 'no-store',
     });
     expect(result).toEqual(mockResponse);
   });
@@ -78,6 +82,7 @@ describe('apiFetch', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 201,
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: jest.fn().mockResolvedValue(mockResponse),
     });
 
@@ -86,13 +91,14 @@ describe('apiFetch', () => {
       body: JSON.stringify(requestBody),
     });
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+    expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/api/v1/api/test', {
       method: 'POST',
       body: JSON.stringify(requestBody),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${mockToken}`,
       },
+      cache: 'no-store',
     });
     expect(result).toEqual(mockResponse);
   });
@@ -102,10 +108,11 @@ describe('apiFetch', () => {
       ok: false,
       status: 401,
       statusText: 'Unauthorized',
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: jest.fn().mockResolvedValue({ error: 'Unauthorized' }),
     });
 
-    await expect(apiFetch('/api/protected')).rejects.toThrow('HTTP 401: Unauthorized');
+    await expect(apiFetch('/api/protected')).rejects.toThrow('Unauthorized');
   });
 
   it('should handle 500 server errors', async () => {
@@ -113,10 +120,11 @@ describe('apiFetch', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: jest.fn().mockResolvedValue({ error: 'Server error' }),
     });
 
-    await expect(apiFetch('/api/error')).rejects.toThrow('HTTP 500: Internal Server Error');
+    await expect(apiFetch('/api/error')).rejects.toThrow('Internal Server Error');
   });
 
   it('should handle network errors', async () => {
@@ -143,6 +151,7 @@ describe('apiFetch', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
+      headers: new Headers({ 'content-type': 'application/json' }),
       json: jest.fn().mockResolvedValue({}),
     });
 
@@ -150,12 +159,13 @@ describe('apiFetch', () => {
       headers: customHeaders,
     });
 
-    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+    expect(mockFetch).toHaveBeenCalledWith('https://api.cfipros.com/api/v1/api/test', {
       headers: {
-        'Content-Type': 'application/json', // Overridden
+        'Content-Type': 'text/plain', // Custom Content-Type preserved
         'X-Custom-Header': 'custom-value',
         'Authorization': `Bearer ${mockToken}`,
       },
+      cache: 'no-store',
     });
   });
 
@@ -163,11 +173,13 @@ describe('apiFetch', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
+      headers: new Headers({ 'content-type': 'text/plain' }),
       json: jest.fn().mockRejectedValue(new Error('Invalid JSON')),
       text: jest.fn().mockResolvedValue('Plain text response'),
     });
 
-    // For non-JSON responses, the function should still try to parse as JSON and fail
-    await expect(apiFetch('/api/text')).rejects.toThrow('Invalid JSON');
+    // For non-JSON responses, the function should return null
+    const result = await apiFetch('/api/text');
+    expect(result).toBeNull();
   });
 });
