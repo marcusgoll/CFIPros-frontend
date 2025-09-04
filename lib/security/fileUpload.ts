@@ -27,7 +27,7 @@ export interface FileMetadata {
  */
 export class FileUploadSecurity {
   // Magic bytes for common file types to verify actual file content
-  // @ts-ignore - Unused but kept for future file type validation
+  // @ts-expect-error - Unused but kept for future file type validation
   private static readonly MAGIC_BYTES: Record<string, Uint8Array[]> = {
     "application/pdf": [
       new Uint8Array([0x25, 0x50, 0x44, 0x46]), // %PDF
@@ -455,7 +455,7 @@ export class FileUploadSecurity {
   /**
    * Helper: Read file bytes
    */
-  // @ts-ignore - Unused but kept for future security features
+  // @ts-expect-error - Unused but kept for future security features
   private static async readFileBytes(
     file: File,
     bytes: number
@@ -482,7 +482,7 @@ export class FileUploadSecurity {
   /**
    * Helper: Compare byte arrays
    */
-  // @ts-ignore - Unused but kept for future security features
+  // @ts-expect-error - Unused but kept for future security features
   private static compareBytes(
     fileBytes: Uint8Array,
     signature: Uint8Array
@@ -498,6 +498,96 @@ export class FileUploadSecurity {
     }
 
     return true;
+  }
+
+  /**
+   * Validate file upload with user authentication context
+   * Provides enhanced security logging and user-specific limits
+   */
+  static async validateFileWithAuth(
+    file: File,
+    userId: string,
+    userRole?: string
+  ): Promise<FileSecurityResult & { metadata?: FileMetadata }> {
+    // Import logging utility
+    const { logInfo, logWarn } = await import("@/lib/utils/logger");
+
+    // Perform standard security validation
+    const baseValidation = await this.validateFile(file);
+    
+    if (!baseValidation.isSecure) {
+      // Log security violations with user context
+      logWarn("File upload security violation", {
+        userId,
+        userRole,
+        filename: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        error: baseValidation.error,
+      });
+      
+      return baseValidation;
+    }
+
+    // Generate file metadata with user context
+    const metadata = await this.generateFileMetadata(file);
+    
+    // Log successful validation
+    logInfo("File upload validated", {
+      userId,
+      userRole,
+      filename: metadata.sanitizedName,
+      fileType: file.type,
+      fileSize: file.size,
+      hash: metadata.hash,
+    });
+
+    // Apply role-based size restrictions if needed
+    if (userRole === 'student' && file.size > 5 * 1024 * 1024) { // 5MB for students
+      return {
+        isSecure: false,
+        error: "File size exceeds limit for student accounts (5MB maximum)",
+      };
+    }
+
+    return {
+      ...baseValidation,
+      metadata,
+    };
+  }
+
+  /**
+   * Get user-specific upload limits based on role
+   */
+  static getUserUploadLimits(userRole?: string): {
+    maxFileSize: number;
+    maxFilesPerHour: number;
+    allowedTypes: string[];
+  } {
+    const limits = {
+      student: {
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        maxFilesPerHour: 5,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+      },
+      cfi: {
+        maxFileSize: 20 * 1024 * 1024, // 20MB
+        maxFilesPerHour: 20,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+      },
+      school_admin: {
+        maxFileSize: 50 * 1024 * 1024, // 50MB
+        maxFilesPerHour: 50,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+      },
+      default: {
+        maxFileSize: 10 * 1024 * 1024, // 10MB
+        maxFilesPerHour: 10,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+      },
+    };
+
+    return limits[userRole as keyof typeof limits] || limits.default;
   }
 }
 

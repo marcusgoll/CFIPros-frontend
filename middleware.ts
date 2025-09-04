@@ -1,50 +1,49 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-// Routes that require authentication
-const protectedRoutes = [
-  "/dashboard",
-  "/lesson",
-  "/study-plan",
-  "/settings",
-  "/analytics",
-];
+// Define protected routes that require authentication
+const isProtectedRoute = createRouteMatcher([
+  '/dashboard(.*)',
+  '/profile(.*)',
+  '/settings(.*)',
+  '/study-plan(.*)',
+  '/reports(.*)',
+  '/analytics(.*)',
+  '/admin(.*)',
+  '/api/auth(.*)',
+  '/api/user(.*)',
+]);
 
-// Routes that are only accessible when not authenticated
-const authRoutes = ["/auth/login", "/auth/register", "/auth/reset-password"];
-
-export function middleware(request: NextRequest) {
+export default clerkMiddleware(async (auth, request: NextRequest) => {
+  const { userId } = await auth();
   const { pathname } = request.nextUrl;
-  const url = request.nextUrl.clone();
 
-  // Get auth token from cookies (placeholder for now)
-  const authToken = request.cookies.get("auth-token")?.value;
-  const isAuthenticated = Boolean(authToken);
+  // Create response for security headers
+  let response: NextResponse;
 
-  // Check if route is protected
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  // Check if route is auth-only
-  const isAuthRoute = authRoutes.some((route) => pathname.startsWith(route));
-
-  // Redirect unauthenticated users from protected routes
-  if (isProtectedRoute && !isAuthenticated) {
-    url.pathname = "/login";
-    url.searchParams.set("redirect", pathname);
-    return NextResponse.redirect(url);
+  // Handle authentication logic
+  if (!userId && isProtectedRoute(request)) {
+    // Redirect unauthenticated users to sign-in
+    const signInUrl = new URL('/sign-in', request.url);
+    signInUrl.searchParams.set('redirect_url', request.url);
+    response = NextResponse.redirect(signInUrl);
+  } else if (userId && (pathname === '/sign-in' || pathname === '/sign-up')) {
+    // Redirect authenticated users away from auth pages
+    response = NextResponse.redirect(new URL('/dashboard', request.url));
+  } else {
+    // Allow the request to continue
+    response = NextResponse.next();
   }
 
-  // Redirect authenticated users from auth routes
-  if (isAuthRoute && isAuthenticated) {
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
+  // Add comprehensive security headers to all responses
+  addSecurityHeaders(response);
+  
+  return response;
+});
 
-  // Add security headers
-  const response = NextResponse.next();
-
+function addSecurityHeaders(response: NextResponse) {
+  // Add comprehensive security headers
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "origin-when-cross-origin");
@@ -53,22 +52,20 @@ export function middleware(request: NextRequest) {
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=()"
   );
-
+  
   // Add CSP header for enhanced security
   response.headers.set(
     "Content-Security-Policy",
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://safe-rooster-9.clerk.accounts.dev",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://*.clerk.accounts.dev https://*.clerk.dev",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.clerk.accounts.dev https://*.clerk.dev",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data: https:",
-      "connect-src 'self' https://api.cfipros.com https://api.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://safe-rooster-9.clerk.accounts.dev https://us.i.posthog.com",
-      "frame-src 'self' https://js.stripe.com https://*.clerk.accounts.dev https://*.clerk.dev https://safe-rooster-9.clerk.accounts.dev",
+      "connect-src 'self' https://api.cfipros.com https://*.clerk.accounts.dev https://*.clerk.dev https://us.i.posthog.com",
+      "frame-src 'self' https://*.clerk.accounts.dev https://*.clerk.dev",
     ].join("; ")
   );
-
-  return response;
 }
 
 export const config = {

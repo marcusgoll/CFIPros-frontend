@@ -5,10 +5,11 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { config } from "@/lib/config";
-import { handleAPIError, addSecurityHeaders, addCORSHeaders } from "./errors";
+import { handleAPIError, addSecurityHeaders, addCORSHeaders, CommonErrors } from "./errors";
 import { getClientIP } from "./proxy";
 import { rateLimiter } from "@/lib/api/rateLimiter";
 import { logError } from "@/lib/utils/logger";
+import { auth } from "@clerk/nextjs/server";
 
 // Use shared rate limiter so tests can mock its behavior
 
@@ -43,6 +44,25 @@ export function withAPIMiddleware<Ctx = unknown>(
 ): (request: NextRequest, context?: Ctx) => Promise<NextResponse> {
   return async (request: NextRequest, context?: Ctx) => {
     try {
+      // Authentication check if required
+      if (options.auth) {
+        try {
+          const { userId } = await auth();
+          if (!userId) {
+            return handleAPIError(
+              CommonErrors.UNAUTHORIZED('Authentication required')
+            );
+          }
+          // Add user ID to headers for downstream processing
+          request.headers.set('X-User-ID', userId);
+        } catch (error) {
+          logError('Authentication error:', error);
+          return handleAPIError(
+            CommonErrors.UNAUTHORIZED('Invalid authentication')
+          );
+        }
+      }
+
       // Rate limiting
       const clientIP = getClientIP(request);
       const rateLimit = await rateLimiter.check(clientIP, options.endpoint);

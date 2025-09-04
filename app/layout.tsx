@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { SimplePerformanceMonitor } from "@/components/SimplePerformanceMonitor";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -109,19 +110,21 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
         <ClerkProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <PostHogProvider>
-              <div id="root" className="relative">
-                {children}
-              </div>
-              <SimplePerformanceMonitor />
-            </PostHogProvider>
-          </ThemeProvider>
+          <QueryProvider>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange
+            >
+              <PostHogProvider>
+                <div id="root" className="relative">
+                  {children}
+                </div>
+                <SimplePerformanceMonitor />
+              </PostHogProvider>
+            </ThemeProvider>
+          </QueryProvider>
         </ClerkProvider>
       </body>
     </html>

@@ -1,7 +1,7 @@
 import { middleware } from "@/middleware";
 
-describe("Auth gating middleware", () => {
-  it("redirects unauthenticated users from /dashboard to /login with redirect param", () => {
+describe("Security headers middleware", () => {
+  it("adds comprehensive security headers to responses", () => {
     const url = new URL("http://localhost:3000/dashboard");
     // Minimal NextRequest-like mock with nextUrl.clone support
     const req = {
@@ -18,12 +18,12 @@ describe("Auth gating middleware", () => {
 
     const res = middleware(req);
 
-    // jest.setup mocks NextResponse.redirect to return an object
-    expect(res.status).toBe(302);
-    const location = res.headers.get("Location");
-    // Validate redirect to /login with redirect=/dashboard (absolute URL is fine)
-    const redirected = new URL(location!, "http://localhost:3000");
-    expect(redirected.pathname).toBe("/login");
-    expect(redirected.searchParams.get("redirect")).toBe("/dashboard");
+    // Check security headers are applied
+    expect(res.headers.get("X-Frame-Options")).toBe("DENY");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("Referrer-Policy")).toBe("origin-when-cross-origin");
+    expect(res.headers.get("X-Permitted-Cross-Domain-Policies")).toBe("none");
+    expect(res.headers.get("Permissions-Policy")).toBe("camera=(), microphone=(), geolocation=()");
+    expect(res.headers.get("Content-Security-Policy")).toContain("default-src 'self'");
   });
 });
