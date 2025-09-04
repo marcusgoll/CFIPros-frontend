@@ -4,6 +4,14 @@ version: 3.0
 encoding: UTF-8
 ---
 
+## Task Status Legend
+
+⏳ Pending
+🔄 In Progress
+✅ Complete
+⚠️ Blocked
+❌ Failed
+
 # Agent OS Orchestrator - Streamlined
 
 Coordinates spec creation, task execution, and quality validation for API contract-driven development across distributed repositories.
@@ -50,6 +58,7 @@ quality:
   lint_errors: 0
   type_errors: 0
   contract_tests: required
+  black_formatting: 0 # Add Black formatting quality gate
 
 api:
   contract_path: api-contracts/openapi.yaml
@@ -83,6 +92,8 @@ output: Spec with API contract
 ```
 
 1. **Create Spec** (`create-spec.md`)
+  Refer to the instructions located in this file:
+@.agent-os/instructions/core/create-spec.md
    - Generate spec.md with requirements
    - Create api-contracts/openapi.yaml
    - Include contract tests in spec.md
@@ -96,6 +107,8 @@ output: Task list with quality gates
 ```
 
 2. **Create Tasks** (`create-tasks.md`)
+Refer to the instructions located in this file:
+@.agent-os/instructions/core/create-tasks.md
    - Load spec and API contract
    - Generate tasks.md
    - Include lint/type/test subtasks
@@ -109,7 +122,10 @@ output: Working code with quality validation
 ```
 
 3. **Execute Tasks** (`execute-tasks.md`)
+Refer to the instructions located in this file:
+@.agent-os/instructions/core/execute-tasks.md
    - **Create feature branch** (`git-workflow`)
+    **Use sub agent "git-workflow"**
      - Extract branch name from spec folder
      - Create and switch to feature branch
    - Load API contract
@@ -119,7 +135,8 @@ output: Working code with quality validation
      - Lint check (0 errors)
      - Type check (0 errors)
      - Test coverage (≥80%)
-   - Update task status
+     - Black Formatting (0 errors) # Add Black formatting check
+   - Update task status in tasks.md using the Task Status Legend
    - Output: Implemented features on feature branch
 
 ### Phase 4: Completion
@@ -130,11 +147,19 @@ output: PR-ready code with quality validation
 ```
 
 4. **Complete Tasks** (`complete-tasks.md`)
+Refer to the instructions located in this file:
+@.agent-os/instructions/core/complete-tasks.md
    - Run full quality validation (`test-runner`)
+   **Use sub agent "test-runner"**
    - Verify contract compliance (`senior-code-reviewer`)
+   - Use sub agent "senior-code-reviewer"
    - Generate coverage report
    - Create recap document (`project-manager`)
+      - Use sub agent "project-manager"
+   - Update @.agent-os/docs/api-contract as single source of api truth.
+   - Update @.agent-os/product/roadmap.md in the workflow.
    - **Commit and create PR** (`git-workflow`)
+      Use sub agent "git-workflow"
      - Commit with quality metrics
      - Push to remote
      - Create PR with contract reference
@@ -162,6 +187,7 @@ Each phase must pass before proceeding:
 - [ ] Lint: 0 errors
 - [ ] Types: 0 errors
 - [ ] Coverage: ≥80%
+- [ ] Black Formatting: 0 errors # Added missing Black formatting to quality gates
 
 ### Completion Quality Gate
 
@@ -170,6 +196,7 @@ Each phase must pass before proceeding:
 - [ ] API contract validated
 - [ ] Recap document created
 - [ ] Update @.agent-os/docs/api-contract as single source of api truth.
+- [ ] Update @.agent-os/product/roadmap.md in the workflow.
 
 ## Simple Commands
 
@@ -295,6 +322,7 @@ Claude: [Implements with quality gates]
 → Lint ✅
 → Types ✅
 → Coverage 85% ✅
+→ Black Formatting ✅ # Example of Black formatting check
 
 User: Complete feature
 Claude: [Validates and commits]
@@ -347,6 +375,7 @@ Claude: [Implements task 1]
 → Coverage 75% ❌
 [Adds more tests]
 → Coverage 82% ✅
+→ Black Formatting ✅ # Example of Black formatting check
 → Task 1 complete
 
 User: Complete feature

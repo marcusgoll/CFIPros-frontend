@@ -185,6 +185,14 @@ export class FileUploadSecurity {
   }
 
   /**
+   * Helper: Read file as text
+   */
+  private static async readFileAsText(file: File, bytes: number): Promise<string> {
+    const buffer = await file.slice(0, bytes).arrayBuffer();
+    return new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+  }
+
+  /**
    * Scan file content for security threats
    */
   private static async scanFileContent(file: File): Promise<FileValidationResult> {
@@ -374,25 +382,99 @@ export class FileUploadSecurity {
     return new Uint8Array(buffer);
   }
 
+
   /**
-   * Helper: Compare byte arrays
+   * Validate file upload with user authentication context
+   * Provides enhanced security logging and user-specific limits
    */
-  // @ts-expect-error - Unused but kept for future security features
-  private static compareBytes(
-    fileBytes: Uint8Array,
-    signature: Uint8Array
-  ): boolean {
-    if (fileBytes.length < signature.length) {
-      return false;
+  static async validateFileWithAuth(
+    file: File,
+    userId: string,
+    userRole?: string
+  ): Promise<FileValidationResult & { metadata?: any }> {
+    // Import logging utility
+    const { logInfo, logWarn } = await import("@/lib/utils/logger");
+
+    // Perform standard security validation
+    const baseValidation = await this.validateFile(file);
+    
+    if (!baseValidation.isSecure) {
+      // Log security violations with user context
+      logWarn("File upload security violation", {
+        userId,
+        userRole,
+        filename: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        error: baseValidation.error,
+      });
+      
+      return baseValidation;
     }
 
-    for (let i = 0; i < signature.length; i++) {
-      if (fileBytes[i] !== signature[i]) {
-        return false;
-      }
+    // Generate basic file metadata  
+    const metadata = {
+      sanitizedName: this.createSafeFilename(file.name),
+      hash: await this.generateFileHash(file),
+      uploadId: this.generateUploadId(),
+    };
+    
+    // Log successful validation
+    logInfo("File upload validated", {
+      userId,
+      userRole,
+      filename: metadata.sanitizedName,
+      fileType: file.type,
+      fileSize: file.size,
+      hash: metadata.hash,
+    });
+
+    // Apply role-based size restrictions if needed
+    if (userRole === 'student' && file.size > 5 * 1024 * 1024) { // 5MB for students
+      return {
+        isSecure: false,
+        error: "File size exceeds limit for student accounts (5MB maximum)",
+      };
     }
 
-    return true;
+    return {
+      ...baseValidation,
+      metadata,
+    };
+  }
+
+  /**
+   * Get user-specific upload limits based on role
+   */
+  static getUserUploadLimits(userRole?: string): {
+    maxFileSize: number;
+    maxFilesPerHour: number;
+    allowedTypes: string[];
+  } {
+    const limits = {
+      student: {
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        maxFilesPerHour: 5,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+      },
+      cfi: {
+        maxFileSize: 20 * 1024 * 1024, // 20MB
+        maxFilesPerHour: 20,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+      },
+      school_admin: {
+        maxFileSize: 50 * 1024 * 1024, // 50MB
+        maxFilesPerHour: 50,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+      },
+      default: {
+        maxFileSize: 10 * 1024 * 1024, // 10MB
+        maxFilesPerHour: 10,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+      },
+    };
+
+    return limits[userRole as keyof typeof limits] || limits.default;
   }
 
   /**
@@ -440,5 +522,15 @@ export class FileUploadSecurity {
    */
   static generateUploadId(): string {
     return `upload_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+  }
+
+  /**
+   * Generate file hash for deduplication and integrity
+   */
+  private static async generateFileHash(file: File): Promise<string> {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }
 }
