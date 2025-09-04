@@ -16,7 +16,7 @@ jest.mock('@tanstack/react-query', () => ({
   useQuery: jest.fn(),
 }));
 
-import { useAuth, useMe, useCurrentOrg } from '@/hooks/useAuth';
+import { useAuth, useMe, useCurrentOrg } from '@/lib/hooks/useAuth';
 import * as clerkClient from '@/lib/api/clerk-client';
 
 const mockClerkClient = clerkClient as jest.Mocked<typeof clerkClient>;

@@ -499,6 +499,96 @@ export class FileUploadSecurity {
 
     return true;
   }
+
+  /**
+   * Validate file upload with user authentication context
+   * Provides enhanced security logging and user-specific limits
+   */
+  static async validateFileWithAuth(
+    file: File,
+    userId: string,
+    userRole?: string
+  ): Promise<FileSecurityResult & { metadata?: FileMetadata }> {
+    // Import logging utility
+    const { logInfo, logWarn } = await import("@/lib/utils/logger");
+
+    // Perform standard security validation
+    const baseValidation = await this.validateFile(file);
+    
+    if (!baseValidation.isSecure) {
+      // Log security violations with user context
+      logWarn("File upload security violation", {
+        userId,
+        userRole,
+        filename: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        error: baseValidation.error,
+      });
+      
+      return baseValidation;
+    }
+
+    // Generate file metadata with user context
+    const metadata = await this.generateFileMetadata(file);
+    
+    // Log successful validation
+    logInfo("File upload validated", {
+      userId,
+      userRole,
+      filename: metadata.sanitizedName,
+      fileType: file.type,
+      fileSize: file.size,
+      hash: metadata.hash,
+    });
+
+    // Apply role-based size restrictions if needed
+    if (userRole === 'student' && file.size > 5 * 1024 * 1024) { // 5MB for students
+      return {
+        isSecure: false,
+        error: "File size exceeds limit for student accounts (5MB maximum)",
+      };
+    }
+
+    return {
+      ...baseValidation,
+      metadata,
+    };
+  }
+
+  /**
+   * Get user-specific upload limits based on role
+   */
+  static getUserUploadLimits(userRole?: string): {
+    maxFileSize: number;
+    maxFilesPerHour: number;
+    allowedTypes: string[];
+  } {
+    const limits = {
+      student: {
+        maxFileSize: 5 * 1024 * 1024, // 5MB
+        maxFilesPerHour: 5,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+      },
+      cfi: {
+        maxFileSize: 20 * 1024 * 1024, // 20MB
+        maxFilesPerHour: 20,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+      },
+      school_admin: {
+        maxFileSize: 50 * 1024 * 1024, // 50MB
+        maxFilesPerHour: 50,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+      },
+      default: {
+        maxFileSize: 10 * 1024 * 1024, // 10MB
+        maxFilesPerHour: 10,
+        allowedTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+      },
+    };
+
+    return limits[userRole as keyof typeof limits] || limits.default;
+  }
 }
 
 /**

@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/utils/logger";
 
 interface UserMetadata {
   role?: string;
@@ -31,7 +32,7 @@ export async function GET() {
     // Get permissions based on role
     const permissions = getPermissionsByRole(role);
     
-    // TODO: Get organization-specific permissions via Clerk API
+    // Organization-specific permissions will be populated when Clerk Organizations API is integrated
     const orgPermissions: string[] = [];
 
     return NextResponse.json({
@@ -40,8 +41,8 @@ export async function GET() {
       organizationRole: null
     });
 
-  } catch {
-    // Log error for monitoring (in production, use proper logging service)
+  } catch (error) {
+    logError('Permissions fetch error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/utils/logger";
 
 interface Organization {
   id: string;
@@ -42,8 +43,7 @@ export async function GET() {
       );
     }
 
-    // TODO: Implement organization fetching via Clerk API
-    // For now, return empty organizations list
+    // Organizations will be fetched via Clerk Organizations API when integration is complete
     const organizations: Organization[] = [];
 
     return NextResponse.json({
@@ -53,8 +53,8 @@ export async function GET() {
       message: 'Organization support requires Clerk API integration'
     });
 
-  } catch {
-    // Log error for monitoring (in production, use proper logging service)
+  } catch (error) {
+    logError('Organizations fetch error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch organizations' },
       { status: 500 }
@@ -101,8 +101,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // TODO: In production, create organization via Clerk API
-    // For now, we'll simulate the creation
+    // Organization creation will be implemented via Clerk Organizations API when integration is complete
     const newOrganization: Organization = {
       id: `org_${Date.now()}`, // Simulate organization ID
       name,
@@ -125,8 +124,8 @@ export async function POST(request: Request) {
       { status: 201 }
     );
 
-  } catch {
-    // Log error for monitoring (in production, use proper logging service)
+  } catch (error) {
+    logError('Organization creation error:', error);
     return NextResponse.json(
       { error: 'Failed to create organization' },
       { status: 500 }

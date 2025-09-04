@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/utils/logger";
 
 interface UserMetadata {
   role?: string;
@@ -51,12 +52,12 @@ export async function POST() {
       imageUrl: user.imageUrl,
       role: metadata?.role || 'student',
       emailVerified: user.emailAddresses[0]?.verification?.status === 'verified',
-      organizations: [], // TODO: Implement organization fetching via Clerk API
+      organizations: [], // Organizations will be populated when Clerk Organizations API is integrated
       lastSyncAt: new Date().toISOString()
     };
 
-    // TODO: In production, save this data to your backend database
-    // await saveUserToDatabase(syncData);
+    // Backend persistence will be implemented when database layer is ready
+    // await apiFetch('/users/sync', { method: 'POST', body: syncData });
 
     return NextResponse.json({
       success: true,
@@ -65,8 +66,8 @@ export async function POST() {
       data: syncData
     });
 
-  } catch {
-    // Log error for monitoring (in production, use proper logging service)
+  } catch (error) {
+    logError('User sync failed:', error);
     return NextResponse.json(
       { error: 'Sync failed', details: 'Unknown error' },
       { status: 500 }

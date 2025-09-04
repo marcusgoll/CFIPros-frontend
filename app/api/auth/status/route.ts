@@ -1,5 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
+import { logError } from "@/lib/utils/logger";
 
 interface UserMetadata {
   role?: string;
@@ -26,9 +27,6 @@ export async function GET() {
     const metadata = user.privateMetadata as UserMetadata;
     const role = metadata?.role || 'student';
     
-    // Get organization info if available (simplified approach for now)
-    const organization = null; // TODO: Implement organization fetching via Clerk API
-
     // Define permissions based on role
     const permissions = getPermissionsByRole(role);
 
@@ -56,9 +54,7 @@ export async function GET() {
     });
 
   } catch (error) {
-    // TODO: Replace with proper logging service in production  
-    // logger.error('Auth status error', { error: error.message });
-    console.error('Auth status error:', error);
+    logError('Auth status error:', error);
     return NextResponse.json(
       { error: 'Authentication status check failed' },
       { status: 500 }

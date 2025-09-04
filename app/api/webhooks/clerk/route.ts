@@ -1,6 +1,7 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { logError, logInfo, logWarn } from '@/lib/utils/logger';
 
 interface UserMetadata {
   role?: string;
@@ -78,8 +79,7 @@ export async function POST(req: Request) {
       'svix-signature': svixSignature,
     }) as ClerkWebhookEvent;
   } catch (err) {
-    // TODO: Replace with proper logging service in production
-    // logger.error('Webhook signature validation failed', { error: err.message });
+    logError('Webhook signature validation failed:', err);
     
     // Check if this is a signature verification error vs server error
     if (err instanceof Error && err.message.includes('Invalid signature')) {
@@ -106,8 +106,7 @@ export async function POST(req: Request) {
       processed
     });
   } catch (error) {
-    // TODO: Replace with proper logging service in production
-    // logger.error('Webhook processing failed', { error: error.message });
+    logError('Webhook processing failed:', error);
     
     return NextResponse.json(
       { error: 'Failed to process webhook' },
@@ -119,8 +118,7 @@ export async function POST(req: Request) {
 async function handleWebhookEvent(evt: ClerkWebhookEvent): Promise<boolean> {
   const { type, data } = evt;
 
-  // TODO: Replace with proper logging service in production
-  // logger.info('Processing webhook event', { type, userId: data.id });
+  logInfo('Processing webhook event:', { type, userId: data.id });
 
   switch (type) {
     case 'user.created':
@@ -160,94 +158,80 @@ async function handleWebhookEvent(evt: ClerkWebhookEvent): Promise<boolean> {
       return true;
     
     default:
-      // TODO: Replace with proper logging service in production
-      // logger.warn('Unhandled webhook event type', { type });
+      logWarn('Unhandled webhook event type:', type);
       return false; // Event not processed
   }
 }
 
 async function handleUserCreated(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('User created', { userId: data.id });
+  logInfo('User created:', { userId: data.id });
   
-  // TODO: In production, save user to your backend database
-  // Example data structure for backend sync:
-  const userData = {
-    clerkUserId: data.id,
-    email: data.email_addresses?.[0]?.email_address,
-    firstName: data.first_name,
-    lastName: data.last_name,
-    imageUrl: data.image_url,
-    role: data.private_metadata?.role || 'student',
-    emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
-    createdAt: data.created_at ? new Date(data.created_at) : new Date(),
-  };
-  
-  // await saveUserToDatabase(userData);
-  // TODO: Implement user database persistence
+  // Backend persistence will be implemented when database layer is ready
+  // Example data that will be sent:
+  // {
+  //   clerkUserId: data.id,
+  //   email: data.email_addresses?.[0]?.email_address,
+  //   firstName: data.first_name,
+  //   lastName: data.last_name,
+  //   imageUrl: data.image_url,
+  //   role: data.private_metadata?.role || 'student',
+  //   emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
+  //   createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+  // }
+  // await apiFetch('/users', { method: 'POST', body: userData });
 }
 
 async function handleUserUpdated(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('User updated', { userId: data.id });
+  logInfo('User updated:', { userId: data.id });
   
-  // TODO: Update user in your backend database
-  const userData = {
-    clerkUserId: data.id,
-    email: data.email_addresses?.[0]?.email_address,
-    firstName: data.first_name,
-    lastName: data.last_name,
-    imageUrl: data.image_url,
-    role: data.private_metadata?.role || 'student',
-    emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
-    updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
-  };
-  
-  // await updateUserInDatabase(userData);
-  // TODO: Implement user database update
+  // Backend persistence will be implemented when database layer is ready
+  // Example data that will be sent:
+  // {
+  //   clerkUserId: data.id,
+  //   email: data.email_addresses?.[0]?.email_address,
+  //   firstName: data.first_name,
+  //   lastName: data.last_name,
+  //   imageUrl: data.image_url,
+  //   role: data.private_metadata?.role || 'student',
+  //   emailVerified: data.email_addresses?.[0]?.verification?.status === 'verified',
+  //   updatedAt: data.updated_at ? new Date(data.updated_at) : new Date(),
+  // }
+  // await apiFetch(`/users/${data.id}`, { method: 'PUT', body: userData });
 }
 
 async function handleUserDeleted(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('User deleted', { userId: data.id });
+  logInfo('User deleted:', { userId: data.id });
   
-  // TODO: Delete or deactivate user in your backend database
-  // await deleteUserFromDatabase(data.id);
-  // TODO: Implement user database deletion
+  // Backend API call will be implemented when database persistence layer is ready
+  // await apiFetch(`/users/${data.id}`, { method: 'DELETE' });
 }
 
 async function handleOrganizationCreated(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('Organization created', { organizationId: data.id });
-  // TODO: Handle organization creation
+  logInfo('Organization created:', { organizationId: data.id });
+  // Note: Organization handling will be implemented when backend database is available
 }
 
 async function handleOrganizationUpdated(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('Organization updated', { organizationId: data.id });
-  // TODO: Handle organization update
+  logInfo('Organization updated:', { organizationId: data.id });
+  // Note: Organization handling will be implemented when backend database is available
 }
 
 async function handleOrganizationDeleted(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('Organization deleted', { organizationId: data.id });
-  // TODO: Handle organization deletion
+  logInfo('Organization deleted:', { organizationId: data.id });
+  // Note: Organization handling will be implemented when backend database is available
 }
 
 async function handleMembershipCreated(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('Membership created', { userId: data.id });
-  // TODO: Handle membership creation
+  logInfo('Membership created:', { userId: data.id });
+  // Note: Membership handling will be implemented when backend database is available
 }
 
 async function handleMembershipUpdated(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('Membership updated', { userId: data.id });
-  // TODO: Handle membership update
+  logInfo('Membership updated:', { userId: data.id });
+  // Note: Membership handling will be implemented when backend database is available
 }
 
 async function handleMembershipDeleted(data: ClerkWebhookEvent['data']) {
-  // TODO: Replace with proper logging service in production
-  // logger.info('Membership deleted', { userId: data.id });
-  // TODO: Handle membership deletion
+  logInfo('Membership deleted:', { userId: data.id });
+  // Note: Membership handling will be implemented when backend database is available
 }
