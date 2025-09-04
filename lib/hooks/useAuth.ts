@@ -35,7 +35,9 @@ export function useMe() {
     retry: (failureCount, error) => {
       if (error && typeof error === 'object' && 'status' in error) {
         const status = (error as { status: number }).status;
-        if (status === 401 || status === 403) return false;
+        if (status === 401 || status === 403) {
+          return false;
+        }
       }
       return failureCount < 2; // Reduce retries
     },
@@ -61,7 +63,9 @@ export function useCurrentOrg() {
     retry: (failureCount, error) => {
       if (error && typeof error === 'object' && 'status' in error) {
         const status = (error as { status: number }).status;
-        if (status === 401 || status === 403) return false;
+        if (status === 401 || status === 403) {
+          return false;
+        }
       }
       return failureCount < 2; // Reduce retries
     },
@@ -114,7 +118,9 @@ export function useAuthData() {
       // Don't retry on auth errors
       if (error && typeof error === 'object' && 'status' in error) {
         const status = (error as { status: number }).status;
-        if (status === 401 || status === 403) return false;
+        if (status === 401 || status === 403) {
+          return false;
+        }
       }
       return failureCount < 2; // Reduce retry attempts
     },

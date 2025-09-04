@@ -112,10 +112,8 @@ describe("FileUploadSecurity", () => {
     });
 
     it("should accept valid PDF files with proper magic bytes", async () => {
-      // PDF magic bytes: %PDF
-      const pdfContent = new Uint8Array([
-        0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34,
-      ]);
+      // Create PDF content as string to work around Jest File API issues
+      const pdfContent = "%PDF-1.4\n%âãÏÓ\n1 0 obj";
       const file = new File([pdfContent], "test.pdf", {
         type: "application/pdf",
       });
@@ -168,16 +166,8 @@ describe("FileUploadSecurity", () => {
     });
 
     it("should reject PDF files with embedded JavaScript", async () => {
-      // PDF with JavaScript keyword
-      const pdfWithJS = new Uint8Array([
-        0x25,
-        0x50,
-        0x44,
-        0x46, // %PDF
-        ...Array.from(
-          new TextEncoder().encode('/JavaScript << /JS (alert("XSS")) >>')
-        ),
-      ]);
+      // PDF with JavaScript keyword - using string format for Jest compatibility
+      const pdfWithJS = '%PDF-1.4\n/JavaScript << /JS (alert("XSS")) >>';
       const file = new File([pdfWithJS], "malicious.pdf", {
         type: "application/pdf",
       });
@@ -191,9 +181,8 @@ describe("FileUploadSecurity", () => {
     });
 
     it("should warn about hidden files", async () => {
-      const pdfContent = new Uint8Array([
-        0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34,
-      ]);
+      // Use string format for Jest compatibility
+      const pdfContent = "%PDF-1.4";
       const file = new File([pdfContent], ".hidden.pdf", {
         type: "application/pdf",
       });
