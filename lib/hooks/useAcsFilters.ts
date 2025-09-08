@@ -141,7 +141,7 @@ export function useAcsFilters({
   }, [filters]);
 
   const getApiParams = useCallback(() => {
-    const params: Record<string, any> = {};
+    const params: Record<string, string> = {};
     if (filters.docs.length > 0) {params.doc = filters.docs.join(",");}
     if (filters.types.length > 0) {params.type = filters.types.join(",");}
     if (filters.areas.length > 0) {params.area = filters.areas.join(",");}
@@ -186,4 +186,3 @@ export function useAcsFilters({
     parseUrlParams,
   };
 }
-
