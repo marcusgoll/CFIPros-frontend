@@ -1,0 +1,124 @@
+name: Dependabot Auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test-and-merge:
+    if: github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Clean environment
+        run: |
+          # Kill any processes on common ports
+          sudo fuser -k 3000/tcp 3001/tcp 3002/tcp || true
+          # Clean npm cache
+          npm cache clean --force
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run type check
+        run: npm run type-check
+      
+      - name: Run linting
+        run: npm run lint
+      
+      - name: Run tests with coverage
+        run: npm test -- --coverage --passWithNoTests
+      
+      - name: Build project
+        run: npm run build
+      
+      - name: Security audit
+        run: npm audit --audit-level moderate
+        continue-on-error: true
+      
+      - name: Check if PR is auto-mergeable
+        id: check-merge
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PR_LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          
+          echo "PR Title: $PR_TITLE"
+          echo "PR Labels: $PR_LABELS"
+          
+          # Check if this is a minor/patch update
+          if [[ "$PR_TITLE" =~ ^deps.*minor-patch ]]; then
+            echo "auto_merge=true" >> $GITHUB_OUTPUT
+            echo "✅ This is a minor/patch update - eligible for auto-merge"
+          elif [[ "$PR_TITLE" =~ ^deps.*major ]]; then
+            echo "auto_merge=false" >> $GITHUB_OUTPUT
+            echo "🚨 This is a major update - requires manual review"
+          else
+            echo "auto_merge=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Cannot determine update type - requires manual review"
+          fi
+      
+      - name: Auto-merge PR
+        if: steps.check-merge.outputs.auto_merge == 'true'
+        run: |
+          gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
+          echo "✅ PR scheduled for auto-merge after all checks pass"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Add comment for manual review
+        if: steps.check-merge.outputs.auto_merge == 'false'
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body "🚨 **Manual Review Required**
+          
+          This PR contains major version updates or critical dependency changes that require manual review before merging.
+          
+          **Next Steps:**
+          1. Review the changelog for breaking changes
+          2. Test the changes locally
+          3. Merge manually if everything looks good
+          
+          **Test locally:**
+          \`\`\`bash
+          gh pr checkout ${{ github.event.pull_request.number }}
+          npm ci
+          npm run type-check
+          npm test
+          npm run build
+          \`\`\`"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job to handle failed tests
+  notify-failure:
+    if: failure() && github.actor == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    needs: test-and-merge
+    steps:
+      - name: Comment on failed PR
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body "❌ **Automated tests failed**
+          
+          The dependency update has failed automated testing. Please review the CI logs and fix any issues before merging.
+          
+          Common issues:
+          - Breaking changes in the updated dependency
+          - Type incompatibilities
+          - Test failures due to API changes
+          
+          Check the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details."
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

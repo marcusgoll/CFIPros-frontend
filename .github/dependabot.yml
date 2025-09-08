@@ -1,31 +1,52 @@
 version: 2
 
 updates:
-  # Enable version updates for npm
+  # Enable version updates for npm with strategic grouping
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     assignees:
       - "marcusgoll"
     labels:
       - "dependencies"
       - "automated-pr"
     commit-message:
-      prefix: "⬆️"
+      prefix: "deps"
       include: "scope"
-    # Allow all direct and indirect dependencies
-    allow:
-      - dependency-type: "direct"
-      - dependency-type: "indirect"
-    # Ignore major updates for all dependencies (allow minor/patch)
-    ignore:
-      - dependency-name: "*"
+    groups:
+      # Group minor and patch updates for auto-merge
+      minor-patch:
+        patterns:
+          - "*"
         update-types:
-          - "version-update:semver-major"
+          - "minor"
+          - "patch"
+      # Separate major updates for manual review
+      major:
+        patterns:
+          - "*"
+        update-types:
+          - "major"
+    ignore:
+      # Critical packages that need manual review for major updates
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@clerk/nextjs"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jest"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@testing-library/react"
+        update-types: ["version-update:semver-major"]
 
   # Enable version updates for GitHub Actions
   - package-ecosystem: "github-actions"
