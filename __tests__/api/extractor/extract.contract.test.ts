@@ -20,9 +20,14 @@ jest.mock("@/lib/api/middleware", () => ({
   ),
 }));
 
-jest.mock("@/lib/security/fileUpload", () => ({
-  FileUploadRateLimiter: {
-    checkRateLimit: jest.fn(),
+jest.mock("@/lib/api/rateLimiter", () => ({
+  rateLimiter: {
+    check: jest.fn().mockResolvedValue({
+      success: true,
+      remaining: 9,
+      reset: Date.now() + 3600000,
+      limit: 10
+    }),
   },
 }));
 
@@ -87,7 +92,7 @@ jest.mock("@/lib/api/errors", () => ({
 // Import after mocks
 import { POST, OPTIONS } from "@/app/api/extractor/extract/route";
 import { NextRequest } from "next/server";
-import { FileUploadRateLimiter } from "@/lib/security/fileUpload";
+import { rateLimiter } from "@/lib/api/rateLimiter";
 import { validateRequest } from "@/lib/api/validation";
 import { proxyFileUploadWithFormData } from "@/lib/api/proxy";
 import { trackEvent } from "@/lib/analytics/telemetry";
@@ -235,7 +240,7 @@ const validateCORSHeaders = (response: Response) => {
 };
 
 // Validate rate limiting headers
-const validateRateLimitHeaders = (response: Response, expectedLimit: string = "20", expectedRemaining?: string) => {
+const validateRateLimitHeaders = (response: Response, expectedLimit: string = "10", expectedRemaining?: string) => {
   expect(response.headers.get("X-RateLimit-Limit")).toBe(expectedLimit);
   
   if (expectedRemaining) {
@@ -259,10 +264,11 @@ describe("Advanced ACS Extractor API Contract Tests", () => {
   describe("POST /extractor/extract - Complete OpenAPI Validation", () => {
     it("validates complete ExtractResponse schema (200) against OpenAPI spec", async () => {
       // Setup mocks for successful case
-      (FileUploadRateLimiter.checkRateLimit as jest.Mock).mockReturnValue({
-        allowed: true,
-        remainingUploads: 15,
-        resetTime: Date.now() + 3600000,
+      (rateLimiter.check as jest.Mock).mockResolvedValue({
+        success: true,
+        remaining: 9,
+        reset: Date.now() + 3600000,
+        limit: 10
       });
 
       (validateRequest.fileUpload as jest.Mock).mockResolvedValue({
@@ -389,7 +395,7 @@ describe("Advanced ACS Extractor API Contract Tests", () => {
       validateCORSHeaders(response);
 
       // Validate rate limiting headers
-      validateRateLimitHeaders(response, "20", "15");
+      validateRateLimitHeaders(response, "10", "9");
 
       // Validate analytics tracking occurred
       expect(trackEvent).toHaveBeenCalledWith("batch_upload_started", expect.objectContaining({
@@ -399,10 +405,11 @@ describe("Advanced ACS Extractor API Contract Tests", () => {
     });
 
     it("validates ErrorResponse schema for bad request (400) against OpenAPI spec", async () => {
-      (FileUploadRateLimiter.checkRateLimit as jest.Mock).mockReturnValue({
-        allowed: true,
-        remainingUploads: 19,
-        resetTime: Date.now() + 3600000,
+      (rateLimiter.check as jest.Mock).mockResolvedValue({
+        success: true,
+        remaining: 9,
+        reset: Date.now() + 3600000,
+        limit: 10
       });
 
       (validateRequest.fileUpload as jest.Mock).mockResolvedValue({
@@ -457,14 +464,15 @@ describe("Advanced ACS Extractor API Contract Tests", () => {
       expect(responseData.request_id).toBe("req_contract_test_400");
 
       // Validate rate limiting headers present even in error responses
-      validateRateLimitHeaders(response, "20", "19");
+      validateRateLimitHeaders(response, "10", "9");
     });
 
     it("validates file too large error (413 mapped to 400) against OpenAPI spec", async () => {
-      (FileUploadRateLimiter.checkRateLimit as jest.Mock).mockReturnValue({
-        allowed: true,
-        remainingUploads: 18,
-        resetTime: Date.now() + 3600000,
+      (rateLimiter.check as jest.Mock).mockResolvedValue({
+        success: true,
+        remaining: 8,
+        reset: Date.now() + 3600000,
+        limit: 10
       });
 
       (validateRequest.fileUpload as jest.Mock).mockResolvedValue({
@@ -510,10 +518,11 @@ describe("Advanced ACS Extractor API Contract Tests", () => {
     });
 
     it("validates rate limiting error (429 mapped to 400) against OpenAPI spec", async () => {
-      (FileUploadRateLimiter.checkRateLimit as jest.Mock).mockReturnValue({
-        allowed: false,
-        remainingUploads: 0,
-        resetTime: Date.now() + 3600000,
+      (rateLimiter.check as jest.Mock).mockResolvedValue({
+        success: false,
+        remaining: 0,
+        reset: Date.now() + 3600000,
+        limit: 10
       });
 
       const resetDate = new Date(Date.now() + 3600000).toISOString();
@@ -558,10 +567,11 @@ describe("Advanced ACS Extractor API Contract Tests", () => {
     });
 
     it("validates multipart/form-data request schema constraints", async () => {
-      (FileUploadRateLimiter.checkRateLimit as jest.Mock).mockReturnValue({
-        allowed: true,
-        remainingUploads: 19,
-        resetTime: Date.now() + 3600000,
+      (rateLimiter.check as jest.Mock).mockResolvedValue({
+        success: true,
+        remaining: 9,
+        reset: Date.now() + 3600000,
+        limit: 10
       });
 
       const request = new NextRequest("http://localhost/api/extractor/extract", {
@@ -589,10 +599,11 @@ describe("Advanced ACS Extractor API Contract Tests", () => {
         new File([`content ${i}`], `file_${i}.pdf`, { type: "application/pdf" })
       );
 
-      (FileUploadRateLimiter.checkRateLimit as jest.Mock).mockReturnValue({
-        allowed: true,
-        remainingUploads: 15,
-        resetTime: Date.now() + 3600000,
+      (rateLimiter.check as jest.Mock).mockResolvedValue({
+        success: true,
+        remaining: 9,
+        reset: Date.now() + 3600000,
+        limit: 10
       });
 
       (validateRequest.fileUpload as jest.Mock).mockResolvedValue({
