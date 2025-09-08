@@ -12,11 +12,8 @@ import {
   addCorrelationId,
 } from "@/lib/api/proxy";
 import { CommonErrors, handleAPIError } from "@/lib/api/errors";
-import {
-  FileUploadRateLimiter,
-  FileUploadCSP,
-  FileUploadSecurity,
-} from "@/lib/security/fileUpload";
+import { FileUploadSecurity } from "@/lib/security/fileUpload";
+import { rateLimiter } from "@/lib/api/rateLimiter";
 import { currentUser } from "@clerk/nextjs/server";
 
 async function uploadHandler(request: NextRequest) {

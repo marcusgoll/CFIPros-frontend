@@ -12,7 +12,7 @@ import {
   addCorrelationId,
 } from "@/lib/api/proxy";
 import { CommonErrors, handleAPIError } from "@/lib/api/errors";
-import { FileUploadRateLimiter } from "@/lib/security/fileUpload";
+import { rateLimiter } from "@/lib/api/rateLimiter";
 import { trackEvent } from "@/lib/analytics/telemetry";
 
 async function extractHandler(request: NextRequest) {
@@ -20,17 +20,13 @@ async function extractHandler(request: NextRequest) {
   const clientIP = getClientIP(request);
 
   // Rate limiting for extractor - more lenient than general uploads
-  const rateLimitCheck = FileUploadRateLimiter.checkRateLimit(
-    clientIP,
-    20, // Max 20 extractions per hour for ACS extractor
-    60 * 60 * 1000 // 1 hour window
-  );
+  const rateLimitKey = `extractor:${clientIP}`;
+  const rateLimitCheck = await rateLimiter.checkLimit(rateLimitKey, 20, 3600); // 20 requests per hour
 
-  if (!rateLimitCheck.allowed) {
-    const resetDate = new Date(rateLimitCheck.resetTime).toISOString();
+  if (!rateLimitCheck.success) {
     return handleAPIError(
       CommonErrors.RATE_LIMIT_EXCEEDED(
-        `Extraction limit exceeded. Try again after ${resetDate}`
+        `Extraction limit exceeded. Try again in ${Math.ceil(rateLimitCheck.resetTime / 1000)} seconds`
       )
     );
   }
