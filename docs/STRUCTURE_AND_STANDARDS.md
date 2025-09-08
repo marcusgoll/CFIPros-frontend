@@ -37,6 +37,12 @@ This document defines file placement, naming, and cleanup standards for producti
 - No temp/backup files: `*.bak`, `*.backup`.
 - Use `scripts/cleanup-repo.sh` before opening PRs.
 
+### Review Folder Policy
+
+- When unsure about deleting a file, move it to a local `review/` folder that is git-ignored.
+- Record the move in `docs/REORGANIZATION_LOG.md` with date, path, and rationale.
+- Seek confirmation before permanent deletion of any code/data files.
+
 ## Environment & Secrets
 
 - Only commit `.env.example` templates.
@@ -46,4 +52,3 @@ This document defines file placement, naming, and cleanup standards for producti
 
 - `npm run lint:fix`, `npm run type-check`, `npm run test`.
 - Confirm `npm run build` passes and bundle size is reasonable (`npm run analyze`).
-

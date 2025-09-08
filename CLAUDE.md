@@ -1,383 +1,82 @@
-# CFIPros Frontend - Claude Development Guide
-
-## Project Overview
-
-CFIPros Frontend is a Next.js 15 application for aviation training and certification services. Features secure file uploads, performance monitoring, and type-safe forms.
-
-## Architecture
-
-### Tech Stack
-
-- **Framework**: Next.js 15.1.0 with App Router
-- **Language**: TypeScript 5.8.4 (strict mode)
-- **Styling**: Tailwind CSS
-- **Forms**: React Hook Form + Zod validation
-- **Testing**: Jest + React Testing Library
-- **Authentication**: Clerk (integrated)
-
-### Key Features
-
-- 🛡️ **Security**: File upload validation, rate limiting, security headers
-- 📊 **Performance**: Web Vitals tracking, bundle analysis, memory monitoring
-- 🏗️ **Modern Stack**: Server Components, type-safe APIs, error handling
-- 🧪 **Testing**: 38.57% test coverage, TypeScript strict mode
-
-## Project Structure
-
-```
-frontend/
-├── app/                     # Next.js 15 App Router
-│   ├── api/                 # API routes with security middleware
-│   ├── globals.css          # Global styles
-│   └── layout.tsx           # Root layout with performance monitoring
-├── components/              # Reusable UI components
-│   ├── forms/              # Form components with validation
-│   ├── layout/             # Layout components (navigation, hero, spotlight menu)
-│   ├── providers/          # Context providers and error boundaries
-│   ├── sections/           # Page sections (hero, features)
-│   └── ui/                 # Basic UI components
-├── lib/                    # Core utilities and services
-│   ├── analytics/          # Analytics and telemetry services
-│   ├── api/                # API client, middleware, validation
-│   ├── config/             # Configuration files and navigation
-│   ├── hooks/              # Custom React hooks
-│   ├── security/           # Security modules (file upload, etc.)
-│   ├── services/           # Business logic services
-│   ├── types/              # TypeScript type definitions
-│   ├── utils/              # Utility functions and performance monitoring
-│   └── validation/         # Zod schemas
-├── __tests__/              # Test suites
-└── public/                 # Static assets
-```
-
-## Development Commands
-
-### Essential Commands
-
-```bash
-# Development server
-npm run dev
-
-# Run all tests
-npm test
-
-# Run tests with coverage
-npm test -- --coverage
-
-# Type checking
-npm run type-check
-
-# Lint code
-npm run lint
-
-# Build for production
-npm run build
-
-# Bundle analysis
-npm run analyze
-```
-
-### Testing Strategy
-
-- **Unit Tests**: Components, hooks, utilities
-- **Integration Tests**: API routes, form validation
-- **Security Tests**: File upload validation, rate limiting
-- **Performance Tests**: Memory leak detection, Web Vitals
-
-## Git Workflow Best Practices
-
-### Daily Development
-
-```bash
-# Always push after completing features
-git add .
-git commit -m "feat: add new feature"
-git push origin master
-```
-
-### Important Rules
-
-- **Push Early, Push Often**: Always push to remote after big changes
-- **Test Before Push**: Run `npm test` before pushing
-- **Build Verification**: Run `npm run build` for major changes
-- **Branch Strategy**: Use feature branches for experimental work
-
-## Security Implementation
-
-### File Upload Security
-
-- **File Type Verification**: Checks magic bytes and MIME types
-- **Content Scanning**: Detects dangerous patterns and scripts
-- **Rate Limiting**: 10 uploads per hour per client
-- **Safe Filenames**: Sanitizes names, prevents path traversal
-
-### API Security
-
-- **Security Headers**: CSP, XSS protection, content type validation
-- **Rate Limiting**: Per-endpoint request limits
-- **Input Validation**: Zod schemas for all requests
-- **Error Handling**: Consistent error responses
-
-## Performance Monitoring
-
-### Web Vitals Tracking
-
-- **Core Web Vitals**: CLS, FID, LCP monitoring
-- **Memory Usage**: Leak detection and cleanup
-- **Bundle Analysis**: Code splitting optimization
-- **Performance Diagnostics**: Real-time overlay in development
-
-### Implementation Details
-
-- Performance tracker singleton with observer pattern
-- React component for performance overlay
-- Bundle analyzer integration for optimization insights
-- Memory leak prevention in form hooks
-
-## Key Development Patterns
-
-### Error Handling
-
-```typescript
-// Use standardized error handling
-import { CommonErrors, handleAPIError } from "@/lib/api/errors";
-
-// In API routes
-if (!validation.isValid) {
-  return handleAPIError(CommonErrors.VALIDATION_ERROR(validation.error));
-}
-```
-
-### Form Validation
-
-```typescript
-// Use typed form hooks with Zod
-import { useForm } from "@/lib/hooks/useForm";
-import { loginSchema } from "@/lib/validation/schemas";
-
-const { register, handleSubmit, formState } = useForm({
-  schema: loginSchema,
-  onSubmit: async (data) => {
-    /* handle submission */
-  },
-});
-```
-
-### File Upload Security
-
-```typescript
-// Comprehensive security validation
-import { FileUploadSecurity } from "@/lib/security/fileUpload";
-
-const securityCheck = await FileUploadSecurity.validateFile(file);
-if (!securityCheck.isSecure) {
-  throw new Error(securityCheck.error);
-}
-```
-
-## API Integration
-
-### Backend Integration
-
-- **Base URL**: Set via `BACKEND_API_URL` environment variable
-- **Authentication**: Clerk token integration
-- **Rate Limiting**: Per-endpoint limits configured
-- **Proxy Pattern**: Frontend proxy for backend API calls
-
-### Environment Variables
-
-```bash
-# Required
-BACKEND_API_URL=https://api.cfipros.com/v1
-
-# Optional
-REDIS_URL=redis://localhost:6379
-ALLOWED_ORIGINS=https://cfipros.com,https://www.cfipros.com
-NODE_ENV=development
-```
-
-## Testing Guidelines
-
-### Running Tests
-
-```bash
-# Run all tests
-npm test
-
-# Run specific test file
-npm test -- __tests__/lib/security/fileUpload.test.ts
-
-# Run tests with coverage
-npm test -- --coverage
-
-# Watch mode for development
-npm test -- --watch
-```
-
-### Test Coverage Goals
-
-- **Target**: 80%+ coverage for all new code
-- **Current**: 38.57% overall (strong foundation)
-- **Priority**: Security modules, API routes, core utilities
-
-## Troubleshooting
-
-### Common Issues
-
-```bash
-# Build fails with type errors
-npm run type-check
-
-# Tests failing
-npm test -- --verbose
-
-# Development server issues
-rm -rf .next && npm run dev
-
-# Bundle size too large
-npm run analyze
-```
-
-### Quick Fixes
-
-- **Type errors**: Check imports and Zod schemas
-- **Test failures**: Run individual test files to isolate issues
-- **Performance issues**: Check Web Vitals in browser dev tools
-- **Auth issues**: Verify Clerk configuration and API keys
-
-## Known Issues & Technical Debt
-
-### Current Issues
-
-1. **Static Generation**: Some pages have event handlers in Server Components
-2. **ESLint**: Temporarily disabled strict rules during development
-3. **Type Coverage**: Some legacy `any` types in older files
-
-### Next Steps
-
-1. Re-enable ESLint configuration
-2. Fix TypeScript strict mode issues
-3. Increase test coverage to 80%+
-4. Add E2E testing
-
-## Deployment Checklist
-
-### Pre-Deployment
-
-- [ ] All tests passing (`npm test`)
-- [ ] Build succeeds (`npm run build`)
-- [ ] Type checking passes (`npm run type-check`)
-- [ ] Bundle analysis reviewed (`npm run analyze`)
-- [ ] Environment variables configured
-- [ ] Security headers verified
-
-### Production Configuration
-
-- Set `NODE_ENV=production`
-- Configure `BACKEND_API_URL` for production API
-- Set up Redis for rate limiting (optional but recommended)
-- Configure allowed origins for CORS
-
-## Repository Cleanup Rules
-
-- Do not commit build artifacts or coverage reports:
-  - Ignore `.next/`, `.swc/`, `coverage/`, `coverage-acs/`, `coverage-extractor/`.
-- Remove ad-hoc logs and run artefacts from root:
-  - `*results.log`, `*validation.log`, `*verification-results.log`, `test-*.log`.
-- Delete editor/IDE caches and local caches: `.jest-cache/`, `.vscode/`, `.idea/`.
-- No backup or temp files in source control:
-  - Remove `*.bak`, `*.backup`, duplicate copies, and single-use scratch files.
-- Keep environment files local:
-  - Only commit `.env.example`. Never commit `.env*` secrets.
-- Use `scripts/cleanup-repo.sh` to purge artifacts before PRs.
-
-## File Organization Standards
-
-- App code lives under `app/`, reusable UI under `components/`, core logic under `lib/`.
-- Custom React hooks live in `lib/hooks/`:
-  - Path alias `@/hooks/*` maps to `lib/hooks/*`.
-  - Do not create a top-level `hooks/` folder.
-- API client/middleware/validation under `lib/api/`, `lib/validation/`.
-- Security-sensitive utilities under `lib/security/`.
-- Tests live in `__tests__/` or as `*.test.ts(x)` colocated with code.
-- Static assets in `public/`; no raw binaries in repo outside `public/`.
-- Project docs live in `docs/` (architecture, standards, ADRs).
-
-### Naming Conventions
-
-- Components: PascalCase; hooks/utilities: camelCase.
-- File names mirror exported symbol where feasible.
-- Co-locate index barrels only when they simplify imports.
-
-### Placement Guidelines
-
-- New hook → `lib/hooks/<name>.ts` and import via `@/hooks/<name>`.
-- New service or domain logic → `lib/services/`.
-- New config/feature flags → `lib/config/`.
-- New API contract/types → `lib/types/`.
-- New scripts or one-off tooling → `scripts/`.
-- One-pagers/decision records → `docs/`.
-
-## Version History
-
-### v1.0.0 (Current)
-
-- ✅ Next.js 15 foundation with App Router
-- ✅ Comprehensive file upload security
-- ✅ Performance monitoring with Web Vitals
-- ✅ 38.57% test coverage achieved
-- ✅ Type-safe API layer with Zod validation
-- ✅ Production-ready build system
-
-### Future Roadmap
-
-- **v1.0.1**: Fix static generation issues, improve test coverage
-- **v1.1.0**: E2E testing suite, enhanced performance optimizations
-- **v1.2.0**: PWA features, advanced caching strategies
-
-## Development Notes for Claude
-
-### Common Tasks
-
-1. **Adding Components**: Follow patterns in `components/ui/`
-2. **Creating API Routes**: Use middleware from `lib/api/middleware`
-3. **Building Forms**: Use `lib/hooks/useForm` with Zod schemas
-4. **Adding Security**: Extend `lib/security/` modules
-5. **Writing Tests**: Mirror structure in `__tests__/`
-6. **After Big Changes**: Always run tests and push to remote
-
-### Code Style
-
-- Use TypeScript strict mode
-- Prefer functional components with hooks
-- Follow Next.js 15 App Router patterns
-- Implement comprehensive error handling
-- Write tests for all new features
-
-### Performance Considerations
-
-- Use React.memo for expensive components
-- Implement proper cleanup in useEffect hooks
-- Monitor bundle size with analyzer
-- Track Web Vitals in development
-
-### Security Best Practices
-
-- Validate all inputs with Zod schemas
-- Rate limit sensitive endpoints
-- Use security headers and CSP
-- Follow file upload security patterns
-- Never commit secrets or API keys
-- Push to remote after security updates
-
-## Repository Information
-
-- **Remote**: https://github.com/marcusgoll/CFIPros-frontend
-- **Branch Strategy**: Master branch for production, feature branches for development
-- **Commit Style**: Conventional commits with emoji prefixes
-- **Release Process**: Semantic versioning with annotated tags
-
-Last updated: 2025-08-29 (post-v1.0.0 with FeatureSpotlightMenu implementation)
-- Add to memory. Before starting a dev server you MUST RUN: 1. npx kill-port 3000 3001 3002
-2. npm cache clean --force
-3. Then start the dev server (npm run dev). This way we have a clean dev server every time.
+Project Structure, Cleanup Rules, and Production Readiness
+
+This repository follows a Next.js App Router layout with strict TypeScript and Jest. Use this document as the single source of truth for file placement, cleanup practices, and production-readiness checks.
+
+Directory Layout (authoritative)
+- `app/` — Next.js routes, segments, layouts, pages, server routes.
+- `components/` — Reusable UI components (PascalCase files/folders). Group by domain when helpful (e.g., `components/acs`, `components/layout`).
+- `lib/` — Core logic: hooks, services, utilities, validation, security, types, config, SEO.
+- `public/` — Static, web‑served assets only (images, fonts, icons). No code.
+- `__tests__/` — Jest test suites and helpers. Colocation as `*.test.ts(x)` is also allowed.
+- `scripts/` — Maintenance/dev tooling. Nothing in here ships to production.
+- `docs/` — Architecture notes, ADRs, release/phase docs, internal guides.
+
+Paths & Imports
+- Use the `@/` alias for root‑relative imports. Example: `import { fetchResults } from "@/lib/api/client"`.
+- Hooks import alias: `@/hooks/*` maps to `lib/hooks/*`.
+
+Naming Conventions
+- Components: PascalCase (e.g., `FeatureSpotlightMenu.tsx`).
+- Hooks/utilities/services: camelCase (e.g., `useDebounce.ts`, `analysisService.ts`).
+- Route files follow Next.js conventions (`page.tsx`, `layout.tsx`, `route.ts`).
+
+Placement Standards
+- Hooks live only in `lib/hooks/`.
+- UI primitives live in `components/ui/`; domain groupings live under `components/<domain>/`.
+- Do not create top‑level `hooks/`, `utils/`, or `services/` folders outside `lib/`.
+- Public assets (images, fonts) belong in `public/` and must not import code.
+- Internal docs (release notes, integration summaries) belong in `docs/` (moved from root).
+
+Cleanup Rules (pre‑PR and pre‑release)
+- Remove build/test artifacts: `.next/`, `.swc/`, `coverage*/`, `.jest-cache/`, `*.log`.
+- Remove temp/backup files: `*.bak`, `*.backup`, editor swap files.
+- Keep only canonical configs at root: `package.json`, `tsconfig.json`, `jest.config.js`, `postcss.config.mjs`, `tailwind.config.ts`, `next.config.ts`, repo policies (`README.md`, `LICENSE`, `SECURITY.md`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `AGENTS.md`, this `CLAUDE.md`). All other docs -> `docs/`.
+- Scripts that are debugging/experimental stay inside `scripts/` and are not bundled.
+
+Production Readiness Checklist
+- Lint/types/tests: `npm run lint:fix`, `npm run type-check`, `npm run test` (or `test:coverage`).
+- Build: `npm run build`. Serve: `npm start`. Bundle analysis: `npm run analyze`.
+- Env: Keep `.env.example` up to date. Never commit `.env*` files with secrets.
+- Middleware/headers: Coordinate changes in `middleware.ts` with security/auth owners.
+
+Testing Standards
+- Frameworks: Jest + React Testing Library (jsdom). Prefer user‑centric tests; avoid implementation details.
+- Place tests under `__tests__/` or as `*.test.ts(x)` beside source. Use `@/` alias in tests.
+- Accessibility: Use `jest-axe` where relevant.
+
+Known Duplications and Consolidation Policy
+- Error Boundaries: Two implementations exist today: `components/ErrorBoundary.tsx` and `components/common/ErrorBoundary.tsx` (referenced by PricingSection and tests). Do not delete either until a consolidation PR updates imports and merges feature differences (e.g., `FeatureTableErrorFallback`, `UploadErrorBoundary`). Prefer standardizing on a single export under `components/common/` with a follow‑up refactor.
+
+New Files: Where to Put Them
+- New route/UI: `app/` for routes; presentational pieces in `components/`.
+- New hook: `lib/hooks/<name>.ts`.
+- New service/business logic: `lib/services/<name>.ts`.
+- New config/enums/constants: `lib/config/` or `lib/constants.ts` (if shared).
+- New utility: `lib/utils/<name>.ts`.
+- New types: `lib/types/`.
+- New docs: `docs/`.
+- New maintenance/dev scripts: `scripts/`.
+
+Process Notes
+- Keep changes minimal and focused; avoid unrelated refactors in the same PR.
+- Update this file and `docs/STRUCTURE_AND_STANDARDS.md` when adjusting structure policy.
+
+References
+- See `docs/STRUCTURE_AND_STANDARDS.md` for deeper guidance and PR checks.
+
+Review Folder Policy and Safeguards
+- Destructive changes require explicit confirmation. When uncertain, do not delete — move to a local, git‑ignored `review/` folder instead.
+- The `review/` folder is for temporary quarantine of files pending human review. Add brief notes in `docs/REORGANIZATION_LOG.md` when quarantining.
+- Never place executable secrets or production keys in `review/`. It is local only; keep it out of version control.
+
+Systematic Execution Steps (for structural changes)
+- Scan and categorize: inventory files by type/purpose; identify duplicates and misplaced items.
+- Dependency analysis: use ripgrep to find imports/usages before any move or deletion (e.g., `rg -n "components/common/ErrorBoundary"`).
+- Plan: write a short, verifiable plan of moves (source → destination) and expected config/test updates.
+- Execute: move files; update imports and configuration (`tsconfig.json` paths, Jest `moduleNameMapper`, barrel files).
+- Validate: `npm run type-check`, `npm run test`, `npm run build` and a quick local smoke test.
+- Document: append a dated entry to `docs/REORGANIZATION_LOG.md` summarizing moves/deletions and rationale.
+
+Deletion and Data Handling
+- Never delete files that might contain important code or data without approval. Prefer moving to `review/` first.
+- Build artifacts, caches, and logs are safe to delete: `.next/`, `.swc/`, `coverage*/`, `.jest-cache/`, `*.log`.

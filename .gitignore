@@ -121,6 +121,7 @@ business/
 internal/
 proprietary/
 test-data/
+review/
 
 # Claude AI assistant files  
 # CRITICAL: Do NOT delete these files - only exclude from git tracking
