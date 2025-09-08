@@ -19,7 +19,8 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/hooks/*": ["lib/hooks/*"]
     },
     "target": "es2022",
     "forceConsistentCasingInFileNames": true,

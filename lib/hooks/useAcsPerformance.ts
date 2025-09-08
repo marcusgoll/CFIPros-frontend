@@ -32,13 +32,13 @@ export function useAcsPerformance(acsCode: string): UseAcsPerformanceResult {
 
     try {
       const response = await fetch(`/api/acs/${encodeURIComponent(acsCode)}/performance`);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch performance data: ${response.status}`);
       }
 
       const result = await response.json();
-      
+
       if (result.success) {
         setData(result.data);
       } else {
@@ -68,3 +68,4 @@ export function useAcsPerformance(acsCode: string): UseAcsPerformanceResult {
     refetch,
   };
 }
+

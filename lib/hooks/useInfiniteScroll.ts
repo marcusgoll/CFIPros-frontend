@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface UseInfiniteScrollOptions<T> {
-  fetchMore: (offset: number, limit: number) => Promise<{
-    items: T[];
-    hasMore: boolean;
-    total: number;
-  }>;
+  fetchMore: (
+    offset: number,
+    limit: number
+  ) => Promise<{ items: T[]; hasMore: boolean; total: number }>;
   initialData?: T[];
   pageSize?: number;
   threshold?: number;
@@ -34,26 +33,28 @@ export function useInfiniteScroll<T>({
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(true);
   const [total, setTotal] = useState(0);
-  
+
   const loadingRef = useRef(false);
   const currentOffset = useRef(initialData.length);
 
   const loadMore = useCallback(async () => {
     if (!enabled || loading || !hasMore || loadingRef.current) return;
-    
+
     loadingRef.current = true;
     setLoading(true);
     setError(null);
 
     try {
       const result = await fetchMore(currentOffset.current, pageSize);
-      
-      setData(prev => [...prev, ...result.items]);
+
+      setData((prev) => [...prev, ...result.items]);
       setHasMore(result.hasMore);
       setTotal(result.total);
       currentOffset.current += result.items.length;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load more items');
+      setError(
+        err instanceof Error ? err.message : "Failed to load more items"
+      );
     } finally {
       setLoading(false);
       loadingRef.current = false;
@@ -70,25 +71,15 @@ export function useInfiniteScroll<T>({
     loadingRef.current = false;
   }, [initialData]);
 
-  // Auto-load initial page if no initial data
   useEffect(() => {
     if (enabled && data.length === 0 && !loading && !loadingRef.current) {
       loadMore();
     }
   }, [enabled, data.length, loading, loadMore]);
 
-  return {
-    data,
-    loading,
-    error,
-    hasMore,
-    loadMore,
-    reset,
-    total,
-  };
+  return { data, loading, error, hasMore, loadMore, reset, total };
 }
 
-// Hook for intersection observer-based infinite scroll
 export function useIntersectionObserver(
   callback: () => void,
   options: IntersectionObserverInit = {}
@@ -106,11 +97,7 @@ export function useIntersectionObserver(
           callback();
         }
       },
-      {
-        threshold: 0.1,
-        rootMargin: '100px',
-        ...options,
-      }
+      { threshold: 0.1, rootMargin: "100px", ...options }
     );
 
     observerRef.current.observe(targetRef.current);
@@ -125,7 +112,6 @@ export function useIntersectionObserver(
   return targetRef;
 }
 
-// Hook for scroll-based infinite loading
 export function useScrollInfiniteLoad(
   callback: () => void,
   threshold = 0.8,
@@ -150,10 +136,11 @@ export function useScrollInfiniteLoad(
 
     const container = containerRef.current;
     if (container) {
-      container.addEventListener('scroll', handleScroll);
-      return () => container.removeEventListener('scroll', handleScroll);
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
     }
   }, [callback, threshold, enabled]);
 
   return containerRef;
 }
+

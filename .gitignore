@@ -54,6 +54,8 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+coverage-acs/
+coverage-extractor/
 *.lcov
 
 # nyc test coverage
@@ -89,6 +91,20 @@ temp/
 coverage/
 junit.xml
 .jest-cache/
+.swc/
+.playwright-mcp/
+
+# Local logs and run artifacts
+*results.log
+*validation.log
+*verification-results.log
+test-coverage-results.log
+test-results.log
+test-suite-results.log
+performance-results.log
+perf-results.log
+accessibility-results.log
+a11y-results.log
 
 # Database
 *.db

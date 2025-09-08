@@ -278,6 +278,46 @@ npm run analyze
 - Set up Redis for rate limiting (optional but recommended)
 - Configure allowed origins for CORS
 
+## Repository Cleanup Rules
+
+- Do not commit build artifacts or coverage reports:
+  - Ignore `.next/`, `.swc/`, `coverage/`, `coverage-acs/`, `coverage-extractor/`.
+- Remove ad-hoc logs and run artefacts from root:
+  - `*results.log`, `*validation.log`, `*verification-results.log`, `test-*.log`.
+- Delete editor/IDE caches and local caches: `.jest-cache/`, `.vscode/`, `.idea/`.
+- No backup or temp files in source control:
+  - Remove `*.bak`, `*.backup`, duplicate copies, and single-use scratch files.
+- Keep environment files local:
+  - Only commit `.env.example`. Never commit `.env*` secrets.
+- Use `scripts/cleanup-repo.sh` to purge artifacts before PRs.
+
+## File Organization Standards
+
+- App code lives under `app/`, reusable UI under `components/`, core logic under `lib/`.
+- Custom React hooks live in `lib/hooks/`:
+  - Path alias `@/hooks/*` maps to `lib/hooks/*`.
+  - Do not create a top-level `hooks/` folder.
+- API client/middleware/validation under `lib/api/`, `lib/validation/`.
+- Security-sensitive utilities under `lib/security/`.
+- Tests live in `__tests__/` or as `*.test.ts(x)` colocated with code.
+- Static assets in `public/`; no raw binaries in repo outside `public/`.
+- Project docs live in `docs/` (architecture, standards, ADRs).
+
+### Naming Conventions
+
+- Components: PascalCase; hooks/utilities: camelCase.
+- File names mirror exported symbol where feasible.
+- Co-locate index barrels only when they simplify imports.
+
+### Placement Guidelines
+
+- New hook → `lib/hooks/<name>.ts` and import via `@/hooks/<name>`.
+- New service or domain logic → `lib/services/`.
+- New config/feature flags → `lib/config/`.
+- New API contract/types → `lib/types/`.
+- New scripts or one-off tooling → `scripts/`.
+- One-pagers/decision records → `docs/`.
+
 ## Version History
 
 ### v1.0.0 (Current)
@@ -333,7 +373,7 @@ npm run analyze
 ## Repository Information
 
 - **Remote**: https://github.com/marcusgoll/CFIPros-frontend
-- **Branch Strategy**: Main branch for production, feature branches for development
+- **Branch Strategy**: Master branch for production, feature branches for development
 - **Commit Style**: Conventional commits with emoji prefixes
 - **Release Process**: Semantic versioning with annotated tags
 
