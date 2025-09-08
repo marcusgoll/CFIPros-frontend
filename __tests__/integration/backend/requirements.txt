@@ -1,0 +1,46 @@
+# Backend Integration Testing Dependencies
+# API Testing Framework
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-mock==3.12.0
+pytest-cov==4.1.0
+requests==2.31.0
+httpx==0.25.2
+
+# FastAPI Testing Support
+fastapi==0.104.1
+uvicorn==0.24.0
+
+# Schema Validation and OpenAPI
+pydantic==2.5.0
+jsonschema==4.20.0
+openapi-spec-validator==0.7.1
+
+# Authentication and Security
+pyjwt==2.8.0
+cryptography==41.0.7
+python-multipart==0.0.6
+
+# Test Data and Fixtures
+faker==20.1.0
+factory-boy==3.3.0
+
+# Environment and Configuration
+python-dotenv==1.0.0
+pydantic-settings==2.1.0
+
+# Type Checking and Linting
+mypy==1.7.1
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+
+# Database Testing (if needed)
+sqlalchemy==2.0.23
+alembic==1.13.0
+
+# Webhook Testing
+svix==1.15.0
+
+# Performance and Load Testing
+locust==2.17.0

@@ -1,0 +1,172 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cfipros-backend-integration-tests"
+version = "1.0.0"
+description = "CFIPros Backend API Integration Tests"
+authors = [{name = "CFIPros Team", email = "dev@cfipros.com"}]
+license = {text = "MIT"}
+requires-python = ">=3.9"
+
+dependencies = [
+    "pytest>=7.4.3",
+    "pytest-asyncio>=0.21.1",
+    "requests>=2.31.0", 
+    "httpx>=0.25.2",
+    "pydantic>=2.5.0",
+    "pyjwt>=2.8.0",
+    "python-dotenv>=1.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.7.1",
+    "black>=23.11.0", 
+    "isort>=5.12.0",
+    "flake8>=6.1.0",
+    "pytest-cov>=4.1.0"
+]
+
+database = [
+    "sqlalchemy>=2.0.23",
+    "alembic>=1.13.0"
+]
+
+webhooks = [
+    "svix>=1.15.0"
+]
+
+performance = [
+    "locust>=2.17.0"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["base_test", "conftest", "database"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pytest.*",
+    "httpx.*", 
+    "sqlalchemy.*",
+    "alembic.*",
+    "svix.*",
+    "locust.*"
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["__tests__/integration/backend"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "-ra",
+    "--cov=__tests__/integration/backend",
+    "--cov-report=term-missing",
+    "--cov-report=html:coverage-backend",
+    "--cov-fail-under=80"
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "contract: API contract tests", 
+    "auth: Authentication tests",
+    "security: Security and malicious file tests",
+    "rate_limit: Rate limiting tests",
+    "slow: Slow running tests (> 5s)",
+    "requires_backend: Tests that need backend server running",
+    "requires_database: Tests that need database connection", 
+    "clerk_integration: Clerk authentication integration tests",
+    "performance: Performance and load tests"
+]
+asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]
+
+[tool.coverage.run]
+source = ["__tests__/integration/backend"]
+omit = [
+    "*/conftest.py",
+    "*/test_*.py", 
+    "*/*_test.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError", 
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod"
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':'
+    "E501",  # line too long (handled by black)
+    "W503"   # line break before binary operator
+]
+per-file-ignores = [
+    "__init__.py:F401",  # imported but unused
+    "conftest.py:F401,F811"  # fixtures may appear unused
+]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    ".mypy_cache"
+]
