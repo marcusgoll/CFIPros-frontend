@@ -49,10 +49,10 @@ describe("AktrToAcsUploader Component", () => {
       refresh: jest.fn(),
     });
 
-    // Default successful fetch mock
+    // Default successful fetch mock - note the backend returns batch_id with underscore
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
-      json: jest.fn().mockResolvedValue({ batchId: "demo-batch-id" }),
+      json: jest.fn().mockResolvedValue({ batch_id: "demo-batch-id" }),
     } as any);
   });
 
@@ -141,7 +141,7 @@ describe("AktrToAcsUploader Component", () => {
             () =>
               resolve({
                 ok: true,
-                json: async () => ({ batchId: "demo-batch-id" }),
+                json: async () => ({ batch_id: "demo-batch-id" }),
               } as any),
             200
           )
@@ -190,10 +190,6 @@ describe("AktrToAcsUploader Component", () => {
   it("handles upload errors gracefully", async () => {
     const user = userEvent.setup();
 
-    // Mock Math.random to always trigger the error scenario
-    const originalMath = Math.random;
-    Math.random = jest.fn(() => 0.01); // Force error scenario
-
     render(<AktrToAcsUploader />);
 
     const fileInput = screen.getByLabelText(/file upload/i, {
@@ -226,9 +222,6 @@ describe("AktrToAcsUploader Component", () => {
 
     // Check analytics tracking
     expect(mockedTrackUploadFailed).toHaveBeenCalled();
-
-    // Restore Math.random
-    Math.random = originalMath;
   });
 
   it("updates file count display correctly", async () => {
@@ -302,7 +295,7 @@ describe("AktrToAcsUploader Component", () => {
             () =>
               resolve({
                 ok: true,
-                json: async () => ({ batchId: "demo-batch-id" }),
+                json: async () => ({ batch_id: "demo-batch-id" }),
               } as any),
             800
           )
@@ -322,5 +315,49 @@ describe("AktrToAcsUploader Component", () => {
     // Check file names are displayed
     expect(screen.getByText("report1.pdf")).toBeInTheDocument();
     expect(screen.getByText("report2.pdf")).toBeInTheDocument();
+  });
+
+  it("handles retry functionality correctly", async () => {
+    const user = userEvent.setup();
+    render(<AktrToAcsUploader />);
+
+    const fileInput = screen.getByLabelText(/file upload/i, {
+      selector: 'input[type="file"]',
+    });
+    const submitButton = screen.getByRole("button", {
+      name: /analyze reports/i,
+    });
+
+    // First request fails
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockRejectedValueOnce(
+      new Error("network error")
+    );
+
+    // Upload file and submit
+    await user.upload(fileInput, validPdfFile);
+    await user.click(submitButton);
+
+    // Wait for error to appear
+    await waitFor(() => {
+      expect(screen.getByRole("alert")).toBeInTheDocument();
+    });
+
+    // Reset fetch to succeed on retry
+    (global.fetch as jest.MockedFunction<typeof fetch>).mockResolvedValueOnce({
+      ok: true,
+      json: jest.fn().mockResolvedValue({ batch_id: "retry-batch-id" }),
+    } as any);
+
+    // Click retry button
+    const retryButton = screen.getByRole("button", { name: /try again/i });
+    await user.click(retryButton);
+
+    // Should eventually navigate on successful retry
+    await waitFor(
+      () => {
+        expect(mockPush).toHaveBeenCalledWith("/batches/retry-batch-id");
+      },
+      { timeout: 5000 }
+    );
   });
 });
