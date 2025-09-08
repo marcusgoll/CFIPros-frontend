@@ -44,6 +44,14 @@
     "test:backend:local": "tsx __tests__/integration/backend/test-runner.ts --env local",
     "test:backend:staging": "tsx __tests__/integration/backend/test-runner.ts --env staging",
     "test:backend:production": "tsx __tests__/integration/backend/test-runner.ts --env production",
+    "test:frontend": "jest --testPathPattern=__tests__/integration/frontend",
+    "test:frontend:watch": "jest --testPathPattern=__tests__/integration/frontend --watch",
+    "test:contract": "jest --testPathPattern=__tests__/integration/frontend/tests",
+    "test:contract-validation": "jest --testPathPattern=__tests__/lib/validation",
+    "contract:drift-check": "node scripts/contract-drift-check.js",
+    "contract:drift-check:ci": "NODE_ENV=ci CONTRACT_OUTPUT_FORMAT=junit CONTRACT_OUTPUT_FILE=contract-drift-report.xml node scripts/contract-drift-check.js",
+    "lint:tests": "eslint __tests__/**/*.{ts,tsx} --fix",
+    "type-check:tests": "tsc --project __tests__/tsconfig.json --noEmit",
     "test:backend:verbose": "tsx __tests__/integration/backend/test-runner.ts --verbose",
     "demo:api": "node scripts/demo-api-flow.js",
     "analyze": "cross-env ANALYZE=true npm run build",
@@ -108,13 +116,14 @@
     "jest": "~29.7.0",
     "jest-axe": "^10.0.0",
     "jest-environment-jsdom": "~29.7.0",
+    "msw": "^2.11.1",
     "node-fetch": "^2.7.0",
     "postcss": "^8.5.2",
     "prettier": "^3.3.3",
     "prettier-plugin-tailwindcss": "^0.6.8",
     "schema-dts": "^1.1.5",
     "tailwindcss": "^3.4.16",
-    "typescript": "~5.8.4"
+    "typescript": "^5.6.3"
   },
   "engines": {
     "node": ">=18.0.0"

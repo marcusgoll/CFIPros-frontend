@@ -38,7 +38,7 @@ export function useInfiniteScroll<T>({
   const currentOffset = useRef(initialData.length);
 
   const loadMore = useCallback(async () => {
-    if (!enabled || loading || !hasMore || loadingRef.current) return;
+    if (!enabled || loading || !hasMore || loadingRef.current) {return;}
 
     loadingRef.current = true;
     setLoading(true);
@@ -88,7 +88,7 @@ export function useIntersectionObserver(
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    if (!targetRef.current) return;
+    if (!targetRef.current) {return;}
 
     observerRef.current = new IntersectionObserver(
       (entries) => {
@@ -120,11 +120,11 @@ export function useScrollInfiniteLoad(
   const containerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {return;}
 
     const handleScroll = () => {
       const container = containerRef.current;
-      if (!container) return;
+      if (!container) {return;}
 
       const { scrollTop, scrollHeight, clientHeight } = container;
       const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;

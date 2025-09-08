@@ -25,7 +25,7 @@ export function useAcsPerformance(acsCode: string): UseAcsPerformanceResult {
   const [error, setError] = useState<string | null>(null);
 
   const fetchPerformanceData = async () => {
-    if (!acsCode) return;
+    if (!acsCode) {return;}
 
     setLoading(true);
     setError(null);

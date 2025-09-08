@@ -45,7 +45,7 @@ Testing Standards
 - Accessibility: Use `jest-axe` where relevant.
 
 Known Duplications and Consolidation Policy
-- Error Boundaries: Two implementations exist today: `components/ErrorBoundary.tsx` and `components/common/ErrorBoundary.tsx` (referenced by PricingSection and tests). Do not delete either until a consolidation PR updates imports and merges feature differences (e.g., `FeatureTableErrorFallback`, `UploadErrorBoundary`). Prefer standardizing on a single export under `components/common/` with a follow‑up refactor.
+- Error Boundaries: Consolidated under `components/common/ErrorBoundary.tsx` with exports for `ErrorBoundary`, `useErrorHandler`, `FeatureTableErrorFallback`, and `UploadErrorBoundary`. The legacy `components/ErrorBoundary.tsx` is now a thin re‑export for backward compatibility. New code must import from `@/components/common/ErrorBoundary`.
 
 New Files: Where to Put Them
 - New route/UI: `app/` for routes; presentational pieces in `components/`.

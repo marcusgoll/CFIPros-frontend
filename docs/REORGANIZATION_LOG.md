@@ -8,6 +8,6 @@ This log records structural moves and cleanups to keep history discoverable.
 - Note: A local folder `test-data/` (ignored by git) was removed as part of cleanup. If this contained valuable local samples, please advise whether to restore/move into `review/`.
 
 Pending (requires confirmation)
-- Consolidate duplicate ErrorBoundary components under components/common/ and update imports across code and tests.
+- Consolidated ErrorBoundary components under components/common/ErrorBoundary.tsx and updated imports; left components/ErrorBoundary.tsx as a thin re-export for backward compatibility.
+ - Consolidated ErrorBoundary components under components/common/ErrorBoundary.tsx and updated imports; removed legacy components/ErrorBoundary.tsx after verifying no remaining imports.
 - Quarantine any uncertain files into `review/` for manual approval before deletion.
-

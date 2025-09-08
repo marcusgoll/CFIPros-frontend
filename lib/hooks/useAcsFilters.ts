@@ -53,7 +53,7 @@ export function useAcsFilters({
   const debouncedFilters = useDebounce(filters, debounceMs);
 
   useEffect(() => {
-    if (!fetchOptions) return;
+    if (!fetchOptions) {return;}
 
     const fetchFilterOptions = async () => {
       setLoading(true);
@@ -76,9 +76,9 @@ export function useAcsFilters({
         const typeMap = new Map<string, number>();
 
         codesResponse.items.forEach((code) => {
-          if (code.type) typeMap.set(code.type, (typeMap.get(code.type) || 0) + 1);
-          if (code.area) areaMap.set(code.area, (areaMap.get(code.area) || 0) + 1);
-          if (code.task) taskMap.set(code.task, (taskMap.get(code.task) || 0) + 1);
+          if (code.type) {typeMap.set(code.type, (typeMap.get(code.type) || 0) + 1);}
+          if (code.area) {areaMap.set(code.area, (areaMap.get(code.area) || 0) + 1);}
+          if (code.task) {taskMap.set(code.task, (taskMap.get(code.task) || 0) + 1);}
         });
 
         const areaOptions: FilterOption[] = Array.from(areaMap.entries())
@@ -132,31 +132,31 @@ export function useAcsFilters({
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filters.docs.length > 0) count++;
-    if (filters.types.length > 0) count++;
-    if (filters.areas.length > 0) count++;
-    if (filters.tasks.length > 0) count++;
-    if (filters.codePrefix.length > 0) count++;
+    if (filters.docs.length > 0) {count++;}
+    if (filters.types.length > 0) {count++;}
+    if (filters.areas.length > 0) {count++;}
+    if (filters.tasks.length > 0) {count++;}
+    if (filters.codePrefix.length > 0) {count++;}
     return count;
   }, [filters]);
 
   const getApiParams = useCallback(() => {
     const params: Record<string, any> = {};
-    if (filters.docs.length > 0) params.doc = filters.docs.join(",");
-    if (filters.types.length > 0) params.type = filters.types.join(",");
-    if (filters.areas.length > 0) params.area = filters.areas.join(",");
-    if (filters.tasks.length > 0) params.task = filters.tasks.join(",");
-    if (filters.codePrefix) params.code_prefix = filters.codePrefix;
+    if (filters.docs.length > 0) {params.doc = filters.docs.join(",");}
+    if (filters.types.length > 0) {params.type = filters.types.join(",");}
+    if (filters.areas.length > 0) {params.area = filters.areas.join(",");}
+    if (filters.tasks.length > 0) {params.task = filters.tasks.join(",");}
+    if (filters.codePrefix) {params.code_prefix = filters.codePrefix;}
     return params;
   }, [filters]);
 
   const getUrlParams = useCallback(() => {
     const params = new URLSearchParams();
-    if (filters.docs.length > 0) filters.docs.forEach((d) => params.append("doc", d));
-    if (filters.types.length > 0) filters.types.forEach((t) => params.append("type", t));
-    if (filters.areas.length > 0) filters.areas.forEach((a) => params.append("area", a));
-    if (filters.tasks.length > 0) filters.tasks.forEach((t) => params.append("task", t));
-    if (filters.codePrefix) params.set("prefix", filters.codePrefix);
+    if (filters.docs.length > 0) {filters.docs.forEach((d) => params.append("doc", d));}
+    if (filters.types.length > 0) {filters.types.forEach((t) => params.append("type", t));}
+    if (filters.areas.length > 0) {filters.areas.forEach((a) => params.append("area", a));}
+    if (filters.tasks.length > 0) {filters.tasks.forEach((t) => params.append("task", t));}
+    if (filters.codePrefix) {params.set("prefix", filters.codePrefix);}
     return params;
   }, [filters]);
 

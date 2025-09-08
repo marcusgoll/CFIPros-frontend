@@ -10,6 +10,7 @@ const customJestConfig = {
   setupFilesAfterEnv: [
     "<rootDir>/jest.setup.js",
     "<rootDir>/__tests__/__utils__/jest-extended.d.ts",
+    "<rootDir>/__tests__/integration/frontend/setup/dom-environment.ts",
   ],
   testEnvironment: "jest-environment-jsdom",
   moduleNameMapper: {
@@ -70,6 +71,10 @@ const customJestConfig = {
   maxWorkers: "50%", // Use half available CPU cores
   cache: true,
   cacheDirectory: "<rootDir>/.jest-cache",
+  
+  // Memory leak detection for integration tests
+  detectOpenHandles: true,
+  forceExit: false,
   
   // Coverage reporting
   coverageReporters: [

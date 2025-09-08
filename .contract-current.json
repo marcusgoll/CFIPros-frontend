@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2025-09-08T16:44:08.251Z",
+  "totalRequests": 150,
+  "compliantRequests": 142,
+  "violations": [
+    {
+      "endpoint": "/auth/refresh",
+      "method": "POST",
+      "timestamp": "2025-09-08T16:44:08.271Z",
+      "expectedSchema": "TokenResponse",
+      "violations": [
+        "token: Required field missing"
+      ],
+      "severity": "critical",
+      "impact": "Authentication system may fail completely",
+      "responseStatus": 200
+    }
+  ],
+  "complianceRate": 94.66666666666667,
+  "endpointStats": {
+    "POST /extractor/extract": {
+      "total": 50,
+      "compliant": 48,
+      "violations": 2,
+      "complianceRate": 96
+    },
+    "GET /extractor/results": {
+      "total": 40,
+      "compliant": 40,
+      "violations": 0,
+      "complianceRate": 100
+    },
+    "GET /auth/session": {
+      "total": 30,
+      "compliant": 28,
+      "violations": 2,
+      "complianceRate": 93.33
+    },
+    "GET /auth/status": {
+      "total": 20,
+      "compliant": 20,
+      "violations": 0,
+      "complianceRate": 100
+    },
+    "POST /auth/refresh": {
+      "total": 10,
+      "compliant": 6,
+      "violations": 4,
+      "complianceRate": 60
+    }
+  },
+  "summary": {
+    "criticalViolations": 1,
+    "highViolations": 2,
+    "mediumViolations": 3,
+    "lowViolations": 2
+  },
+  "version": "1.0.0",
+  "environment": "development",
+  "gitCommit": "72177b927d1b901153ecd50e78309f19de198b28"
+}

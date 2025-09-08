@@ -1,0 +1,40 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "types": ["jest", "@types/jest", "@testing-library/jest-dom", "node"],
+    "lib": ["dom", "dom.iterable", "es2022"],
+    "target": "es2022",
+    "module": "commonjs",
+    "jsx": "react-jsx",
+    "baseUrl": "../",
+    "paths": {
+      "@/*": ["*"],
+      "@/hooks/*": ["lib/hooks/*"],
+      "@/components/*": ["components/*"],
+      "@/lib/*": ["lib/*"],
+      "@/utils/*": ["lib/utils/*"],
+      "@/types/*": ["lib/types/*"],
+      "@/config/*": ["lib/config/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx", 
+    "**/*.js",
+    "**/*.jsx",
+    "../jest.setup.js",
+    "../__tests__/__utils__/jest-extended.d.ts"
+  ],
+  "exclude": [
+    "../node_modules",
+    "../.next",
+    "../coverage"
+  ]
+}

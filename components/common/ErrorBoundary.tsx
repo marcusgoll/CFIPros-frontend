@@ -136,4 +136,75 @@ export const FeatureTableErrorFallback: React.FC<{
   </div>
 );
 
+// Specialized error boundary for upload functionality
+export function UploadErrorBoundary({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <ErrorBoundary
+      fallback={UploadErrorFallback}
+      onError={(error, errorInfo) => {
+        logError("Upload system error:", error, errorInfo);
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}
+
+function UploadErrorFallback({
+  resetError,
+}: {
+  error: Error | undefined;
+  resetError: () => void;
+}) {
+  return (
+    <div className="bg-destructive/5 border-destructive/20 rounded-lg border p-6 text-center">
+      <div className="bg-destructive/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+        <svg
+          className="h-6 w-6 text-destructive"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 12l2 2 4-4"
+          />
+        </svg>
+      </div>
+      <h3 className="mb-2 text-lg font-medium text-destructive-foreground">
+        Upload System Error
+      </h3>
+      <p className="mb-4 text-destructive">
+        The upload system encountered an error and needs to be restarted. Your
+        files are safe and you can try uploading again.
+      </p>
+      <button
+        onClick={resetError}
+        className="hover:bg-destructive/90 inline-flex items-center rounded-md bg-destructive px-4 py-2 text-destructive-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
+      >
+        <svg
+          className="mr-2 h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+          />
+        </svg>
+        Restart Upload System
+      </button>
+    </div>
+  );
+}
+
 export default ErrorBoundary;

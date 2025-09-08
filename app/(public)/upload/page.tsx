@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import { UploadForm } from "./client";
-import { UploadErrorBoundary } from "@/components/ErrorBoundary";
+import { UploadErrorBoundary } from "@/components/common/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Upload Documents | CFIPros",

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { logError } from "@/lib/utils/logger";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/common/ErrorBoundary";
 import { AlertTriangle, RefreshCw } from "lucide-react";
 import { sanitizeErrorMessage } from "@/lib/utils/errorSanitization";
 

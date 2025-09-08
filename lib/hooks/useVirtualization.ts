@@ -116,7 +116,7 @@ export function useVirtualGrid({
     for (let row = visibleRange.startRow; row <= visibleRange.endRow; row++) {
       for (let col = visibleRange.startCol; col <= visibleRange.endCol; col++) {
         const index = row * columns + col;
-        if (index >= itemCount) break;
+        if (index >= itemCount) {break;}
         items.push({
           index,
           row,

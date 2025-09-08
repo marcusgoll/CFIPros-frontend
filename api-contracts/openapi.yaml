@@ -1,0 +1,749 @@
+openapi: 3.0.3
+info:
+  title: CFIPros API
+  description: Aviation training platform API for file extraction and ACS analysis
+  version: 1.0.0
+  contact:
+    name: CFIPros Support
+    url: https://cfipros.com
+    email: support@cfipros.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.cfipros.com/v1
+    description: Production server
+  - url: https://staging-api.cfipros.com/v1
+    description: Staging server
+  - url: http://localhost:8000/v1
+    description: Local development server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /extractor/extract:
+    post:
+      tags:
+        - File Extraction
+      summary: Upload files for ACS extraction
+      description: Upload one or more files for batch processing and ACS extraction
+      operationId: extractFiles
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  minItems: 1
+                  maxItems: 30
+                  description: Files to process (PDF, JPEG, PNG only)
+              required:
+                - files
+            encoding:
+              files:
+                contentType: application/pdf, image/jpeg, image/png
+      responses:
+        '202':
+          description: Files accepted for processing
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: Remaining requests in current window
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+              description: Time when rate limit resets (Unix timestamp)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                no_file_provided:
+                  summary: No files provided
+                  value:
+                    error: "No files provided"
+                    code: "NO_FILE_PROVIDED"
+                    details:
+                      accepted_types: ["application/pdf", "image/jpeg", "image/png"]
+                invalid_file_type:
+                  summary: Invalid file type
+                  value:
+                    error: "Invalid file type"
+                    code: "INVALID_FILE_TYPE"
+                    details:
+                      accepted_types: ["application/pdf", "image/jpeg", "image/png"]
+                file_too_large:
+                  summary: File too large
+                  value:
+                    error: "File too large"
+                    code: "FILE_TOO_LARGE"
+                    details:
+                      max_size_mb: 15
+                      provided_size_mb: 25
+                too_many_files:
+                  summary: Too many files
+                  value:
+                    error: "Too many files provided"
+                    code: "TOO_MANY_FILES"
+                    details:
+                      max_files: 30
+                      provided_count: 35
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Unauthorized"
+                code: "UNAUTHORIZED"
+        '429':
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request limit per hour
+            X-RateLimit-Reset:
+              schema:
+                type: integer
+              description: Time when rate limit resets (Unix timestamp)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Rate limit exceeded"
+                code: "RATE_LIMIT_EXCEEDED"
+                details:
+                  retry_after: 3600
+                  limit: "10 requests per hour"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    options:
+      tags:
+        - CORS
+      summary: CORS preflight
+      description: Handle CORS preflight requests
+      operationId: extractFilesOptions
+      responses:
+        '200':
+          description: CORS preflight response
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+            Access-Control-Max-Age:
+              schema:
+                type: integer
+
+  /extractor/results/{batchId}:
+    get:
+      tags:
+        - Results
+      summary: Get processing results
+      description: Retrieve processing status and results for a batch
+      operationId: getResults
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: batchId
+          in: path
+          required: true
+          description: Batch ID returned from file extraction
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: Processing status and results
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ProcessingStatus'
+                  - $ref: '#/components/schemas/ProcessingResults'
+        '404':
+          description: Batch not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Batch not found"
+                code: "BATCH_NOT_FOUND"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/session:
+    get:
+      tags:
+        - Authentication
+      summary: Get current session
+      description: Retrieve current user session information
+      operationId: getSession
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Session information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/status:
+    get:
+      tags:
+        - Authentication
+      summary: Check authentication status
+      description: Quick authentication status check
+      operationId: getAuthStatus
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authentication status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthStatusResponse'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh authentication token
+      description: Refresh JWT token for continued access
+      operationId: refreshToken
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Token expired or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/clerk/webhook:
+    post:
+      tags:
+        - Webhooks
+      summary: Clerk webhook endpoint
+      description: Handle Clerk user lifecycle webhooks
+      operationId: clerkWebhook
+      security: []
+      parameters:
+        - name: svix-id
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: svix-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: svix-signature
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClerkWebhookPayload'
+      responses:
+        '200':
+          description: Webhook processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  processed_event:
+                    type: string
+                required:
+                  - success
+                  - processed_event
+        '400':
+          description: Invalid webhook
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ExtractResponse:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the processing batch
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [processing, queued]
+          description: Current status of the batch
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time (ISO 8601)
+          example: "2025-09-08T10:30:00Z"
+        files_count:
+          type: integer
+          minimum: 1
+          maximum: 30
+          description: Number of files in the batch
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileInfo'
+          description: Information about uploaded files
+        created_at:
+          type: string
+          format: date-time
+          description: Batch creation timestamp
+        user_id:
+          type: string
+          description: User identifier
+      required:
+        - batch_id
+        - status
+        - estimated_completion
+        - files_count
+
+    FileInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          description: File identifier
+        name:
+          type: string
+          description: Original filename
+        size:
+          type: integer
+          description: File size in bytes
+        type:
+          type: string
+          enum: [application/pdf, image/jpeg, image/png]
+          description: MIME type
+        status:
+          type: string
+          enum: [queued, processing, completed, failed]
+          description: Processing status
+      required:
+        - id
+        - name
+        - size
+        - type
+        - status
+
+    ProcessingStatus:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processing, queued]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Processing progress (0-1)
+        estimated_completion:
+          type: string
+          format: date-time
+        files_processed:
+          type: integer
+          minimum: 0
+        files_total:
+          type: integer
+          minimum: 1
+        current_file:
+          type: string
+          description: Currently processing file
+      required:
+        - batch_id
+        - status
+        - progress
+        - files_processed
+        - files_total
+
+    ProcessingResults:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [completed, failed, partially_completed]
+        completed_at:
+          type: string
+          format: date-time
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtractionResult'
+        summary:
+          $ref: '#/components/schemas/ExtractionSummary'
+      required:
+        - batch_id
+        - status
+        - completed_at
+        - results
+
+    ExtractionResult:
+      type: object
+      properties:
+        file_id:
+          type: string
+        file_name:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, partially_processed]
+        extracted_data:
+          $ref: '#/components/schemas/ExtractedData'
+        error:
+          type: string
+          description: Error message if processing failed
+        processing_time_seconds:
+          type: number
+          minimum: 0
+      required:
+        - file_id
+        - file_name
+        - status
+
+    ExtractedData:
+      type: object
+      properties:
+        acs_sections:
+          type: array
+          items:
+            $ref: '#/components/schemas/ACSSection'
+        total_sections_found:
+          type: integer
+          minimum: 0
+        confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        document_type:
+          type: string
+          enum: [aktr, pts, acs, other]
+      required:
+        - acs_sections
+        - total_sections_found
+        - confidence_score
+
+    ACSSection:
+      type: object
+      properties:
+        section:
+          type: string
+          pattern: '^[A-Z]{2,3}\.[IVX]+\.[A-Z]+(\.[0-9]+[a-z]?)?$'
+          description: ACS section code (e.g., PA.I.A, PPT.VII.A.1a)
+          example: "PA.I.A"
+        task:
+          type: string
+          description: Task description
+          example: "Certificates and Documents"
+        elements:
+          type: array
+          items:
+            type: string
+          description: Task elements
+        page_numbers:
+          type: array
+          items:
+            type: integer
+          description: Pages where this section was found
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence score for extraction
+      required:
+        - section
+        - task
+        - elements
+        - confidence
+
+    ExtractionSummary:
+      type: object
+      properties:
+        total_files_processed:
+          type: integer
+        successful_extractions:
+          type: integer
+        failed_extractions:
+          type: integer
+        total_acs_sections_found:
+          type: integer
+        average_confidence_score:
+          type: number
+          minimum: 0
+          maximum: 1
+        processing_time_total_seconds:
+          type: number
+        unique_sections:
+          type: array
+          items:
+            type: string
+      required:
+        - total_files_processed
+        - successful_extractions
+        - failed_extractions
+        - total_acs_sections_found
+
+    SessionResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/UserInfo'
+        session:
+          $ref: '#/components/schemas/SessionInfo'
+      required:
+        - user
+        - session
+
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        org_id:
+          type: string
+        org_role:
+          type: string
+          enum: [student, instructor, admin]
+        permissions:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - email
+        - org_role
+
+    SessionInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+      required:
+        - id
+        - expires_at
+
+    AuthStatusResponse:
+      type: object
+      properties:
+        authenticated:
+          type: boolean
+        user_id:
+          type: string
+        session_id:
+          type: string
+      required:
+        - authenticated
+
+    TokenResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: New JWT token
+        expires_at:
+          type: string
+          format: date-time
+        refresh_token:
+          type: string
+          description: Refresh token for future use
+      required:
+        - token
+        - expires_at
+
+    ClerkWebhookPayload:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [user.created, user.updated, user.deleted, session.created, session.ended]
+        data:
+          type: object
+          description: Event-specific data from Clerk
+        object:
+          type: string
+          enum: [event]
+        created:
+          type: integer
+          description: Unix timestamp
+      required:
+        - type
+        - data
+        - object
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Error code for programmatic handling
+          enum: 
+            - NO_FILE_PROVIDED
+            - INVALID_FILE_TYPE
+            - FILE_TOO_LARGE
+            - TOO_MANY_FILES
+            - UNAUTHORIZED
+            - RATE_LIMIT_EXCEEDED
+            - BATCH_NOT_FOUND
+            - VALIDATION_ERROR
+            - INTERNAL_ERROR
+            - MISSING_WEBHOOK_HEADERS
+            - TOKEN_EXPIRED
+            - INVALID_TOKEN
+        details:
+          type: object
+          description: Additional error details
+        request_id:
+          type: string
+          description: Request identifier for debugging
+        timestamp:
+          type: string
+          format: date-time
+      required:
+        - error
+        - code
+
+  examples:
+    ExtractResponseExample:
+      value:
+        batch_id: "550e8400-e29b-41d4-a716-446655440000"
+        status: "processing"
+        estimated_completion: "2025-09-08T10:30:00Z"
+        files_count: 2
+        files:
+          - id: "file_1"
+            name: "aktr.pdf"
+            size: 2048000
+            type: "application/pdf"
+            status: "queued"
+          - id: "file_2"
+            name: "pts.pdf"
+            size: 1536000
+            type: "application/pdf"
+            status: "queued"
+
+    ProcessingResultsExample:
+      value:
+        batch_id: "550e8400-e29b-41d4-a716-446655440000"
+        status: "completed"
+        completed_at: "2025-09-08T10:35:00Z"
+        results:
+          - file_id: "file_1"
+            file_name: "aktr.pdf"
+            status: "success"
+            extracted_data:
+              acs_sections:
+                - section: "PA.I.A"
+                  task: "Certificates and Documents"
+                  elements: ["Check certificates", "Verify documents"]
+                  page_numbers: [1, 2]
+                  confidence: 0.95
+              total_sections_found: 15
+              confidence_score: 0.92
+              document_type: "aktr"
+            processing_time_seconds: 45.2
+        summary:
+          total_files_processed: 2
+          successful_extractions: 2
+          failed_extractions: 0
+          total_acs_sections_found: 28
+          average_confidence_score: 0.89

@@ -31,7 +31,7 @@ export function useRecentSearches() {
   const addRecentSearch = useCallback(
     (query: string) => {
       const trimmedQuery = query.trim();
-      if (!trimmedQuery || trimmedQuery.length < 2) return;
+      if (!trimmedQuery || trimmedQuery.length < 2) {return;}
 
       setRecentSearches((prev) => {
         const filtered = prev.filter(
