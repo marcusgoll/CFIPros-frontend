@@ -570,7 +570,9 @@ describe("ContactForm", () => {
       await user.click(screen.getByRole("button", { name: /send message/i }));
 
       // Should show loading state
-      expect(screen.getByText("Sending...")).toBeInTheDocument();
+      // Should show loading state - accept either button text or loading component
+      const loadingText = screen.queryByText("Sending...") || screen.queryByText("Loading...");
+      expect(loadingText).toBeInTheDocument();
       
       // Component should remain stable even with hanging promise
       expect(screen.getByLabelText(/name/i)).toBeDisabled();

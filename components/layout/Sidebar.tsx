@@ -30,7 +30,7 @@ export function Sidebar() {
         <ul className="space-y-2">
           {navigation.map((item) => {
             const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
+              pathname === item.href || (pathname?.startsWith(`${item.href}/`) ?? false);
 
             return (
               <li key={item.name}>
