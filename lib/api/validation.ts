@@ -151,7 +151,15 @@ export class RequestValidator {
       }
 
       // Generate secure metadata for the first file (backend expects single metadata blob)
-      const metadata = await FileUploadSecurity.generateFileMetadata(files[0]!);
+      const firstFile = files[0]!;
+      const metadata = {
+        name: firstFile.name,
+        size: firstFile.size,
+        type: firstFile.type,
+        lastModified: firstFile.lastModified,
+        uploadId: FileUploadSecurity.generateUploadId(),
+        safeFilename: FileUploadSecurity.createSafeFilename(firstFile.name)
+      };
 
       // Add metadata to form data for backend processing
       formData.set("fileMetadata", JSON.stringify(metadata));

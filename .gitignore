@@ -86,8 +86,9 @@ tmp/
 temp/
 
 # Jest
-coverage
+coverage/
 junit.xml
+.jest-cache/
 
 # Database
 *.db

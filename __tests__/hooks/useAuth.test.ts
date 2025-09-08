@@ -32,7 +32,7 @@ describe('useAuth', () => {
   it('should return authentication status', () => {
     const mockUseUser = require('@clerk/nextjs').useUser;
     mockUseUser.mockReturnValue({
-      userId: 'user_123',
+      user: { id: 'user_123' },
       isSignedIn: true,
       isLoaded: true,
     });
@@ -47,7 +47,7 @@ describe('useAuth', () => {
   it('should return loading state when not loaded', () => {
     const mockUseUser = require('@clerk/nextjs').useUser;
     mockUseUser.mockReturnValue({
-      userId: null,
+      user: null,
       isSignedIn: false,
       isLoaded: false,
     });
@@ -56,7 +56,7 @@ describe('useAuth', () => {
 
     expect(result.current.isAuthenticated).toBe(false);
     expect(result.current.isLoading).toBe(true);
-    expect(result.current.userId).toBeNull();
+    expect(result.current.userId).toBeUndefined();
   });
 });
 

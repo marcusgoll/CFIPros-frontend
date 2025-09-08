@@ -79,14 +79,20 @@ export class APIError extends Error {
 export function handleAPIError(error: Error | APIError): NextResponse {
   if (error instanceof APIError) {
     const problemDetails = error.toProblemDetails();
+    // Add unique instance ID if not present
+    if (!problemDetails.instance) {
+      problemDetails.instance = `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
 
-    return NextResponse.json(problemDetails, {
+    const response = NextResponse.json(problemDetails, {
       status: error.status,
       headers: {
-        "Content-Type": "application/problem+json",
+        "Content-Type": "application/json",
         "X-Error-Code": error.code,
       },
     });
+    
+    return addSecurityHeaders(response);
   }
 
   // Generic error handling
@@ -96,16 +102,19 @@ export function handleAPIError(error: Error | APIError): NextResponse {
     type: "about:blank#internal_error",
     title: "internal_error",
     status: 500,
-    detail: "An internal server error occurred",
+    detail: typeof error === 'string' ? error : (error.message || "Internal server error"),
+    instance: `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
   };
 
-  return NextResponse.json(problemDetails, {
+  const response = NextResponse.json(problemDetails, {
     status: 500,
     headers: {
-      "Content-Type": "application/problem+json",
+      "Content-Type": "application/json",
       "X-Error-Code": "internal_error",
     },
   });
+  
+  return addSecurityHeaders(response);
 }
 
 /**
@@ -138,7 +147,7 @@ export const CommonErrors = {
 
   // File Upload
   FILE_TOO_LARGE: (detail = "File exceeds maximum size limit") =>
-    new APIError("file_too_large", 400, detail),
+    new APIError("file_too_large", 413, detail),
 
   UNSUPPORTED_FILE_TYPE: (detail = "Unsupported file type") =>
     new APIError("unsupported_file_type", 400, detail),
@@ -147,6 +156,9 @@ export const CommonErrors = {
     new APIError("no_file_provided", 400, detail),
 
   // Resource Access
+  NOT_FOUND: (detail = "Resource not found") =>
+    new APIError("not_found", 404, detail),
+
   RESOURCE_NOT_FOUND: (resource: string, id: string) =>
     new APIError("resource_not_found", 404, `${resource} ${id} not found`),
 
@@ -201,10 +213,25 @@ export function createRateLimitErrorResponse(
  * Add security headers to response
  */
 export function addSecurityHeaders(response: NextResponse): NextResponse {
-  response.headers.set("X-Content-Type-Options", "nosniff");
-  response.headers.set("X-Frame-Options", "DENY");
-  response.headers.set("X-XSS-Protection", "1; mode=block");
-  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  // Only add header if not already set
+  if (!response.headers.has("X-Content-Type-Options")) {
+    response.headers.set("X-Content-Type-Options", "nosniff");
+  }
+  if (!response.headers.has("X-Frame-Options")) {
+    response.headers.set("X-Frame-Options", "DENY");
+  }
+  if (!response.headers.has("X-XSS-Protection")) {
+    response.headers.set("X-XSS-Protection", "1; mode=block");
+  }
+  if (!response.headers.has("Strict-Transport-Security")) {
+    response.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+  if (!response.headers.has("Content-Security-Policy")) {
+    response.headers.set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; object-src 'none'");
+  }
+  if (!response.headers.has("Referrer-Policy")) {
+    response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  }
 
   return response;
 }
@@ -215,7 +242,7 @@ export function addSecurityHeaders(response: NextResponse): NextResponse {
 export function addCORSHeaders(
   response: NextResponse,
   request?: import("next/server").NextRequest,
-  methods = "GET, POST, OPTIONS"
+  methods = "GET, POST, PUT, DELETE, OPTIONS"
 ): NextResponse {
   const allowedOrigins = process.env["ALLOWED_ORIGINS"]?.split(",") || [
     "http://localhost:3000",

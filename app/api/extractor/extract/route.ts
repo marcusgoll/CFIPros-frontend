@@ -12,7 +12,7 @@ import {
   addCorrelationId,
 } from "@/lib/api/proxy";
 import { CommonErrors, handleAPIError } from "@/lib/api/errors";
-import { FileUploadRateLimiter } from "@/lib/security/fileUpload";
+import { rateLimiter } from "@/lib/api/rateLimiter";
 import { trackEvent } from "@/lib/analytics/telemetry";
 
 async function extractHandler(request: NextRequest) {
@@ -20,17 +20,13 @@ async function extractHandler(request: NextRequest) {
   const clientIP = getClientIP(request);
 
   // Rate limiting for extractor - more lenient than general uploads
-  const rateLimitCheck = FileUploadRateLimiter.checkRateLimit(
-    clientIP,
-    20, // Max 20 extractions per hour for ACS extractor
-    60 * 60 * 1000 // 1 hour window
-  );
+  const rateLimitCheck = await rateLimiter.check(clientIP, 'default');
 
-  if (!rateLimitCheck.allowed) {
-    const resetDate = new Date(rateLimitCheck.resetTime).toISOString();
+  if (!rateLimitCheck.success) {
+    const resetDate = new Date(rateLimitCheck.reset).toISOString();
     return handleAPIError(
       CommonErrors.RATE_LIMIT_EXCEEDED(
-        `Extraction limit exceeded. Try again after ${resetDate}`
+        `Extraction limit exceeded. ${rateLimitCheck.remaining}/${rateLimitCheck.limit} requests remaining. Try again after ${resetDate}`
       )
     );
   }
@@ -99,7 +95,7 @@ async function extractHandler(request: NextRequest) {
           "X-Correlation-ID": correlationId,
           "X-Client-IP": clientIP,
           "X-Service": "acs-extractor-v1.2",
-          "X-Rate-Limit-Remaining": rateLimitCheck.remainingUploads.toString(),
+          "X-Rate-Limit-Remaining": rateLimitCheck.remaining.toString(),
         },
       }
     );
@@ -114,15 +110,9 @@ async function extractHandler(request: NextRequest) {
     }
 
     // Add rate limit headers to response
-    response.headers.set("X-RateLimit-Limit", "20");
-    response.headers.set(
-      "X-RateLimit-Remaining",
-      rateLimitCheck.remainingUploads.toString()
-    );
-    response.headers.set(
-      "X-RateLimit-Reset",
-      new Date(rateLimitCheck.resetTime).toISOString()
-    );
+    response.headers.set("X-RateLimit-Limit", rateLimitCheck.limit.toString());
+    response.headers.set("X-RateLimit-Remaining", rateLimitCheck.remaining.toString());
+    response.headers.set("X-RateLimit-Reset", new Date(rateLimitCheck.reset).toISOString());
 
     // Add CORS headers for public access
     response.headers.set("Access-Control-Allow-Origin", "*");
