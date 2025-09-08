@@ -12,7 +12,6 @@ import {
   addCorrelationId,
 } from "@/lib/api/proxy";
 import { CommonErrors, handleAPIError } from "@/lib/api/errors";
-import { FileUploadSecurity } from "@/lib/security/fileUpload";
 import { rateLimiter } from "@/lib/api/rateLimiter";
 import { currentUser } from "@clerk/nextjs/server";
 
@@ -32,21 +31,14 @@ async function uploadHandler(request: NextRequest) {
     );
   }
   
-  // Get role-based upload limits
-  const userLimits = FileUploadSecurity.getUserUploadLimits(userRole);
+  // Check rate limiting for file uploads
+  const rateLimitCheck = await rateLimiter.check(clientIP, 'upload');
 
-  // Check rate limiting for file uploads with user-specific limits
-  const rateLimitCheck = FileUploadRateLimiter.checkRateLimit(
-    userId, // Use userId instead of IP for authenticated users
-    userLimits.maxFilesPerHour,
-    60 * 60 * 1000 // 1 hour window
-  );
-
-  if (!rateLimitCheck.allowed) {
-    const resetDate = new Date(rateLimitCheck.resetTime).toISOString();
+  if (!rateLimitCheck.success) {
+    const resetDate = new Date(rateLimitCheck.reset).toISOString();
     return handleAPIError(
       CommonErrors.RATE_LIMIT_EXCEEDED(
-        `Upload limit exceeded. Try again after ${resetDate}`
+        `Upload limit exceeded. ${rateLimitCheck.remaining}/${rateLimitCheck.limit} requests remaining. Try again after ${resetDate}`
       )
     );
   }
@@ -90,27 +82,17 @@ async function uploadHandler(request: NextRequest) {
       "X-Client-IP": clientIP,
       "X-User-ID": userId,
       "X-User-Role": userRole,
-      "X-Upload-Remaining": rateLimitCheck.remainingUploads.toString(),
-      "X-Rate-Limit-Reset": new Date(rateLimitCheck.resetTime).toISOString(),
+      "X-Upload-Remaining": rateLimitCheck.remaining.toString(),
+      "X-Rate-Limit-Reset": new Date(rateLimitCheck.reset).toISOString(),
     },
   });
 
-  // Add security headers to response
-  const securityHeaders = FileUploadCSP.getUploadPageCSP();
-  Object.entries(securityHeaders).forEach(([key, value]) => {
-    response.headers.set(key, value);
-  });
-
+  // Add security headers to response (security headers are already added by middleware)
+  
   // Add rate limit headers
-  response.headers.set("X-RateLimit-Limit", userLimits.maxFilesPerHour.toString());
-  response.headers.set(
-    "X-RateLimit-Remaining",
-    rateLimitCheck.remainingUploads.toString()
-  );
-  response.headers.set(
-    "X-RateLimit-Reset",
-    new Date(rateLimitCheck.resetTime).toISOString()
-  );
+  response.headers.set("X-RateLimit-Limit", rateLimitCheck.limit.toString());
+  response.headers.set("X-RateLimit-Remaining", rateLimitCheck.remaining.toString());
+  response.headers.set("X-RateLimit-Reset", new Date(rateLimitCheck.reset).toISOString());
 
   return response;
 }

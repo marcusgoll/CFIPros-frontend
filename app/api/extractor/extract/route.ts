@@ -20,13 +20,13 @@ async function extractHandler(request: NextRequest) {
   const clientIP = getClientIP(request);
 
   // Rate limiting for extractor - more lenient than general uploads
-  const rateLimitKey = `extractor:${clientIP}`;
-  const rateLimitCheck = await rateLimiter.checkLimit(rateLimitKey, 20, 3600); // 20 requests per hour
+  const rateLimitCheck = await rateLimiter.check(clientIP, 'default');
 
   if (!rateLimitCheck.success) {
+    const resetDate = new Date(rateLimitCheck.reset).toISOString();
     return handleAPIError(
       CommonErrors.RATE_LIMIT_EXCEEDED(
-        `Extraction limit exceeded. Try again in ${Math.ceil(rateLimitCheck.resetTime / 1000)} seconds`
+        `Extraction limit exceeded. ${rateLimitCheck.remaining}/${rateLimitCheck.limit} requests remaining. Try again after ${resetDate}`
       )
     );
   }
@@ -95,7 +95,7 @@ async function extractHandler(request: NextRequest) {
           "X-Correlation-ID": correlationId,
           "X-Client-IP": clientIP,
           "X-Service": "acs-extractor-v1.2",
-          "X-Rate-Limit-Remaining": rateLimitCheck.remainingUploads.toString(),
+          "X-Rate-Limit-Remaining": rateLimitCheck.remaining.toString(),
         },
       }
     );
@@ -110,15 +110,9 @@ async function extractHandler(request: NextRequest) {
     }
 
     // Add rate limit headers to response
-    response.headers.set("X-RateLimit-Limit", "20");
-    response.headers.set(
-      "X-RateLimit-Remaining",
-      rateLimitCheck.remainingUploads.toString()
-    );
-    response.headers.set(
-      "X-RateLimit-Reset",
-      new Date(rateLimitCheck.resetTime).toISOString()
-    );
+    response.headers.set("X-RateLimit-Limit", rateLimitCheck.limit.toString());
+    response.headers.set("X-RateLimit-Remaining", rateLimitCheck.remaining.toString());
+    response.headers.set("X-RateLimit-Reset", new Date(rateLimitCheck.reset).toISOString());
 
     // Add CORS headers for public access
     response.headers.set("Access-Control-Allow-Origin", "*");
